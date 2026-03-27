@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { isAuthenticated, getStoredUser } from "../lib/auth";
+import { getStoredUser, isAuthenticated } from "../lib/auth";
 
 export default function ProtectedRoute() {
   const authenticated = isAuthenticated();
@@ -9,7 +9,12 @@ export default function ProtectedRoute() {
     return <Navigate to="/login" replace />;
   }
 
-  if (user && user.has_access === false) {
+  const hasAccess =
+    !!user &&
+    user.is_active === true &&
+    user.is_blocked === false;
+
+  if (!hasAccess) {
     return <Navigate to="/premium" replace />;
   }
 

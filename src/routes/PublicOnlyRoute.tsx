@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { isAuthenticated, getStoredUser } from "../lib/auth";
+import { getStoredUser, isAuthenticated } from "../lib/auth";
 
 export default function PublicOnlyRoute() {
   const authenticated = isAuthenticated();
@@ -9,7 +9,12 @@ export default function PublicOnlyRoute() {
     return <Outlet />;
   }
 
-  if (user?.has_access) {
+  const hasAccess =
+    !!user &&
+    user.is_active === true &&
+    user.is_blocked === false;
+
+  if (hasAccess) {
     return <Navigate to="/dashboard" replace />;
   }
 

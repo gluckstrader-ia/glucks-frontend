@@ -4,7 +4,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { BrainCircuit } from "lucide-react";
-import { saveAuth } from "../lib/auth";
+
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
@@ -34,11 +34,16 @@ export default function LoginPage() {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.detail || "Falha no login");
-      }
+      const hasAccess =
+        !!data.user &&
+        data.user.is_active === true &&
+        data.user.is_blocked === false;
 
-      saveAuth(data.access_token, data.user);
+      if (hasAccess) {
+        navigate("/dashboard");
+      } else {
+        navigate("/premium");
+      }
 
       if (data.user?.has_access) {
         navigate("/dashboard");
