@@ -120,7 +120,7 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="Senha"
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
               />
             </div>

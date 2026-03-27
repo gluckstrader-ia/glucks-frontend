@@ -1768,7 +1768,9 @@ function CalculadoraTab({
         <div className="text-zinc-400 mb-2">Seu Capital (BRL)</div>
         <Input
           value={capital}
-          onChange={(e) => setCapital(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setCapital(e.target.value)
+          }
           placeholder="Ex: 10.000,00"
           className="bg-zinc-900 border-zinc-700 text-white"
         />

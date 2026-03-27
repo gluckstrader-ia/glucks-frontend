@@ -10,7 +10,6 @@ import {
   History,
   LineChart,
   Lock,
-  Play,
   Radio,
   Sparkles,
   TrendingUp,
@@ -133,7 +132,7 @@ export default function HomePremiumScreen({
                 title="Nova Análise"
                 subtitle="Analise qualquer ativo com IA avançada"
                 icon={<TrendingUp className="h-7 w-7" />}
-                accent="green"
+                accent="cyan"
                 onClick={onOpenDashboard}
             />
           </motion.section>
@@ -220,7 +219,7 @@ function HeroActionCard({
   tag2?: string;
 }) {
   const theme =
-  accent === "green"
+  accent === "cyan"
     ? {
         wrap: "border-green-500/60 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.22),rgba(16,185,129,0.10)_35%,rgba(0,0,0,0.2)_75%)]",
         glow: "shadow-[0_0_40px_rgba(34,197,94,0.14)]",
@@ -473,7 +472,7 @@ function MiniInsightCard({
   title: string;
   subtitle: string;
   icon: React.ReactNode;
-  accent: "green" | "amber";
+  accent: "cyan" | "amber" | "green";
 }) {
   const style =
     accent === "cyan"
