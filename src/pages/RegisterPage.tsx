@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { BrainCircuit } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
@@ -105,14 +105,14 @@ export default function RegisterPage() {
               <Input
                 placeholder="Nome"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                 className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
               />
 
               <Input
                 placeholder="Email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
               />
 
@@ -120,7 +120,7 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="Senha"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
               />
             </div>

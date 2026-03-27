@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -63,7 +63,7 @@ export default function LoginPage() {
           <Input
             placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
           />
 
@@ -71,7 +71,7 @@ export default function LoginPage() {
             type="password"
             placeholder="Senha"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
           />
 

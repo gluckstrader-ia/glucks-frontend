@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -247,27 +247,6 @@ type AnalysisData = {
 
 };
 
-function Meter({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
-  return (
-    <div className="space-y-1">
-      <div className="text-xs text-zinc-400">
-        <span>{label}</span>
-        <span>{value}%</span>
-      </div>
-      <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-        <div className={`h-full ${color}`} style={{ width: `${value}%` }} />
-      </div>
-    </div>
-  );
-}
 
 function getPriceDecimals(assetType?: string, n?: number) {
   const value = Number(n ?? 0);
@@ -301,148 +280,6 @@ function formatBrl(n?: number) {
     style: "currency",
     currency: "BRL",
   }).format(Number(n ?? 0));
-}
-
-function AnalysisLoadingScreen({
-  asset,
-  progress,
-}: {
-  asset: string;
-  progress: number;
-}) {
-  const steps = [
-    { title: "Coletando Dados", subtitle: "Concluído", state: "done" },
-    { title: "Análise Técnica", subtitle: "Concluído", state: "done" },
-    { title: "Análise Fundamentalista", subtitle: "Concluído", state: "done" },
-    { title: "Análise de Timing", subtitle: "Concluído", state: "done" },
-    {
-      title: "Gerando Estratégia",
-      subtitle: "Calculando pontos de entrada, stop e take profit...",
-      state: "active",
-    },
-    {
-      title: "Calculando Força do Sinal",
-      subtitle: "Aguardando etapa anterior",
-      state: "idle",
-    },
-  ] as const;
-
-  return (
-    <div className="min-h-screen bg-black text-zinc-100 flex">
-      <aside className="w-64 bg-zinc-950 border-r border-zinc-800 p-6 hidden lg:block">
-        <h1 className="text-xl font-bold flex items-center gap-2 text-white mb-10">
-          <BrainCircuit size={18} /> Gluck&apos;s Trader IA
-        </h1>
-        <div className="text-zinc-300 flex gap-2 items-center">
-          <BarChart3 size={16} /> Dashboard
-        </div>
-      </aside>
-
-      <main className="flex-1 p-6 md:p-8">
-        <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6 shadow-2xl shadow-cyan-950/20">
-          <div className="flex items-start gap-4 mb-6">
-            <div className="h-14 w-14 rounded-2xl bg-cyan-950/80 border border-cyan-800/50 flex items-center justify-center text-cyan-400 text-2xl">
-              ✦
-            </div>
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
-                IA Analisando {asset}
-              </h2>
-              <p className="text-zinc-400 mt-1">
-                Processando com inteligência artificial avançada
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {steps.map((step, index) => {
-              const done = step.state === "done";
-              const active = step.state === "active";
-              return (
-                <div
-                  key={index}
-                  className={`rounded-2xl border p-4 flex items-center justify-between gap-4 ${done
-                    ? "border-green-700/60 bg-gradient-to-r from-green-950/80 to-emerald-950/20"
-                    : active
-                      ? "border-cyan-700/60 bg-gradient-to-r from-cyan-950/50 to-sky-950/10"
-                      : "border-zinc-800 bg-gradient-to-r from-zinc-950 to-zinc-900/40"
-                    }`}
-                >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div
-                      className={`h-12 w-12 rounded-2xl border flex items-center justify-center shrink-0 ${done
-                        ? "bg-green-900/70 text-green-400 border-green-800/60"
-                        : active
-                          ? "bg-cyan-950/70 text-cyan-400 border-cyan-800/60"
-                          : "bg-zinc-900 text-zinc-500 border-zinc-800"
-                        }`}
-                    >
-                      {done ? "✓" : active ? "◌" : "↗"}
-                    </div>
-                    <div className="min-w-0">
-                      <div
-                        className={`font-semibold text-lg ${done
-                          ? "text-green-400"
-                          : active
-                            ? "text-cyan-400"
-                            : "text-zinc-500"
-                          }`}
-                      >
-                        {step.title}
-                      </div>
-                      <div className="text-zinc-400 text-sm truncate">
-                        {step.subtitle}
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    className={`font-semibold text-sm shrink-0 ${done
-                      ? "text-green-400"
-                      : active
-                        ? "text-cyan-400"
-                        : "text-zinc-500"
-                      }`}
-                  >
-                    {done ? "Concluído" : active ? "Em andamento" : ""}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-6 rounded-2xl border border-zinc-800 bg-black/70 overflow-hidden">
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 text-sm text-zinc-400">
-              <div className="flex gap-2">
-                <span className="h-3 w-3 rounded-full bg-red-500 inline-block" />
-                <span className="h-3 w-3 rounded-full bg-yellow-400 inline-block" />
-                <span className="h-3 w-3 rounded-full bg-green-500 inline-block" />
-              </div>
-              <span className="ml-3">AI Engine v2.0</span>
-            </div>
-            <div className="p-4 space-y-2 font-mono text-cyan-400 text-base md:text-lg">
-              <div>→ Calculando médias móveis...</div>
-              <div>→ Analisando volume de negociação...</div>
-              <div>→ Verificando divergências de indicadores...</div>
-              <div>→ Avaliando sentimento do mercado...</div>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <div className="flex items-center justify-between mb-2 text-zinc-400">
-              <span>Progresso</span>
-              <span className="text-cyan-400 font-semibold">{progress}%</span>
-            </div>
-            <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-cyan-400 via-emerald-400 to-yellow-400"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
 }
 
 function NewsPanel({
@@ -2116,66 +1953,12 @@ function PlaceholderTab({ label }: { label: string }) {
   );
 }
 
-function SubscriptionRequiredScreen({
-  user,
-  onLogout,
-}: {
-  user: any;
-  onLogout: () => void;
-}) {
-  return (
-    <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center p-6">
-      <div className="w-full max-w-2xl rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-8">
-        <div className="text-center">
-          <div className="text-4xl mb-4">🔒</div>
-          <h1 className="text-3xl font-bold text-white">
-            Assinatura necessária
-          </h1>
-          <p className="text-zinc-400 mt-3 text-lg">
-            Olá, {user?.name || "usuário"}.
-          </p>
-          <p className="text-zinc-400 mt-2">
-            Para acessar completamente a plataforma Gluck&apos;s Trader IA,
-            é necessário ter uma assinatura ativa.
-          </p>
-        </div>
-
-        <div className="mt-8 rounded-3xl border border-cyan-900/40 bg-cyan-950/10 p-6 text-center">
-          <div className="text-white text-2xl font-bold">Plano Pro</div>
-          <div className="text-cyan-400 text-5xl font-bold mt-3">R$ 197,00</div>
-          <div className="text-zinc-400 mt-2">por mês</div>
-
-          <div className="mt-6 space-y-2 text-zinc-300 text-sm">
-            <div>✓ Acesso completo a todas as abas</div>
-            <div>✓ Análises completas em tempo real</div>
-            <div>✓ Multiativos: Brasil, Forex, Ações e Cripto</div>
-            <div>✓ Plataforma completa liberada</div>
-          </div>
-
-          <button className="mt-8 w-full rounded-xl bg-green-600 hover:bg-green-700 text-white py-3 font-semibold">
-            Assinar agora
-          </button>
-        </div>
-
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={onLogout}
-            className="px-4 py-2 rounded-xl border border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-          >
-            Sair
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 type AssetCategoryLabel = "Índices" | "Ações" | "Forex" | "Crypto" | "B3" | "Futuros BR";
 
 type AssetOption = {
   label: string;
   value: string;
-  apiType: "index" | "stock" | "forex" | "crypto" | "b3";
+  apiType: "index" | "stock" | "forex" | "crypto" | "b3" | "future_br";
   tvSymbol?: string;
 };
 
@@ -2566,7 +2349,9 @@ const AI_LOADING_STEPS = [
                 <label className="block text-sm text-zinc-400 mb-2">Ativo da lista</label>
                 <select
                   value={asset}
-                  onChange={(e) => setAsset(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setAsset(e.target.value)
+                  }    
                   className="h-10 w-full rounded-xl bg-zinc-900 border border-zinc-700 px-3 text-white"
                 >
                   {selectedAssetOptions.map((item) => (
@@ -2581,7 +2366,9 @@ const AI_LOADING_STEPS = [
                 <label className="block text-sm text-zinc-400 mb-2">Ativo manual</label>
                 <input
                   value={customAsset}
-                  onChange={(e) => setCustomAsset(e.target.value.toUpperCase())}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setCustomAsset(e.target.value.toUpperCase())
+                  }
                   className="h-10 w-full rounded-xl bg-zinc-900 border border-zinc-700 px-3 text-white"
                   placeholder="Ex: PETR4, AAPL, BTCUSDT"
                 />
