@@ -4,7 +4,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { BrainCircuit } from "lucide-react";
-
+import { saveAuth } from "../lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
@@ -34,18 +34,18 @@ export default function LoginPage() {
 
       const data = await response.json();
 
+      if (!response.ok) {
+        throw new Error(data.detail || "Falha no login");
+      }
+
+      saveAuth(data.access_token, data.user);
+
       const hasAccess =
         !!data.user &&
         data.user.is_active === true &&
         data.user.is_blocked === false;
 
       if (hasAccess) {
-        navigate("/dashboard");
-      } else {
-        navigate("/premium");
-      }
-
-      if (data.user?.has_access) {
         navigate("/dashboard");
       } else {
         navigate("/premium");
@@ -68,7 +68,9 @@ export default function LoginPage() {
           <Input
             placeholder="Email"
             value={email}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setEmail(e.target.value)
+            }
             className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
           />
 
@@ -76,7 +78,9 @@ export default function LoginPage() {
             type="password"
             placeholder="Senha"
             value={password}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setPassword(e.target.value)
+            }
             className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
           />
 
@@ -96,7 +100,10 @@ export default function LoginPage() {
 
           <div className="text-center text-sm text-zinc-400">
             Ainda não tem conta?{" "}
-            <Link to="/cadastro" className="text-emerald-400 hover:text-emerald-300">
+            <Link
+              to="/cadastro"
+              className="text-emerald-400 hover:text-emerald-300"
+            >
               Criar conta
             </Link>
           </div>
