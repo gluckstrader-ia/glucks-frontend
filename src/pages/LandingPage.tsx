@@ -99,6 +99,8 @@ export default function LandingPage() {
           </div>
         </div>
 
+        <WhatsAppButton />
+
         {/* BOTÃO WHATSAPP NO HEADER (opcional) */}
         <a
           href="https://wa.me/5551994830003?text=Olá! Quero saber mais sobre a Gluck's Trader IA."
