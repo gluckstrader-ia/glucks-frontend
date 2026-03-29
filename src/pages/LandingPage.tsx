@@ -1,3 +1,6 @@
+
+import WhatsAppButton from "../components/WhatsAppButton";
+
 export default function LandingPage() {
   const plans = [
     {
@@ -99,7 +102,6 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <WhatsAppButton />
 
         {/* BOTÃO WHATSAPP NO HEADER (opcional) */}
         <a
@@ -511,6 +513,8 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      <WhatsAppButton />   
     </div>
   );
 }
