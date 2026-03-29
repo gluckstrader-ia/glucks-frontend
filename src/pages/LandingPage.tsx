@@ -88,16 +88,26 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/15 text-xl font-bold text-emerald-400 ring-1 ring-emerald-500/30">
-              G
-            </div>
-            <div>
-              <div className="text-lg font-bold">Gluck&apos;s Trader IA</div>
-              <div className="text-xs text-zinc-400">
-                Inteligência de mercado para decisão rápida
-              </div>
-            </div>
+            <img
+              src="/logo.png"
+              alt="Gluck's Trader IA"
+              className="w-12 h-12 rounded-xl object-cover shadow-md"
+            />
+          <div className="leading-tight">
+            <h1 className="text-white font-bold text-lg">Gluck&apos;s Trader IA</h1>
+            <p className="text-zinc-400 text-sm">Inteligência para análise de mercado</p>
           </div>
+        </div>
+
+        {/* BOTÃO WHATSAPP NO HEADER (opcional) */}
+        <a
+          href="https://wa.me/5551994830003?text=Olá! Quero saber mais sobre a Gluck's Trader IA."
+          target="_blank"
+          rel="noreferrer"
+          className="hidden md:flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-500 transition"
+        >
+          WhatsApp
+        </a>
 
           <nav className="hidden items-center gap-6 text-sm text-zinc-300 md:flex">
             <a href="#beneficios" className="transition hover:text-white">

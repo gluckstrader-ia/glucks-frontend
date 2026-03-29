@@ -7,6 +7,7 @@ import PremiumHomePage from "./pages/PremiumHomePage";
 import DashboardPage from "./pages/DashboardPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
+import WhatsAppButton from "./components/WhatsAppButton";
 
 export default function App() {
   return (
