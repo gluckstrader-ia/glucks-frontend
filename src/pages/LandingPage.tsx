@@ -94,7 +94,7 @@ export default function LandingPage() {
             <img
               src="/logo.png"
               alt="Gluck's Trader IA"
-              className="w-12 h-12 rounded-xl object-cover shadow-md"
+              className="w-15 h-12 rounded-xl object-cover shadow-md"
             />
           <div className="leading-tight">
             <h1 className="text-white font-bold text-lg">Gluck&apos;s Trader IA</h1>
