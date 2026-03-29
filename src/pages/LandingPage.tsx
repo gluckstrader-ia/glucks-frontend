@@ -58,10 +58,6 @@ export default function LandingPage() {
       q: "O acesso é liberado automaticamente?",
       a: "Sim. A estrutura foi pensada para liberação automática após confirmação do pagamento, com possibilidade de liberação manual quando necessário.",
     },
-    {
-      q: "Posso cancelar depois?",
-      a: "Sim. O controle de assinatura pode ser ajustado conforme o plano contratado e as regras comerciais que você definir.",
-    },
   ];
 
   const benefits = [
