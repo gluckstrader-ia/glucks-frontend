@@ -70,7 +70,7 @@ export default function PremiumPage() {
   }
 
   function handleWhatsApp(planId: string) {
-    const phone = "5551999999999"; // TROQUE PELO SEU NÚMERO COM DDI + DDD
+    const phone = "5551994830003"; // TROQUE PELO SEU NÚMERO COM DDI + DDD
 
     let message = "";
 
