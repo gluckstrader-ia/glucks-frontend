@@ -75,6 +75,24 @@ export default function PremiumPage() {
     navigate(`/premium?plan=${planId}`);
   }
 
+  function handleWhatsApp(planId: string) {
+    const phone = "5551994830003"; // seu número
+
+    let message = "";
+
+    if (planId === "mensal") {
+      message = "Olá, quero assinar o plano MENSAL do Gluck’s Trader IA";
+    } else if (planId === "trimestral") {
+      message = "Olá, quero assinar o plano TRIMESTRAL do Gluck’s Trader IA";
+    } else if (planId === "semestral") {
+      message = "Olá, quero assinar o plano SEMESTRAL do Gluck’s Trader IA";
+    }
+
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+    window.open(url, "_blank");
+  }
+  
   async function handleSubscribe(planId: string) {
     try {
       if (loadingPlan) return;
@@ -198,7 +216,7 @@ export default function PremiumPage() {
                     </button>
 
                     <button
-                      onClick={() => handleSubscribe(plan.id)}
+                      onClick={() => handleWhatsApp(plan.id)}
                       disabled={isLoading}
                       className="w-full rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white py-3 font-semibold"
                     >
