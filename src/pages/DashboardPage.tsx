@@ -11,7 +11,7 @@ export default function DashboardPage() {
   const token = getStoredToken();
   const user = getStoredUser();
 
-type AnalysisModules = { //analise
+type AnalysisModules = { 
   technical?: number;
   smc?: number;
   harmonic?: number;
