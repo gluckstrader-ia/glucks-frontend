@@ -2273,14 +2273,24 @@ const AI_LOADING_STEPS = [
 
       if (!response.ok) {
         let errorMessage = "Erro ao analisar mercado";
+
         try {
           const errorData = await response.json();
-          errorMessage = errorData.detail || errorMessage;
+
+          if (typeof errorData.detail === "string") {
+            errorMessage = errorData.detail;
+          } else if (typeof errorData.detail === "object") {
+            errorMessage = JSON.stringify(errorData.detail, null, 2);
+          } else {
+            errorMessage = JSON.stringify(errorData);
+          }
+
         } catch {
           errorMessage = `Erro ${response.status} ao analisar mercado`;
         }
-        throw new Error(errorMessage);
-      }
+
+  throw new Error(errorMessage);
+}
 
       const data = await response.json();
 
