@@ -1,16 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { clearAuth, getStoredUser } from "../lib/auth";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export default function PremiumPage() {
   const navigate = useNavigate();
   const user = getStoredUser();
   const [searchParams] = useSearchParams();
-
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-  const [checkoutError, setCheckoutError] = useState("");
 
   const selectedPlan = useMemo(() => {
     const plan = (searchParams.get("plan") || "mensal").toLowerCase();
@@ -71,63 +66,36 @@ export default function PremiumPage() {
   }
 
   function handleSelectPlan(planId: string) {
-    setCheckoutError("");
     navigate(`/premium?plan=${planId}`);
   }
 
-  async function handleSubscribe(planId: string) {
-    try {
-      if (loadingPlan) return; // evita clique duplo
+  function handleWhatsApp(planId: string) {
+    const phone = "5551994830003"; // TROQUE PELO SEU NÚMERO COM DDI + DDD
 
-      setLoadingPlan(planId);
-      setCheckoutError("");
+    let message = "";
 
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        throw new Error("Sessão expirada. Faça login novamente.");
-      }
-
-      const response = await fetch(`${API_URL}/payments/create-checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ plan: planId }),
-      });
-
-      let data: any = {};
-
-      try {
-        data = await response.json();
-      } catch {
-        throw new Error("Erro ao processar resposta do servidor");
-      }
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Erro ao iniciar pagamento");
-      }
-
-      if (!data.pay_url) {
-        throw new Error("Checkout não retornou URL válida");
-      }
-
-      // REDIRECIONA PARA PAGBANK
-      window.location.href = data.checkout_url;
-    } catch (error: any) {
-      console.error("Erro checkout:", error);
-      setCheckoutError(error.message || "Erro ao iniciar checkout");
-    } finally {
-      setLoadingPlan(null);
+    if (planId === "mensal") {
+      message =
+        "Olá, quero assinar o plano MENSAL do Gluck’s Trader IA. Pode me passar os dados de pagamento?";
+    } else if (planId === "trimestral") {
+      message =
+        "Olá, quero assinar o plano TRIMESTRAL do Gluck’s Trader IA. Pode me passar os dados de pagamento?";
+    } else if (planId === "semestral") {
+      message =
+        "Olá, quero assinar o plano SEMESTRAL do Gluck’s Trader IA. Pode me passar os dados de pagamento?";
+    } else {
+      message =
+        "Olá, quero assinar o Gluck’s Trader IA. Pode me passar os dados de pagamento?";
     }
+
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
   }
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 p-6">
       <div className="mx-auto max-w-6xl">
         <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-8">
-          {/* HEADER */}
           <div className="text-center">
             <div className="text-4xl mb-4">🔒</div>
             <h1 className="text-3xl md:text-4xl font-bold text-white">
@@ -138,19 +106,10 @@ export default function PremiumPage() {
             </p>
           </div>
 
-          {/* ERRO */}
-          {checkoutError && (
-            <div className="mt-8 rounded-2xl border border-red-900/40 bg-red-950/20 p-4 text-red-400 text-sm text-center">
-              {checkoutError}
-            </div>
-          )}
-
-          {/* PLANOS */}
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {plans.map((plan) => {
               const isSelected = selectedPlan === plan.id;
               const isHighlighted = plan.id === "trimestral";
-              const isLoading = loadingPlan === plan.id;
 
               return (
                 <div
@@ -173,9 +132,13 @@ export default function PremiumPage() {
                     {plan.name}
                   </div>
 
+                  <div className="mt-2 text-zinc-400">{plan.description}</div>
+
                   <div className="mt-4 text-4xl font-black text-cyan-400">
                     {plan.price}
                   </div>
+
+                  <div className="mt-1 text-sm text-zinc-500">{plan.period}</div>
 
                   <div className="mt-6 space-y-3">
                     {plan.features.map((feature) => (
@@ -189,21 +152,20 @@ export default function PremiumPage() {
                   <div className="mt-8 space-y-3">
                     <button
                       onClick={() => handleSelectPlan(plan.id)}
-                      className={`w-full rounded-xl border px-4 py-3 font-semibold ${
+                      className={`w-full rounded-xl border px-4 py-3 font-semibold transition ${
                         isSelected
                           ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
-                          : "border-zinc-700 bg-zinc-900 text-white"
+                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
                       }`}
                     >
                       {isSelected ? "Selecionado" : "Selecionar plano"}
                     </button>
 
                     <button
-                      onClick={() => handleSubscribe(plan.id)}
-                      disabled={isLoading}
-                      className="w-full rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white py-3 font-semibold"
+                      onClick={() => handleWhatsApp(plan.id)}
+                      className="w-full rounded-xl bg-green-600 hover:bg-green-700 text-white py-3 font-semibold transition"
                     >
-                      {isLoading ? "Redirecionando..." : "Assinar agora"}
+                      Assinar agora
                     </button>
                   </div>
                 </div>
@@ -211,10 +173,9 @@ export default function PremiumPage() {
             })}
           </div>
 
-          {/* INFO FINAL */}
           <div className="mt-10 text-center">
             <div className="text-zinc-400">
-              Plano atual:{" "}
+              Plano selecionado:{" "}
               <span className="text-white font-bold">
                 {selectedPlanMeta.name}
               </span>
@@ -222,7 +183,7 @@ export default function PremiumPage() {
 
             <button
               onClick={handleLogout}
-              className="mt-6 px-4 py-2 rounded-xl border border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
+              className="mt-6 px-4 py-2 rounded-xl border border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800 transition"
             >
               Sair
             </button>
