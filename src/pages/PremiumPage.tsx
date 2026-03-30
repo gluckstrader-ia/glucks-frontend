@@ -77,7 +77,7 @@ export default function PremiumPage() {
 
   async function handleSubscribe(planId: string) {
     try {
-      if (loadingPlan) return; // evita clique duplo
+      if (loadingPlan) return;
 
       setLoadingPlan(planId);
       setCheckoutError("");
@@ -88,7 +88,10 @@ export default function PremiumPage() {
         throw new Error("Sessão expirada. Faça login novamente.");
       }
 
-      const response = await fetch(`${API_URL}/payments/create-checkout`, {
+      const checkoutEndpoint = `${API_URL}/payments/create-checkout`;
+      console.log("CHECKOUT ENDPOINT:", checkoutEndpoint);
+
+      const response = await fetch(checkoutEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -113,8 +116,7 @@ export default function PremiumPage() {
         throw new Error("Checkout não retornou URL válida");
       }
 
-      // REDIRECIONA PARA PAGBANK
-      window.location.href = data.checkout_url;
+      window.location.href = data.pay_url;
     } catch (error: any) {
       console.error("Erro checkout:", error);
       setCheckoutError(error.message || "Erro ao iniciar checkout");
@@ -127,7 +129,6 @@ export default function PremiumPage() {
     <div className="min-h-screen bg-black text-zinc-100 p-6">
       <div className="mx-auto max-w-6xl">
         <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-8">
-          {/* HEADER */}
           <div className="text-center">
             <div className="text-4xl mb-4">🔒</div>
             <h1 className="text-3xl md:text-4xl font-bold text-white">
@@ -138,14 +139,12 @@ export default function PremiumPage() {
             </p>
           </div>
 
-          {/* ERRO */}
           {checkoutError && (
             <div className="mt-8 rounded-2xl border border-red-900/40 bg-red-950/20 p-4 text-red-400 text-sm text-center">
               {checkoutError}
             </div>
           )}
 
-          {/* PLANOS */}
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {plans.map((plan) => {
               const isSelected = selectedPlan === plan.id;
@@ -211,7 +210,6 @@ export default function PremiumPage() {
             })}
           </div>
 
-          {/* INFO FINAL */}
           <div className="mt-10 text-center">
             <div className="text-zinc-400">
               Plano atual:{" "}
