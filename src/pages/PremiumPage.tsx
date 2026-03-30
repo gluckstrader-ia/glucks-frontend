@@ -58,7 +58,7 @@ export default function PremiumPage() {
   ];
 
   const selectedPlanMeta =
-    plans.find((plan) => plan.id === selectedPlan) || plans[0];
+    plans.find((plan) => plan.id === selectedPlan) || plans[0]; //planos
 
   function handleLogout() {
     clearAuth();
