@@ -1972,6 +1972,7 @@ const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
     { label: "Dow Jones", value: "DJI", apiType: "index", tvSymbol: "DJ:DJI" },
     { label: "VIX", value: "VIX", apiType: "index", tvSymbol: "CBOE:VIX" },
   ],
+
   "Ações": [
     { label: "Apple", value: "AAPL", apiType: "stock", tvSymbol: "NASDAQ:AAPL" },
     { label: "Tesla", value: "TSLA", apiType: "stock", tvSymbol: "NASDAQ:TSLA" },
@@ -1979,13 +1980,18 @@ const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
     { label: "Microsoft", value: "MSFT", apiType: "stock", tvSymbol: "NASDAQ:MSFT" },
     { label: "Amazon", value: "AMZN", apiType: "stock", tvSymbol: "NASDAQ:AMZN" },
   ],
+
   "Forex": [
     { label: "EUR/USD", value: "EURUSD", apiType: "forex", tvSymbol: "FX:EURUSD" },
     { label: "GBP/USD", value: "GBPUSD", apiType: "forex", tvSymbol: "FX:GBPUSD" },
     { label: "USD/JPY", value: "USDJPY", apiType: "forex", tvSymbol: "FX:USDJPY" },
     { label: "AUD/USD", value: "AUDUSD", apiType: "forex", tvSymbol: "FX:AUDUSD" },
     { label: "USD/CAD", value: "USDCAD", apiType: "forex", tvSymbol: "FX:USDCAD" },
+
+    // ✅ NOVO
+    { label: "Gold", value: "XAUUSD", apiType: "forex", tvSymbol: "OANDA:XAUUSD" },
   ],
+
   "Crypto": [
     { label: "Bitcoin", value: "BTCUSDT", apiType: "crypto", tvSymbol: "BINANCE:BTCUSDT" },
     { label: "Ethereum", value: "ETHUSDT", apiType: "crypto", tvSymbol: "BINANCE:ETHUSDT" },
@@ -1993,6 +1999,7 @@ const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
     { label: "BNB", value: "BNBUSDT", apiType: "crypto", tvSymbol: "BINANCE:BNBUSDT" },
     { label: "XRP", value: "XRPUSDT", apiType: "crypto", tvSymbol: "BINANCE:XRPUSDT" },
   ],
+
   "B3": [
     { label: "PETR4", value: "PETR4", apiType: "b3", tvSymbol: "BMFBOVESPA:PETR4" },
     { label: "VALE3", value: "VALE3", apiType: "b3", tvSymbol: "BMFBOVESPA:VALE3" },
@@ -2000,34 +2007,55 @@ const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
     { label: "BBDC4", value: "BBDC4", apiType: "b3", tvSymbol: "BMFBOVESPA:BBDC4" },
     { label: "ABEV3", value: "ABEV3", apiType: "b3", tvSymbol: "BMFBOVESPA:ABEV3" },
   ],
+
   "Futuros BR": [
     { label: "Mini Índice", value: "WIN", apiType: "future_br", tvSymbol: "BMFBOVESPA:WIN1!" },
     { label: "Mini Dólar", value: "WDO", apiType: "future_br", tvSymbol: "BMFBOVESPA:WDO1!" },
   ],
-  // NOVA CATEGORIA
+
+  // ✅ NOVA CATEGORIA
   "Futuros US": [
     { label: "Mini Ouro", value: "NGCJ", apiType: "future_us", tvSymbol: "COMEX_MINI:MGC1!" },
     { label: "Mini Nasdaq", value: "MNQ", apiType: "future_us", tvSymbol: "CME_MINI:MNQ1!" },
   ],
 };
 
+// =========================
+// FUNÇÕES AUXILIARES
+// =========================
+
 function getDefaultAssetByCategory(category: AssetCategoryLabel) {
-  return ASSET_OPTIONS[category][0]?.value ?? "";
+  return ASSET_OPTIONS[category]?.[0]?.value ?? "";
 }
 
 function getTradingViewSymbol(category: AssetCategoryLabel, asset: string) {
-  const found = ASSET_OPTIONS[category].find((item) => item.value === asset);
+  const found = ASSET_OPTIONS[category]?.find((item) => item.value === asset);
+
+  // ✅ prioridade total para tvSymbol definido
   if (found?.tvSymbol) return found.tvSymbol;
+
+  // =========================
+  // FALLBACKS SEGUROS
+  // =========================
 
   if (category === "Crypto") return `BINANCE:${asset}`;
   if (category === "Forex") return `FX:${asset}`;
   if (category === "B3") return `BMFBOVESPA:${asset}`;
+
   if (category === "Futuros BR") {
     if (asset === "WIN") return "BMFBOVESPA:WIN1!";
     if (asset === "WDO") return "BMFBOVESPA:WDO1!";
     return `BMFBOVESPA:${asset}`;
   }
+
+  if (category === "Futuros US") {
+    if (asset === "MNQ") return "CME_MINI:MNQ1!";
+    if (asset === "NGCJ") return "COMEX_MINI:MGC1!";
+    return asset;
+  }
+
   if (category === "Ações") return `NASDAQ:${asset}`;
+
   if (category === "Índices") return asset;
 
   return asset;
