@@ -279,18 +279,6 @@ function LiveTradingCard() {
             <Radio className="h-7 w-7" />
             <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-red-500 shadow-[0_0_16px_rgba(239,68,68,0.9)]" />
           </div>
-
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="text-4xl font-bold tracking-tight text-cyan-300">Live Trading IA 26/3</div>
-              <span className="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-sm font-semibold text-red-300">
-                AO VIVO
-              </span>
-            </div>
-            <div className="mt-2 text-lg text-zinc-400">
-              Trading ao vivo com IA comentando cada movimento em tempo real
-            </div>
-          </div>
         </div>
 
         <button className="inline-flex items-center gap-3 self-start rounded-2xl bg-cyan-400 px-6 py-4 text-lg font-bold text-black shadow-[0_0_30px_rgba(34,211,238,0.28)] transition hover:scale-[1.02]">
