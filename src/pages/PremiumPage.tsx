@@ -88,7 +88,7 @@ export default function PremiumPage() {
         throw new Error("Sessão expirada. Faça login novamente.");
       }
 
-      const response = await fetch(`${API_URL}/payments/pagbank/checkout`, {
+      const response = await fetch(`${API_URL}/payments/create-checkout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -109,7 +109,7 @@ export default function PremiumPage() {
         throw new Error(data.detail || "Erro ao iniciar pagamento");
       }
 
-      if (!data.checkout_url) {
+      if (!data.pay_url) {
         throw new Error("Checkout não retornou URL válida");
       }
 
