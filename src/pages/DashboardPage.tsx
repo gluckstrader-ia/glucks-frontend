@@ -2015,8 +2015,8 @@ const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
 
   // ✅ NOVA CATEGORIA
   "Futuros US": [
-    { label: "Mini Ouro", value: "NGCJ", apiType: "future_us", tvSymbol: "COMEX_MINI:MGC1!" },
-    { label: "Mini Nasdaq", value: "MNQ", apiType: "future_us", tvSymbol: "CME_MINI:MNQ1!" },
+    { label: "Mini Ouro", value: "NGCJ", apiType: "future_us", tvSymbol: "TVC:GOLD" },
+    { label: "Mini Nasdaq", value: "MNQ", apiType: "future_us", tvSymbol: "NASDAQ:NDX" },
   ],
 };
 
