@@ -2377,6 +2377,7 @@ const AI_LOADING_STEPS = [
                   <option value="Crypto">Crypto</option>
                   <option value="B3">B3</option>
                   <option value="Futuros BR">Futuros BR</option>
+                  <option value="Futuros US">Futuros US</option>
                 </select>
               </div>
 
