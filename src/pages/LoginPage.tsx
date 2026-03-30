@@ -46,7 +46,7 @@ export default function LoginPage() {
         data.user.is_blocked === false;
 
       if (hasAccess) {
-        navigate("/dashboard");
+        navigate("/home-premium");
       } else {
         navigate("/premium");
       }
