@@ -1955,12 +1955,12 @@ function PlaceholderTab({ label }: { label: string }) {
   );
 }
 
-type AssetCategoryLabel = "Índices" | "Ações" | "Forex" | "Crypto" | "B3" | "Futuros BR";
+type AssetCategoryLabel = "Índices" | "Ações" | "Forex" | "Crypto" | "B3" | "Futuros BR" | "Futuros US";
 
 type AssetOption = {
   label: string;
   value: string;
-  apiType: "index" | "stock" | "forex" | "crypto" | "b3" | "future_br";
+  apiType: "index" | "stock" | "forex" | "crypto" | "b3" | "future_br" | "future_us";
   tvSymbol?: string;
 };
 
@@ -2003,6 +2003,11 @@ const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
   "Futuros BR": [
     { label: "Mini Índice", value: "WIN", apiType: "future_br", tvSymbol: "BMFBOVESPA:WIN1!" },
     { label: "Mini Dólar", value: "WDO", apiType: "future_br", tvSymbol: "BMFBOVESPA:WDO1!" },
+  ],
+  // NOVA CATEGORIA
+  "Futuros US": [
+    { label: "Mini Ouro", value: "NGCJ", apiType: "future_us", tvSymbol: "COMEX_MINI:MGC1!" },
+    { label: "Mini Nasdaq", value: "MNQ", apiType: "future_us", tvSymbol: "CME_MINI:MNQ1!" },
   ],
 };
 
