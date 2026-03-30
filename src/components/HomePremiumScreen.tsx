@@ -10,12 +10,10 @@ import {
   History,
   LineChart,
   Lock,
-  Radio,
   Sparkles,
   TrendingUp,
   Users,
   Wallet,
-  Zap,
 } from "lucide-react";
 
 type HomePremiumScreenProps = {
@@ -34,32 +32,12 @@ type RecentAnalysis = {
   strength: number;
 };
 
-type CommunityTrade = {
-  id: string;
-  trader: string;
-  country: string;
-  asset: string;
-  side: "COMPRA" | "VENDA";
-  confidence: number;
-  winRate: number;
-  profit: string;
-  ago: string;
-};
-
 const recentAnalyses: RecentAnalysis[] = [
   { id: "1", asset: "IBOV", market: "Índices", timeframe: "5m", signal: "COMPRA_FORTE", strength: 70 },
   { id: "2", asset: "EURUSD", market: "Forex", timeframe: "5m", signal: "VENDA", strength: 84 },
   { id: "3", asset: "BTCUSDT", market: "Crypto", timeframe: "15m", signal: "COMPRA", strength: 78 },
   { id: "4", asset: "WIN", market: "Futuros BR", timeframe: "5m", signal: "VENDA_FORTE", strength: 81 },
   { id: "5", asset: "PETR4", market: "Ações", timeframe: "15m", signal: "COMPRA_FRACA", strength: 58 },
-];
-
-const communityTrades: CommunityTrade[] = [
-  { id: "1", trader: "Saowalak Chai", country: "TH", asset: "USDCHF", side: "COMPRA", confidence: 83, winRate: 82, profit: "+$680", ago: "agora" },
-  { id: "2", trader: "Bruno Nascimento", country: "BR", asset: "DJI30", side: "VENDA", confidence: 79, winRate: 82, profit: "+$469", ago: "1 min" },
-  { id: "3", trader: "Adrián López", country: "ES", asset: "XAGUSD", side: "VENDA", confidence: 94, winRate: 98, profit: "+$887", ago: "2 min" },
-  { id: "4", trader: "Thomas Peeters", country: "BE", asset: "IBOV", side: "VENDA", confidence: 85, winRate: 89, profit: "+$1082", ago: "3 min" },
-  { id: "5", trader: "Eva Gruber", country: "AT", asset: "DJI30", side: "VENDA", confidence: 82, winRate: 82, profit: "+$624", ago: "5 min" },
 ];
 
 const quickModules = [
@@ -135,10 +113,6 @@ export default function HomePremiumScreen({
                 accent="cyan"
                 onClick={onOpenDashboard}
             />
-          </motion.section>
-
-          <motion.section variants={cardMotion}>
-            <LiveTradingCard />
           </motion.section>
 
           <motion.section variants={cardMotion} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -270,25 +244,6 @@ function HeroActionCard({
   );
 }
 
-function LiveTradingCard() {
-  return (
-    <div className="rounded-[28px] border border-cyan-500/50 bg-[linear-gradient(90deg,rgba(6,182,212,0.14),rgba(59,130,246,0.1),rgba(8,145,178,0.14))] p-6 shadow-[0_0_40px_rgba(34,211,238,0.08)]">
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex items-start gap-4">
-          <div className="relative rounded-2xl bg-cyan-500/15 p-4 text-cyan-300 ring-1 ring-cyan-500/20">
-            <Radio className="h-7 w-7" />
-            <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-red-500 shadow-[0_0_16px_rgba(239,68,68,0.9)]" />
-          </div>
-        </div>
-
-        <button className="inline-flex items-center gap-3 self-start rounded-2xl bg-cyan-400 px-6 py-4 text-lg font-bold text-black shadow-[0_0_30px_rgba(34,211,238,0.28)] transition hover:scale-[1.02]">
-          <Zap className="h-5 w-5" /> Entrar Agora
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function CommunityCard() {
   return (
     <div className="rounded-[30px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(17,24,39,0.92),rgba(7,10,16,0.96))] p-6 shadow-[0_16px_50px_rgba(0,0,0,0.28)]">
@@ -321,7 +276,7 @@ function CommunityCard() {
             </span>
           ))}
           <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-300">
-            🔥 Crypto 24/7
+            🔥 Crypto
           </span>
         </div>
       </div>
@@ -330,44 +285,6 @@ function CommunityCard() {
         <StatCard label="Análises hoje" value="8277" />
         <StatCard label="Taxa de acerto" value="86.6%" valueClassName="text-green-400" cardClassName="border-green-500/30 bg-green-500/10" />
         <StatCard label="Lucro total" value="$872K" valueClassName="text-cyan-300" cardClassName="border-cyan-500/30 bg-cyan-500/10" />
-      </div>
-
-      <div className="mt-6 flex items-center justify-between">
-        <div className="text-lg text-zinc-400">Últimas 15 análises:</div>
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-green-400">↗ 15 ganhos</span>
-          <span className="text-red-400">↘ 0 perdas</span>
-        </div>
-      </div>
-
-      <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-2">
-        {communityTrades.map((trade) => (
-          <div key={trade.id} className="flex items-center justify-between gap-4 rounded-[22px] border border-green-500/20 bg-[linear-gradient(90deg,rgba(34,197,94,0.12),rgba(16,185,129,0.05),rgba(5,10,20,0.1))] p-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-200 text-sm font-bold text-black">
-                {trade.country}
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-2xl font-bold">{trade.trader}</span>
-                  <span className={`rounded-lg px-2.5 py-1 text-sm font-semibold ${trade.side === "COMPRA" ? "bg-green-500/15 text-green-300" : "bg-red-500/15 text-red-300"}`}>
-                    {trade.side}
-                  </span>
-                </div>
-                <div className="mt-1 flex flex-wrap gap-3 text-lg text-zinc-300">
-                  <span className="font-semibold">{trade.asset}</span>
-                  <span>• {trade.confidence}% confiança</span>
-                  <span className="text-green-400">• {trade.winRate}% win</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-right">
-              <div className="text-3xl font-bold text-green-400">↗ {trade.profit}</div>
-              <div className="mt-1 text-base text-zinc-400">◔ {trade.ago}</div>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );
