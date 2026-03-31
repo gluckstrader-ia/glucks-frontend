@@ -1,22 +1,27 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   CandlestickChart,
   Copy,
-  Crown,
   Flame,
   Globe,
   History,
   LineChart,
   Lock,
+  Settings,
   Sparkles,
   TrendingUp,
-  Users,
+  User,
   Wallet,
+  LogOut,
+  CreditCard,
 } from "lucide-react";
 
 type HomePremiumScreenProps = {
   userName?: string;
+  userEmail?: string;
   userPlan?: string;
   onOpenDashboard: () => void;
   onLogout: () => void;
@@ -53,47 +58,167 @@ const cardMotion = {
 
 export default function HomePremiumScreen({
   userName = "Usuário",
+  userEmail = "usuario@gluckstrader.com",
   userPlan = "free",
   onOpenDashboard,
   onLogout,
 }: HomePremiumScreenProps) {
+  const navigate = useNavigate();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
+
+  const userInitials = useMemo(() => {
+    const parts = userName.trim().split(" ").filter(Boolean);
+
+    if (parts.length === 0) return "GT";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+
+    return `${parts[0][0] || ""}${parts[1][0] || ""}`.toUpperCase();
+  }, [userName]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setUserMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#03070d] text-white">
       <div className="sticky top-0 z-30 border-b border-zinc-900/80 bg-[#03070d]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-3 md:px-6 lg:px-8">
-          <div className="flex items-center gap-3 cursor-pointer group">
-          {/* LOGO COM GLOW + ANIMAÇÃO */}
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-black ring-1 ring-zinc-800 transition-all duration-300 group-hover:ring-green-500/50">
-
-          {/* GLOW ANIMADO */}
-              <div className="absolute inset-0 rounded-2xl bg-green-500/20 blur-md opacity-0 transition-all duration-500 group-hover:opacity-100 animate-pulse" />
-
-          {/* LOGO */}
+          <button
+            type="button"
+            onClick={() => navigate("/home")}
+            className="group flex items-center gap-3"
+          >
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-black ring-1 ring-zinc-800 transition-all duration-300 group-hover:scale-105 group-hover:ring-green-500/50">
+              <div className="absolute inset-0 rounded-2xl bg-green-500/20 opacity-0 blur-md transition-all duration-500 group-hover:opacity-100 group-hover:blur-lg" />
               <img
                 src="/logo.png"
                 alt="Gluck's Trader IA"
                 className="relative h-6 w-6 object-contain transition-transform duration-300 group-hover:scale-110"
               />
-          </div>
+            </div>
 
-            {/* TEXTO COM GRADIENTE */}
-          <div className="text-2xl font-bold tracking-tight bg-gradient-to-r from-green-400 via-emerald-400 to-green-600 bg-clip-text text-transparent">
-            Gluck&apos;s Trader IA
-          </div>
-        </div>
+            <div className="bg-gradient-to-r from-green-400 via-emerald-400 to-green-600 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+              Gluck&apos;s Trader IA
+            </div>
+          </button>
 
           <div className="flex items-center gap-3">
-            <TopBadge icon={<Crown className="h-4 w-4" />} value={userPlan.toUpperCase()} color="yellow" />
-            
-            <button className="rounded-full p-2 text-zinc-400 transition hover:bg-zinc-900 hover:text-white">
-              <Users className="h-5 w-5" />
-            </button>
-            <button
-              onClick={onLogout}
-              className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-sm text-zinc-300 transition hover:text-white"
-            >
-              Sair
-            </button>
+            <div className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-1 text-sm font-semibold text-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.12)]">
+              {userPlan.toUpperCase()}
+            </div>
+
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((prev) => !prev)}
+                className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 transition hover:border-green-500/30 hover:bg-zinc-900"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-sm font-bold text-black shadow-[0_0_18px_rgba(34,197,94,0.18)]">
+                  {userInitials}
+                </div>
+
+                <div className="hidden text-left md:block">
+                  <div className="max-w-[140px] truncate text-sm font-semibold text-white">
+                    {userName}
+                  </div>
+                  <div className="max-w-[160px] truncate text-xs text-zinc-400">
+                    {userEmail}
+                  </div>
+                </div>
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 top-14 z-50 w-72 overflow-hidden rounded-2xl border border-zinc-800 bg-[#0b1118] shadow-2xl">
+                  <div className="border-b border-zinc-800 px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 text-base font-bold text-black">
+                        {userInitials}
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-white">
+                          {userName}
+                        </div>
+                        <div className="truncate text-xs text-zinc-400">
+                          {userEmail}
+                        </div>
+                        <div className="mt-1 inline-flex rounded-full border border-yellow-500/20 bg-yellow-500/10 px-2 py-0.5 text-[11px] font-medium text-yellow-400">
+                          Plano {userPlan.toUpperCase()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-2">
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        navigate("/perfil");
+                      }}
+                    >
+                      <User className="h-4 w-4" />
+                      Meu perfil
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        navigate("/configuracoes");
+                      }}
+                    >
+                      <Settings className="h-4 w-4" />
+                      Configurações
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        navigate("/assinatura");
+                      }}
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      Minha assinatura
+                    </button>
+
+                    <div className="my-2 border-t border-zinc-800" />
+
+                    <button
+                      type="button"
+                      onClick={onLogout}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-400 transition hover:bg-red-500/10"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sair
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -105,7 +230,10 @@ export default function HomePremiumScreen({
           transition={{ staggerChildren: 0.07 }}
           className="space-y-6"
         >
-          <motion.section variants={cardMotion} className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+          <motion.section
+            variants={cardMotion}
+            className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between"
+          >
             <div>
               <h1 className="text-3xl font-bold tracking-tight md:text-5xl">
                 Olá, {userName}! <span className="inline-block">👋</span>
@@ -114,35 +242,37 @@ export default function HomePremiumScreen({
                 O que você deseja analisar hoje?
               </p>
             </div>
-
-            
           </motion.section>
 
           <motion.section variants={cardMotion} className="grid grid-cols-1 gap-5">
             <HeroActionCard
-                title="Nova Análise"
-                subtitle="Analise qualquer ativo com IA avançada"
-                icon={<TrendingUp className="h-7 w-7" />}
-                accent="cyan"
-                onClick={onOpenDashboard}
+              title="Nova Análise"
+              subtitle="Analise qualquer ativo com IA avançada"
+              icon={<TrendingUp className="h-7 w-7" />}
+              accent="cyan"
+              onClick={onOpenDashboard}
             />
           </motion.section>
 
           <motion.section variants={cardMotion} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {quickModules.map((module) => {
               const Icon = module.icon;
+
               return (
                 <button
                   key={module.title}
+                  type="button"
                   className="group rounded-[26px] border border-zinc-800 bg-gradient-to-b from-[#0a0f17] to-[#080c13] p-5 text-left transition hover:-translate-y-1 hover:border-zinc-700"
                 >
                   <div className="mb-5 flex items-start justify-between">
                     <div className="rounded-2xl bg-zinc-900 p-3 text-zinc-500 transition group-hover:text-white">
                       <Icon className="h-5 w-5" />
                     </div>
+
                     {module.locked && (
                       <span className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-1 text-xs text-zinc-400">
-                        <Lock className="h-3 w-3" /> Em breve
+                        <Lock className="h-3 w-3" />
+                        Em breve
                       </span>
                     )}
                   </div>
@@ -156,34 +286,15 @@ export default function HomePremiumScreen({
             })}
           </motion.section>
 
-          <motion.section variants={cardMotion} className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <motion.section
+            variants={cardMotion}
+            className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"
+          >
             <CommunityCard />
             <RecentAnalysesCard onOpenDashboard={onOpenDashboard} />
           </motion.section>
         </motion.div>
       </div>
-    </div>
-  );
-}
-
-function TopBadge({
-  icon,
-  value,
-  color,
-}: {
-  icon: React.ReactNode;
-  value: string;
-  color: "yellow" | "cyan";
-}) {
-  const styles =
-    color === "yellow"
-      ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-300"
-      : "border-cyan-500/30 bg-cyan-500/10 text-cyan-300";
-
-  return (
-    <div className={`flex items-center gap-2 rounded-full border px-4 py-2 ${styles}`}>
-      {icon}
-      <span className="font-bold">{value}</span>
     </div>
   );
 }
@@ -206,24 +317,27 @@ function HeroActionCard({
   tag2?: string;
 }) {
   const theme =
-  accent === "cyan"
-    ? {
-        wrap: "border-green-500/60 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.22),rgba(16,185,129,0.10)_35%,rgba(0,0,0,0.2)_75%)]",
-        glow: "shadow-[0_0_40px_rgba(34,197,94,0.14)]",
-        icon: "bg-green-500/20 text-green-300 ring-green-400/20",
-        title: "text-green-400",
-        arrow: "text-green-400",
-      }
-    : {
-        wrap: "border-amber-500/70 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.24),rgba(245,158,11,0.08)_35%,rgba(0,0,0,0.2)_75%)]",
-        glow: "shadow-[0_0_40px_rgba(245,158,11,0.12)]",
-        icon: "bg-amber-500/20 text-amber-300 ring-amber-400/20",
-        title: "text-amber-300",
-        arrow: "text-amber-400",
-      };
+    accent === "cyan"
+      ? {
+          wrap:
+            "border-green-500/60 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.22),rgba(16,185,129,0.10)_35%,rgba(0,0,0,0.2)_75%)]",
+          glow: "shadow-[0_0_40px_rgba(34,197,94,0.14)]",
+          icon: "bg-green-500/20 text-green-300 ring-green-400/20",
+          title: "text-green-400",
+          arrow: "text-green-400",
+        }
+      : {
+          wrap:
+            "border-amber-500/70 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.24),rgba(245,158,11,0.08)_35%,rgba(0,0,0,0.2)_75%)]",
+          glow: "shadow-[0_0_40px_rgba(245,158,11,0.12)]",
+          icon: "bg-amber-500/20 text-amber-300 ring-amber-400/20",
+          title: "text-amber-300",
+          arrow: "text-amber-400",
+        };
 
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`group relative overflow-hidden rounded-[28px] border p-6 text-left transition duration-300 hover:-translate-y-1 ${theme.wrap} ${theme.glow}`}
     >
@@ -235,15 +349,20 @@ function HeroActionCard({
 
           <div>
             <div className={`text-4xl font-bold tracking-tight ${theme.title}`}>{title}</div>
+
             {tag && (
               <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm font-medium text-green-300">
-                <TrendingUp className="h-4 w-4" /> {tag}
+                <TrendingUp className="h-4 w-4" />
+                {tag}
               </div>
             )}
+
             <div className="mt-3 max-w-xl text-lg text-zinc-300">{subtitle}</div>
+
             {tag2 && (
               <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm font-medium text-green-300">
-                <Sparkles className="h-4 w-4" /> {tag2}
+                <Sparkles className="h-4 w-4" />
+                {tag2}
               </div>
             )}
           </div>
@@ -273,21 +392,31 @@ function CommunityCard() {
           </div>
         </div>
 
-        <button className="inline-flex items-center gap-2 text-lg font-semibold text-white transition hover:text-cyan-300">
-          Ver mais <ArrowRight className="h-5 w-5" />
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 text-lg font-semibold text-white transition hover:text-cyan-300"
+        >
+          Ver mais
+          <ArrowRight className="h-5 w-5" />
         </button>
       </div>
 
       <div className="mt-5 rounded-[24px] border border-zinc-800 bg-zinc-900/45 p-5">
         <div className="flex items-center gap-3 text-2xl font-semibold">
-          <Globe className="h-6 w-6 text-cyan-400" /> Mercados Ativos:
+          <Globe className="h-6 w-6 text-cyan-400" />
+          Mercados Ativos:
         </div>
+
         <div className="mt-4 flex flex-wrap gap-3">
           {["GBP", "EUR", "CHF", "USD", "CAD"].map((item) => (
-            <span key={item} className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300">
+            <span
+              key={item}
+              className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300"
+            >
               {item}
             </span>
           ))}
+
           <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-300">
             🔥 Crypto
           </span>
@@ -296,8 +425,18 @@ function CommunityCard() {
 
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard label="Análises hoje" value="8277" />
-        <StatCard label="Taxa de acerto" value="86.6%" valueClassName="text-green-400" cardClassName="border-green-500/30 bg-green-500/10" />
-        <StatCard label="Lucro total" value="$872K" valueClassName="text-cyan-300" cardClassName="border-cyan-500/30 bg-cyan-500/10" />
+        <StatCard
+          label="Taxa de acerto"
+          value="86.6%"
+          valueClassName="text-green-400"
+          cardClassName="border-green-500/30 bg-green-500/10"
+        />
+        <StatCard
+          label="Lucro total"
+          value="$872K"
+          valueClassName="text-cyan-300"
+          cardClassName="border-cyan-500/30 bg-cyan-500/10"
+        />
       </div>
     </div>
   );
@@ -309,8 +448,12 @@ function RecentAnalysesCard({ onOpenDashboard }: { onOpenDashboard: () => void }
       <div className="rounded-[30px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-5">
         <div className="mb-4 flex items-center justify-between">
           <div className="text-3xl font-bold">Análises Recentes</div>
-          <button className="inline-flex items-center gap-2 text-base font-semibold text-white transition hover:text-cyan-300">
-            Ver todas <ArrowRight className="h-4 w-4" />
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 text-base font-semibold text-white transition hover:text-cyan-300"
+          >
+            Ver todas
+            <ArrowRight className="h-4 w-4" />
           </button>
         </div>
 
@@ -318,6 +461,7 @@ function RecentAnalysesCard({ onOpenDashboard }: { onOpenDashboard: () => void }
           {recentAnalyses.map((analysis) => (
             <button
               key={analysis.id}
+              type="button"
               onClick={onOpenDashboard}
               className="flex w-full items-center justify-between gap-4 rounded-[22px] border border-zinc-800 bg-[linear-gradient(90deg,rgba(24,27,32,0.92),rgba(10,14,20,0.98))] p-4 text-left transition hover:border-zinc-700"
             >
@@ -325,6 +469,7 @@ function RecentAnalysesCard({ onOpenDashboard }: { onOpenDashboard: () => void }
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800 text-xl font-bold">
                   {analysis.asset.slice(0, 3)}
                 </div>
+
                 <div>
                   <div className="text-2xl font-bold">{analysis.asset}</div>
                   <div className="mt-1 text-base text-zinc-400">
@@ -334,7 +479,11 @@ function RecentAnalysesCard({ onOpenDashboard }: { onOpenDashboard: () => void }
               </div>
 
               <div className="text-right">
-                <div className={`text-2xl font-bold ${analysis.signal.includes("VENDA") ? "text-red-400" : "text-amber-300"}`}>
+                <div
+                  className={`text-2xl font-bold ${
+                    analysis.signal.includes("VENDA") ? "text-red-400" : "text-amber-300"
+                  }`}
+                >
                   {analysis.signal}
                 </div>
                 <div className="mt-1 text-base text-zinc-400">{analysis.strength}% força</div>
@@ -395,7 +544,9 @@ function MiniInsightCard({
   const style =
     accent === "cyan"
       ? "border-cyan-500/25 bg-cyan-500/10 text-cyan-300"
-      : "border-amber-500/25 bg-amber-500/10 text-amber-300";
+      : accent === "amber"
+      ? "border-amber-500/25 bg-amber-500/10 text-amber-300"
+      : "border-green-500/25 bg-green-500/10 text-green-300";
 
   return (
     <div className="rounded-[24px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-5">
