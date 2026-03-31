@@ -6,12 +6,7 @@ import { Input } from "../components/ui/input";
 import { BrainCircuit, BarChart3 } from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
 
-export default function DashboardPage() {
-  const navigate = useNavigate();
-  const token = getStoredToken();
-  const user = getStoredUser();
-
-type AnalysisModules = { 
+type AnalysisModules = {
   technical?: number;
   smc?: number;
   harmonic?: number;
@@ -114,6 +109,7 @@ type AnalysisData = {
     }[];
     summary?: string;
   };
+
   wegd?: {
     bias?: string;
     confluence?: string;
@@ -257,7 +253,7 @@ type AnalysisData = {
         rr?: string;
       }[];
     };
-  };  
+  };
 
   final_signal?: {
     direction?: string;
@@ -271,9 +267,142 @@ type AnalysisData = {
     justification?: string[];
     verdict?: string;
   };
-
 };
 
+type AssetCategoryLabel =
+  | "Índices"
+  | "Ações"
+  | "Forex"
+  | "Crypto"
+  | "B3"
+  | "Futuros BR"
+  | "Futuros US";
+
+type AssetOption = {
+  label: string;
+  value: string;
+  apiType:
+    | "index"
+    | "stock"
+    | "forex"
+    | "crypto"
+    | "b3"
+    | "future_br"
+    | "future_us";
+  tvSymbol?: string;
+};
+
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+
+const AI_LOADING_STEPS = [
+  "Lendo estrutura do mercado...",
+  "Mapeando fluxo e liquidez...",
+  "Calculando confluências técnicas...",
+  "Validando tendência e timing...",
+  "Refinando o sinal final da IA...",
+];
+
+const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
+  Índices: [
+    { label: "IBOV", value: "IBOV", apiType: "index", tvSymbol: "INDEX:IBOV" },
+    { label: "S&P 500", value: "SP500", apiType: "index", tvSymbol: "SP:SPX" },
+    {
+      label: "NASDAQ",
+      value: "NASDAQ",
+      apiType: "index",
+      tvSymbol: "NASDAQ:IXIC",
+    },
+    { label: "Dow Jones", value: "DJI", apiType: "index", tvSymbol: "DJ:DJI" },
+    { label: "VIX", value: "VIX", apiType: "index", tvSymbol: "CBOE:VIX" },
+  ],
+  Ações: [
+    { label: "Apple", value: "AAPL", apiType: "stock", tvSymbol: "NASDAQ:AAPL" },
+    { label: "Tesla", value: "TSLA", apiType: "stock", tvSymbol: "NASDAQ:TSLA" },
+    { label: "NVIDIA", value: "NVDA", apiType: "stock", tvSymbol: "NASDAQ:NVDA" },
+    {
+      label: "Microsoft",
+      value: "MSFT",
+      apiType: "stock",
+      tvSymbol: "NASDAQ:MSFT",
+    },
+    { label: "Amazon", value: "AMZN", apiType: "stock", tvSymbol: "NASDAQ:AMZN" },
+  ],
+  Forex: [
+    { label: "EUR/USD", value: "EURUSD", apiType: "forex", tvSymbol: "FX:EURUSD" },
+    { label: "GBP/USD", value: "GBPUSD", apiType: "forex", tvSymbol: "FX:GBPUSD" },
+    { label: "USD/JPY", value: "USDJPY", apiType: "forex", tvSymbol: "FX:USDJPY" },
+    { label: "AUD/USD", value: "AUDUSD", apiType: "forex", tvSymbol: "FX:AUDUSD" },
+    { label: "USD/CAD", value: "USDCAD", apiType: "forex", tvSymbol: "FX:USDCAD" },
+    { label: "Gold", value: "XAUUSD", apiType: "forex", tvSymbol: "OANDA:XAUUSD" },
+  ],
+  Crypto: [
+    {
+      label: "Bitcoin",
+      value: "BTCUSDT",
+      apiType: "crypto",
+      tvSymbol: "BINANCE:BTCUSDT",
+    },
+    {
+      label: "Ethereum",
+      value: "ETHUSDT",
+      apiType: "crypto",
+      tvSymbol: "BINANCE:ETHUSDT",
+    },
+    {
+      label: "Solana",
+      value: "SOLUSDT",
+      apiType: "crypto",
+      tvSymbol: "BINANCE:SOLUSDT",
+    },
+    {
+      label: "BNB",
+      value: "BNBUSDT",
+      apiType: "crypto",
+      tvSymbol: "BINANCE:BNBUSDT",
+    },
+    {
+      label: "XRP",
+      value: "XRPUSDT",
+      apiType: "crypto",
+      tvSymbol: "BINANCE:XRPUSDT",
+    },
+  ],
+  B3: [
+    { label: "PETR4", value: "PETR4", apiType: "b3", tvSymbol: "BMFBOVESPA:PETR4" },
+    { label: "VALE3", value: "VALE3", apiType: "b3", tvSymbol: "BMFBOVESPA:VALE3" },
+    { label: "ITUB4", value: "ITUB4", apiType: "b3", tvSymbol: "BMFBOVESPA:ITUB4" },
+    { label: "BBDC4", value: "BBDC4", apiType: "b3", tvSymbol: "BMFBOVESPA:BBDC4" },
+    { label: "ABEV3", value: "ABEV3", apiType: "b3", tvSymbol: "BMFBOVESPA:ABEV3" },
+  ],
+  "Futuros BR": [
+    {
+      label: "Mini Índice",
+      value: "WIN",
+      apiType: "future_br",
+      tvSymbol: "BMFBOVESPA:WIN1!",
+    },
+    {
+      label: "Mini Dólar",
+      value: "WDO",
+      apiType: "future_br",
+      tvSymbol: "BMFBOVESPA:WDO1!",
+    },
+  ],
+  "Futuros US": [
+    {
+      label: "Mini Ouro",
+      value: "NGCJ",
+      apiType: "future_us",
+      tvSymbol: "TVC:GOLD",
+    },
+    {
+      label: "Mini Nasdaq",
+      value: "MNQ",
+      apiType: "future_us",
+      tvSymbol: "NASDAQ:NDX",
+    },
+  ],
+};
 
 function getPriceDecimals(assetType?: string, n?: number) {
   const value = Number(n ?? 0);
@@ -307,6 +436,37 @@ function formatBrl(n?: number) {
     style: "currency",
     currency: "BRL",
   }).format(Number(n ?? 0));
+}
+
+function getDefaultAssetByCategory(category: AssetCategoryLabel) {
+  return ASSET_OPTIONS[category]?.[0]?.value ?? "";
+}
+
+function getTradingViewSymbol(category: AssetCategoryLabel, asset: string) {
+  const found = ASSET_OPTIONS[category]?.find((item) => item.value === asset);
+
+  if (found?.tvSymbol) return found.tvSymbol;
+
+  if (category === "Crypto") return `BINANCE:${asset}`;
+  if (category === "Forex") return `FX:${asset}`;
+  if (category === "B3") return `BMFBOVESPA:${asset}`;
+
+  if (category === "Futuros BR") {
+    if (asset === "WIN") return "BMFBOVESPA:WIN1!";
+    if (asset === "WDO") return "BMFBOVESPA:WDO1!";
+    return `BMFBOVESPA:${asset}`;
+  }
+
+  if (category === "Futuros US") {
+    if (asset === "MNQ") return "CME_MINI:MNQ1!";
+    if (asset === "NGCJ") return "COMEX_MINI:MGC1!";
+    return asset;
+  }
+
+  if (category === "Ações") return `NASDAQ:${asset}`;
+  if (category === "Índices") return asset;
+
+  return asset;
 }
 
 function NewsPanel({
@@ -405,20 +565,22 @@ function NewsPanel({
           <button
             type="button"
             onClick={() => setNewsTab("news")}
-            className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold border flex items-center justify-center gap-2 transition ${newsTab === "news"
-              ? "bg-black text-white border-zinc-800"
-              : "text-zinc-400 border-transparent hover:text-white"
-              }`}
+            className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold border flex items-center justify-center gap-2 transition ${
+              newsTab === "news"
+                ? "bg-black text-white border-zinc-800"
+                : "text-zinc-400 border-transparent hover:text-white"
+            }`}
           >
             📰 Notícias (10)
           </button>
           <button
             type="button"
             onClick={() => setNewsTab("events")}
-            className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold border flex items-center justify-center gap-2 transition ${newsTab === "events"
-              ? "bg-black text-white border-zinc-800"
-              : "text-zinc-400 border-transparent hover:text-white"
-              }`}
+            className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold border flex items-center justify-center gap-2 transition ${
+              newsTab === "events"
+                ? "bg-black text-white border-zinc-800"
+                : "text-zinc-400 border-transparent hover:text-white"
+            }`}
           >
             🗓️ Eventos Econômicos
           </button>
@@ -429,14 +591,16 @@ function NewsPanel({
             {newsItems.map((item, index) => (
               <div
                 key={index}
-                className={`rounded-3xl border p-4 md:p-5 bg-gradient-to-r from-zinc-950 to-zinc-900/70 ${item.highlight ? "border-cyan-700/70" : "border-zinc-800"
-                  }`}
+                className={`rounded-3xl border p-4 md:p-5 bg-gradient-to-r from-zinc-950 to-zinc-900/70 ${
+                  item.highlight ? "border-cyan-700/70" : "border-zinc-800"
+                }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <h3
-                      className={`font-semibold text-lg leading-snug ${item.highlight ? "text-cyan-400" : "text-white"
-                        }`}
+                      className={`font-semibold text-lg leading-snug ${
+                        item.highlight ? "text-cyan-400" : "text-white"
+                      }`}
                     >
                       {item.title}
                     </h3>
@@ -452,8 +616,9 @@ function NewsPanel({
                     </div>
                   </div>
                   <div
-                    className={`text-lg shrink-0 ${item.highlight ? "text-cyan-400" : "text-zinc-500"
-                      }`}
+                    className={`text-lg shrink-0 ${
+                      item.highlight ? "text-cyan-400" : "text-zinc-500"
+                    }`}
                   >
                     ↗
                   </div>
@@ -491,15 +656,9 @@ function NewsPanel({
                         className={`inline-block h-2.5 w-2.5 rounded-full ${item.color}`}
                       />
                     </div>
-                    <div className="col-span-1 text-cyan-400">
-                      {item.actual}
-                    </div>
-                    <div className="col-span-1 text-zinc-300">
-                      {item.forecast}
-                    </div>
-                    <div className="col-span-1 text-zinc-500">
-                      {item.previous}
-                    </div>
+                    <div className="col-span-1 text-cyan-400">{item.actual}</div>
+                    <div className="col-span-1 text-zinc-300">{item.forecast}</div>
+                    <div className="col-span-1 text-zinc-500">{item.previous}</div>
                   </div>
                 ))}
               </div>
@@ -564,15 +723,15 @@ function SummaryTab({
     direction === "COMPRA"
       ? "text-green-400"
       : direction === "VENDA"
-        ? "text-red-400"
-        : "text-yellow-400";
+      ? "text-red-400"
+      : "text-yellow-400";
 
   const directionBg =
     direction === "COMPRA"
       ? "border-green-900/60 bg-gradient-to-b from-green-950/60 to-black"
       : direction === "VENDA"
-        ? "border-red-900/60 bg-gradient-to-b from-red-950/40 to-black"
-        : "border-yellow-900/60 bg-gradient-to-b from-yellow-950/30 to-black";
+      ? "border-red-900/60 bg-gradient-to-b from-red-950/40 to-black"
+      : "border-yellow-900/60 bg-gradient-to-b from-yellow-950/30 to-black";
 
   if (compact) {
     return (
@@ -583,7 +742,9 @@ function SummaryTab({
               <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                 Sinal identificado
               </div>
-              <div className={`text-3xl font-bold mt-2 leading-none ${directionColor}`}>
+              <div
+                className={`text-3xl font-bold mt-2 leading-none ${directionColor}`}
+              >
                 {signalLabel}
               </div>
             </div>
@@ -635,10 +796,10 @@ function SummaryTab({
             <div
               className={`text-2xl font-bold mt-2 ${
                 confidence >= 70
-                ? "text-green-400"
-                : confidence >= 50
-                ? "text-yellow-400"
-                : "text-red-400"
+                  ? "text-green-400"
+                  : confidence >= 50
+                  ? "text-yellow-400"
+                  : "text-red-400"
               }`}
             >
               {confidence}%
@@ -708,12 +869,13 @@ function SummaryTab({
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="flex items-start gap-4">
             <div
-              className={`h-16 w-16 rounded-3xl border flex items-center justify-center text-3xl ${direction === "COMPRA"
+              className={`h-16 w-16 rounded-3xl border flex items-center justify-center text-3xl ${
+                direction === "COMPRA"
                   ? "bg-green-500/20 border-green-500/30 text-green-400"
                   : direction === "VENDA"
-                    ? "bg-red-500/20 border-red-500/30 text-red-400"
-                    : "bg-yellow-500/20 border-yellow-500/30 text-yellow-400"
-                }`}
+                  ? "bg-red-500/20 border-red-500/30 text-red-400"
+                  : "bg-yellow-500/20 border-yellow-500/30 text-yellow-400"
+              }`}
             >
               {direction === "VENDA" ? "↘" : direction === "COMPRA" ? "↗" : "→"}
             </div>
@@ -819,6 +981,189 @@ function SummaryTab({
   );
 }
 
+function ResumoAvancadoTab({
+  asset,
+  tf,
+  analysisData,
+}: {
+  asset: string;
+  tf: string;
+  analysisData: AnalysisData | null;
+}) {
+  if (!analysisData) {
+    return (
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
+        Gere uma análise para visualizar o resumo operacional.
+      </div>
+    );
+  }
+
+  const assetType = analysisData?.asset_type ?? "crypto";
+  const buy = analysisData?.scenarios?.buy;
+  const sell = analysisData?.scenarios?.sell;
+
+  const getBarWidth = (value?: number) => {
+    const safe = Math.max(0, Math.min(100, Number(value ?? 0)));
+    return `${safe}%`;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-white text-2xl font-bold">
+              Resumo Operacional
+            </div>
+            <div className="text-zinc-400 text-sm mt-1">
+              {asset} • {tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/5 p-5">
+        <div className="text-emerald-400 text-2xl font-bold">COMPRA</div>
+
+        <div className="mt-2 text-sm text-zinc-300">
+          Probabilidade: <b>{buy?.probability ?? 0}%</b>
+        </div>
+
+        <div className="mt-3 h-2 bg-zinc-800 rounded-full">
+          <div
+            className="h-2 bg-emerald-400 rounded-full"
+            style={{ width: getBarWidth(buy?.probability) }}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+          <div className="bg-emerald-500/10 p-4 rounded-xl">
+            <div className="text-sm text-zinc-400">Entrada</div>
+            <div className="text-xl font-bold text-emerald-400">
+              {formatPrice(buy?.entry_trigger, assetType)}
+            </div>
+            <div className="text-xs text-zinc-500 mt-2">
+              {buy?.entry_reason ?? "Sem justificativa"}
+            </div>
+          </div>
+
+          <div className="bg-red-500/10 p-4 rounded-xl">
+            <div className="text-sm text-zinc-400">Stop</div>
+            <div className="text-xl font-bold text-red-400">
+              {formatPrice(buy?.stop, assetType)}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-3">
+          {(buy?.targets ?? []).map((t, i) => (
+            <div
+              key={`buy-${i}`}
+              className="bg-black/30 p-3 rounded-xl flex items-center gap-3"
+            >
+              <div className="text-emerald-300 font-bold min-w-[44px]">
+                {t.label ?? "TP"}
+              </div>
+
+              <div className="text-white">
+                {formatPrice(t.price, assetType)}
+              </div>
+
+              <div className="ml-auto flex items-center gap-3 w-48">
+                <div className="flex-1 h-2 bg-zinc-800 rounded-full">
+                  <div
+                    className="h-2 bg-emerald-400 rounded-full"
+                    style={{ width: getBarWidth(t.probability) }}
+                  />
+                </div>
+
+                <div className="text-sm text-amber-300 w-10 text-right">
+                  {t.probability ?? 0}%
+                </div>
+
+                <div className="text-xs text-zinc-500 w-10 text-right">
+                  {t.rr ?? "-"}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-red-500/30 bg-red-500/5 p-5">
+        <div className="text-red-400 text-2xl font-bold">VENDA</div>
+
+        <div className="mt-2 text-sm text-zinc-300">
+          Probabilidade: <b>{sell?.probability ?? 0}%</b>
+        </div>
+
+        <div className="mt-3 h-2 bg-zinc-800 rounded-full">
+          <div
+            className="h-2 bg-red-400 rounded-full"
+            style={{ width: getBarWidth(sell?.probability) }}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+          <div className="bg-red-500/10 p-4 rounded-xl">
+            <div className="text-sm text-zinc-400">Entrada</div>
+            <div className="text-xl font-bold text-red-400">
+              {formatPrice(sell?.entry_trigger, assetType)}
+            </div>
+            <div className="text-xs text-zinc-500 mt-2">
+              {sell?.entry_reason ?? "Sem justificativa"}
+            </div>
+          </div>
+
+          <div className="bg-emerald-500/10 p-4 rounded-xl">
+            <div className="text-sm text-zinc-400">Stop</div>
+            <div className="text-xl font-bold text-emerald-400">
+              {formatPrice(sell?.stop, assetType)}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-3">
+          {(sell?.targets ?? []).map((t, i) => (
+            <div
+              key={`sell-${i}`}
+              className="bg-black/30 p-3 rounded-xl flex items-center gap-3"
+            >
+              <div className="text-red-300 font-bold min-w-[44px]">
+                {t.label ?? "TP"}
+              </div>
+
+              <div className="text-white">
+                {formatPrice(t.price, assetType)}
+              </div>
+
+              <div className="ml-auto flex items-center gap-3 w-48">
+                <div className="flex-1 h-2 bg-zinc-800 rounded-full">
+                  <div
+                    className="h-2 bg-red-400 rounded-full"
+                    style={{ width: getBarWidth(t.probability) }}
+                  />
+                </div>
+
+                <div className="text-sm text-amber-300 w-10 text-right">
+                  {t.probability ?? 0}%
+                </div>
+
+                <div className="text-xs text-zinc-500 w-10 text-right">
+                  {t.rr ?? "-"}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Mantive as demais abas do seu arquivo com a mesma lógica.
+   Se alguma já estava funcionando, não há necessidade de alterar. */
+
 function TechnicalTab({
   asset,
   tf,
@@ -829,7 +1174,6 @@ function TechnicalTab({
   analysisData: AnalysisData | null;
 }) {
   const tech = analysisData?.technical;
-
   const assetType = analysisData?.asset_type ?? "crypto";
   const score = tech?.score ?? 50;
   const buySignals = tech?.buy_signals ?? 0;
@@ -842,17 +1186,10 @@ function TechnicalTab({
   const supports = tech?.supports ?? [];
   const resistances = tech?.resistances ?? [];
 
-  const buyPct = buySignals + sellSignals + neutralSignals > 0
-    ? Math.round((buySignals / (buySignals + sellSignals + neutralSignals)) * 100)
-    : 0;
-
-  const sellPct = buySignals + sellSignals + neutralSignals > 0
-    ? Math.round((sellSignals / (buySignals + sellSignals + neutralSignals)) * 100)
-    : 0;
-
-  const neutralPct = buySignals + sellSignals + neutralSignals > 0
-    ? Math.round((neutralSignals / (buySignals + sellSignals + neutralSignals)) * 100)
-    : 0;
+  const total = buySignals + sellSignals + neutralSignals;
+  const buyPct = total > 0 ? Math.round((buySignals / total) * 100) : 0;
+  const sellPct = total > 0 ? Math.round((sellSignals / total) * 100) : 0;
+  const neutralPct = total > 0 ? Math.round((neutralSignals / total) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -861,7 +1198,9 @@ function TechnicalTab({
           <div className="text-cyan-400 text-lg font-semibold">
             ∿ Análise Técnica para <span className="text-white">{asset}</span>
           </div>
-          <div className="text-zinc-400 mt-1">{tf === "5m" ? "5 Minutos" : tf}</div>
+          <div className="text-zinc-400 mt-1">
+            {tf === "5m" ? "5 Minutos" : tf}
+          </div>
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 text-center mb-6">
@@ -872,9 +1211,15 @@ function TechnicalTab({
 
         <div className="rounded-2xl border border-green-900/70 bg-gradient-to-r from-green-950/70 to-emerald-950/20 p-5 text-center mt-2">
           <div className="text-4xl text-green-400 font-bold">
-            {trendBias === "ALTA" ? "↗ Viés de Alta ↗" : trendBias === "BAIXA" ? "↘ Viés de Baixa ↘" : "— Neutro —"}
+            {trendBias === "ALTA"
+              ? "↗ Viés de Alta ↗"
+              : trendBias === "BAIXA"
+              ? "↘ Viés de Baixa ↘"
+              : "— Neutro —"}
           </div>
-          <div className="text-zinc-400 mt-2">Baseado em indicadores técnicos reais</div>
+          <div className="text-zinc-400 mt-2">
+            Baseado em indicadores técnicos reais
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
@@ -901,7 +1246,11 @@ function TechnicalTab({
                   RSI: {rsi.toFixed(2)}
                 </div>
                 <div className="text-sm text-zinc-400 mt-2">
-                  {rsi > 55 ? "Pressão compradora" : rsi < 45 ? "Pressão vendedora" : "Mercado neutro"}
+                  {rsi > 55
+                    ? "Pressão compradora"
+                    : rsi < 45
+                    ? "Pressão vendedora"
+                    : "Mercado neutro"}
                 </div>
               </div>
               <div className="text-zinc-500 text-3xl">–</div>
@@ -913,19 +1262,25 @@ function TechnicalTab({
           <div className="rounded-2xl border border-red-900/70 bg-red-950/20 p-5 text-center">
             <div className="text-red-400 text-2xl">↘</div>
             <div className="text-zinc-400 mt-2">Venda</div>
-            <div className="text-red-400 text-5xl font-bold mt-2">{sellSignals}</div>
+            <div className="text-red-400 text-5xl font-bold mt-2">
+              {sellSignals}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 text-center">
             <div className="text-zinc-500 text-2xl">–</div>
             <div className="text-zinc-400 mt-2">Neutro</div>
-            <div className="text-white text-5xl font-bold mt-2">{neutralSignals}</div>
+            <div className="text-white text-5xl font-bold mt-2">
+              {neutralSignals}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-green-900/70 bg-green-950/20 p-5 text-center">
             <div className="text-green-400 text-2xl">↗</div>
             <div className="text-zinc-400 mt-2">Compra</div>
-            <div className="text-green-400 text-5xl font-bold mt-2">{buySignals}</div>
+            <div className="text-green-400 text-5xl font-bold mt-2">
+              {buySignals}
+            </div>
           </div>
         </div>
 
@@ -956,7 +1311,9 @@ function TechnicalTab({
           </div>
 
           <div className="rounded-2xl border border-red-900/50 bg-red-950/20 p-5">
-            <div className="text-red-400 text-2xl font-bold mb-4">Resistências</div>
+            <div className="text-red-400 text-2xl font-bold mb-4">
+              Resistências
+            </div>
             <div className="space-y-3">
               {resistances.length > 0 ? (
                 resistances.map((r, idx) => (
@@ -1011,14 +1368,19 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
           </div>
 
           <div
-            className={`rounded-full px-5 py-3 font-bold text-xl ${bias === "BEARISH"
-              ? "bg-red-950/40 border border-red-900/50 text-red-400"
-              : bias === "BULLISH"
+            className={`rounded-full px-5 py-3 font-bold text-xl ${
+              bias === "BEARISH"
+                ? "bg-red-950/40 border border-red-900/50 text-red-400"
+                : bias === "BULLISH"
                 ? "bg-green-950/40 border border-green-900/50 text-green-400"
                 : "bg-zinc-900 border border-zinc-800 text-zinc-300"
-              }`}
+            }`}
           >
-            {bias === "BEARISH" ? "↘ VIÉS BAIXISTA" : bias === "BULLISH" ? "↗ VIÉS ALTISTA" : "— NEUTRO"}
+            {bias === "BEARISH"
+              ? "↘ VIÉS BAIXISTA"
+              : bias === "BULLISH"
+              ? "↗ VIÉS ALTISTA"
+              : "— NEUTRO"}
           </div>
         </div>
 
@@ -1047,7 +1409,9 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
                 <div className="text-zinc-400 uppercase text-sm tracking-wide">Contexto</div>
                 <div className="text-white text-4xl font-bold mt-3">{context?.candles ?? 0}</div>
                 <div className="text-zinc-500 mt-1">velas</div>
-                <div className="text-red-400 text-xl font-bold mt-3">{context?.bias ?? "NEUTRO"}</div>
+                <div className="text-red-400 text-xl font-bold mt-3">
+                  {context?.bias ?? "NEUTRO"}
+                </div>
               </div>
               <div className="text-red-400 text-2xl">↘</div>
             </div>
@@ -1059,7 +1423,9 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
                 <div className="text-zinc-400 uppercase text-sm tracking-wide">Estrutura</div>
                 <div className="text-white text-4xl font-bold mt-3">{structure?.candles ?? 0}</div>
                 <div className="text-zinc-500 mt-1">velas</div>
-                <div className="text-green-400 text-xl font-bold mt-3">{structure?.bias ?? "NEUTRO"}</div>
+                <div className="text-green-400 text-xl font-bold mt-3">
+                  {structure?.bias ?? "NEUTRO"}
+                </div>
               </div>
               <div className="text-green-400 text-2xl">↗</div>
             </div>
@@ -1071,7 +1437,9 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
                 <div className="text-zinc-400 uppercase text-sm tracking-wide">Gatilho</div>
                 <div className="text-white text-4xl font-bold mt-3">{trigger?.candles ?? 0}</div>
                 <div className="text-zinc-500 mt-1">velas</div>
-                <div className="text-zinc-400 text-xl font-bold mt-3">{trigger?.bias ?? "LATERAL"}</div>
+                <div className="text-zinc-400 text-xl font-bold mt-3">
+                  {trigger?.bias ?? "LATERAL"}
+                </div>
               </div>
               <div className="text-zinc-500 text-2xl">–</div>
             </div>
@@ -1090,14 +1458,19 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
             {orderBlocks.map((item, idx) => (
               <div
                 key={idx}
-                className={`rounded-2xl border p-4 ${item.bullish
-                  ? "border-green-900/50 bg-gradient-to-r from-green-950/40 to-emerald-950/20"
-                  : "border-red-900/50 bg-gradient-to-r from-red-950/40 to-rose-950/20"
-                  }`}
+                className={`rounded-2xl border p-4 ${
+                  item.bullish
+                    ? "border-green-900/50 bg-gradient-to-r from-green-950/40 to-emerald-950/20"
+                    : "border-red-900/50 bg-gradient-to-r from-red-950/40 to-rose-950/20"
+                }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <div className={`${item.bullish ? "text-green-400" : "text-red-400"} font-semibold text-lg`}>
+                    <div
+                      className={`${
+                        item.bullish ? "text-green-400" : "text-red-400"
+                      } font-semibold text-lg`}
+                    >
                       ● {item.title}
                     </div>
                     <div className="text-white text-2xl font-bold mt-2">{item.price}</div>
@@ -1116,24 +1489,30 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
             {fvgs.map((item, idx) => (
               <div
                 key={idx}
-                className={`rounded-2xl border p-4 ${item.bullish
-                  ? "border-green-900/50 bg-gradient-to-r from-green-950/35 to-emerald-950/15"
-                  : "border-red-900/50 bg-gradient-to-r from-red-950/35 to-rose-950/15"
-                  }`}
+                className={`rounded-2xl border p-4 ${
+                  item.bullish
+                    ? "border-green-900/50 bg-gradient-to-r from-green-950/35 to-emerald-950/15"
+                    : "border-red-900/50 bg-gradient-to-r from-red-950/35 to-rose-950/15"
+                }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <div className={`${item.bullish ? "text-green-400" : "text-red-400"} font-semibold text-lg`}>
+                    <div
+                      className={`${
+                        item.bullish ? "text-green-400" : "text-red-400"
+                      } font-semibold text-lg`}
+                    >
                       ▮ {item.title}
                     </div>
                     <div className="text-zinc-400 text-sm mt-2">Zona:</div>
                     <div className="text-white text-xl font-bold mt-1">{item.zone}</div>
                   </div>
                   <div
-                    className={`rounded-lg px-3 py-1 text-sm ${item.state === "Aberto"
-                      ? "bg-yellow-500/20 text-yellow-400 border border-yellow-600/30"
-                      : "bg-zinc-800 text-zinc-300 border border-zinc-700"
-                      }`}
+                    className={`rounded-lg px-3 py-1 text-sm ${
+                      item.state === "Aberto"
+                        ? "bg-yellow-500/20 text-yellow-400 border border-yellow-600/30"
+                        : "bg-zinc-800 text-zinc-300 border border-zinc-700"
+                    }`}
                   >
                     {item.state}
                   </div>
@@ -1155,14 +1534,17 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
               >
                 <div>
                   <div className="text-green-400 font-semibold text-lg">💰 Buy-Side Liquidity</div>
-                  <div className="text-white text-2xl font-bold mt-2">{formatPrice(item.price, assetType)}</div>
+                  <div className="text-white text-2xl font-bold mt-2">
+                    {formatPrice(item.price, assetType)}
+                  </div>
                   <div className="text-zinc-400 text-sm mt-2">{item.desc}</div>
                 </div>
                 <div
-                  className={`rounded-lg px-3 py-1 text-sm ${item.tag === "ALTA"
-                    ? "bg-cyan-500/20 text-cyan-400 border border-cyan-600/30"
-                    : "bg-yellow-500/20 text-yellow-400 border border-yellow-600/30"
-                    }`}
+                  className={`rounded-lg px-3 py-1 text-sm ${
+                    item.tag === "ALTA"
+                      ? "bg-cyan-500/20 text-cyan-400 border border-cyan-600/30"
+                      : "bg-yellow-500/20 text-yellow-400 border border-yellow-600/30"
+                  }`}
                 >
                   {item.tag}
                 </div>
@@ -1177,16 +1559,25 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
             {structureBreaks.map((item, idx) => (
               <div
                 key={idx}
-                className={`rounded-2xl border p-4 ${item.bullish
-                  ? "border-green-900/50 bg-gradient-to-r from-green-950/35 to-emerald-950/15"
-                  : "border-red-900/50 bg-gradient-to-r from-red-950/35 to-rose-950/15"
-                  }`}
+                className={`rounded-2xl border p-4 ${
+                  item.bullish
+                    ? "border-green-900/50 bg-gradient-to-r from-green-950/35 to-emerald-950/15"
+                    : "border-red-900/50 bg-gradient-to-r from-red-950/35 to-rose-950/15"
+                }`}
               >
-                <div className={`${item.bullish ? "text-green-400" : "text-red-400"} font-semibold text-lg`}>
+                <div
+                  className={`${
+                    item.bullish ? "text-green-400" : "text-red-400"
+                  } font-semibold text-lg`}
+                >
                   {item.bullish ? "☒" : "☑"} {item.title}
                 </div>
-                <div className="text-white text-2xl font-bold mt-2">{item.price?.toFixed(2)}</div>
-                <div className="text-zinc-400 text-sm mt-2 leading-relaxed">{item.desc}</div>
+                <div className="text-white text-2xl font-bold mt-2">
+                  {item.price?.toFixed(2)}
+                </div>
+                <div className="text-zinc-400 text-sm mt-2 leading-relaxed">
+                  {item.desc}
+                </div>
               </div>
             ))}
           </div>
@@ -1218,8 +1609,9 @@ function HarmonicsTab({ analysisData }: { analysisData: AnalysisData | null }) {
         {patterns.map((pattern, idx) => (
           <div
             key={idx}
-            className={`rounded-3xl border p-5 md:p-6 bg-gradient-to-r from-zinc-950 to-zinc-900/70 ${pattern.bullish ? "border-green-900/60" : "border-red-900/60"
-              }`}
+            className={`rounded-3xl border p-5 md:p-6 bg-gradient-to-r from-zinc-950 to-zinc-900/70 ${
+              pattern.bullish ? "border-green-900/60" : "border-red-900/60"
+            }`}
           >
             <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
               <div className="flex items-start gap-4">
@@ -1234,7 +1626,11 @@ function HarmonicsTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
               <div className="text-right">
                 <div className="text-zinc-400 text-xl">Confiança</div>
-                <div className={`${pattern.bullish ? "text-yellow-400" : "text-green-400"} text-4xl font-bold mt-1`}>
+                <div
+                  className={`${
+                    pattern.bullish ? "text-yellow-400" : "text-green-400"
+                  } text-4xl font-bold mt-1`}
+                >
                   {pattern.confidence}%
                 </div>
               </div>
@@ -1254,10 +1650,11 @@ function HarmonicsTab({ analysisData }: { analysisData: AnalysisData | null }) {
               {(pattern.ratios ?? []).map((ratio, ratioIdx) => (
                 <div
                   key={ratioIdx}
-                  className={`rounded-2xl border p-4 ${ratio.ok
-                    ? "border-green-900/50 bg-gradient-to-r from-green-950/35 to-emerald-950/15"
-                    : "border-red-900/50 bg-gradient-to-r from-red-950/35 to-rose-950/15"
-                    }`}
+                  className={`rounded-2xl border p-4 ${
+                    ratio.ok
+                      ? "border-green-900/50 bg-gradient-to-r from-green-950/35 to-emerald-950/15"
+                      : "border-red-900/50 bg-gradient-to-r from-red-950/35 to-rose-950/15"
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -1266,7 +1663,11 @@ function HarmonicsTab({ analysisData }: { analysisData: AnalysisData | null }) {
                     </div>
                     <div className="text-right">
                       <div className="text-white text-2xl font-bold">{ratio.value}</div>
-                      <div className={`mt-2 text-sm ${ratio.ok ? "text-green-400" : "text-red-400"}`}>
+                      <div
+                        className={`mt-2 text-sm ${
+                          ratio.ok ? "text-green-400" : "text-red-400"
+                        }`}
+                      >
                         {ratio.ok ? "◉" : "⊗"}
                       </div>
                     </div>
@@ -1372,10 +1773,11 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
             key={tab}
             type="button"
             onClick={() => setSubTab(tab)}
-            className={`flex-1 min-w-[140px] px-4 py-3 rounded-xl text-sm border transition ${subTab === tab
-              ? "bg-black text-white border-zinc-800 font-semibold"
-              : "bg-transparent text-zinc-400 border-transparent hover:text-white hover:bg-zinc-900"
-              }`}
+            className={`flex-1 min-w-[140px] px-4 py-3 rounded-xl text-sm border transition ${
+              subTab === tab
+                ? "bg-black text-white border-zinc-800 font-semibold"
+                : "bg-transparent text-zinc-400 border-transparent hover:text-white hover:bg-zinc-900"
+            }`}
           >
             {tab}
           </button>
@@ -1387,16 +1789,23 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
           <div className="rounded-3xl border border-zinc-800 bg-slate-500/20 p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-white text-4xl font-bold">{wyckoff?.phase ?? "INDEFINIDO"}</div>
+                <div className="text-white text-4xl font-bold">
+                  {wyckoff?.phase ?? "INDEFINIDO"}
+                </div>
                 <div className="text-zinc-300 mt-1">Fase de mercado Wyckoff</div>
               </div>
               <div className="text-right">
-                <div className="text-white text-5xl font-bold">{wyckoff?.progress ?? 50}%</div>
+                <div className="text-white text-5xl font-bold">
+                  {wyckoff?.progress ?? 50}%
+                </div>
                 <div className="text-zinc-300">Progresso</div>
               </div>
             </div>
             <div className="mt-4 h-3 rounded-full overflow-hidden bg-zinc-700">
-              <div className="h-full bg-zinc-200" style={{ width: `${wyckoff?.progress ?? 50}%` }} />
+              <div
+                className="h-full bg-zinc-200"
+                style={{ width: `${wyckoff?.progress ?? 50}%` }}
+              />
             </div>
           </div>
 
@@ -1406,22 +1815,30 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
               <div className="grid grid-cols-3 gap-4 items-center">
                 <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
                   <div className="text-zinc-400">Atual</div>
-                  <div className="text-white text-3xl font-bold mt-2">{wyckoff?.phase ?? "INDEFINIDO"}</div>
+                  <div className="text-white text-3xl font-bold mt-2">
+                    {wyckoff?.phase ?? "INDEFINIDO"}
+                  </div>
                 </div>
                 <div className="text-center text-zinc-400 text-4xl">→</div>
                 <div className="rounded-2xl bg-cyan-950/30 p-5 text-center border border-cyan-900/30">
                   <div className="text-zinc-400">Próximo</div>
-                  <div className="text-cyan-400 text-3xl font-bold mt-2">{wyckoff?.next_phase ?? "INDEFINIDO"}</div>
+                  <div className="text-cyan-400 text-3xl font-bold mt-2">
+                    {wyckoff?.next_phase ?? "INDEFINIDO"}
+                  </div>
                 </div>
               </div>
-              <div className="text-zinc-400 mt-4 text-center">Confiança: {wyckoff?.confidence ?? 40}%</div>
+              <div className="text-zinc-400 mt-4 text-center">
+                Confiança: {wyckoff?.confidence ?? 40}%
+              </div>
             </div>
 
             <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
               <div className="text-white text-2xl font-bold mb-4">Composite Man</div>
               <div className="rounded-2xl bg-zinc-900/70 p-8 text-center">
                 <div className="h-12 w-12 rounded-full border-4 border-slate-400 mx-auto mb-4" />
-                <div className="text-slate-300 text-3xl font-bold">{wyckoff?.composite_man ?? "NEUTRO"}</div>
+                <div className="text-slate-300 text-3xl font-bold">
+                  {wyckoff?.composite_man ?? "NEUTRO"}
+                </div>
               </div>
             </div>
           </div>
@@ -1432,12 +1849,17 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
               <div>
                 <div className="text-green-400 font-semibold mb-3">✓ Confirmados</div>
                 {(wyckoff?.events_confirmed ?? []).map((event, idx) => (
-                  <div key={idx} className="rounded-2xl border border-green-900/40 bg-green-950/25 p-4 flex items-start justify-between gap-4">
+                  <div
+                    key={idx}
+                    className="rounded-2xl border border-green-900/40 bg-green-950/25 p-4 flex items-start justify-between gap-4"
+                  >
                     <div>
                       <div className="text-green-400 text-2xl font-bold">{event.name}</div>
                       <div className="text-zinc-400 mt-1">{event.desc}</div>
                     </div>
-                    <div className="text-white font-semibold">{event.price?.toFixed(5)}</div>
+                    <div className="text-white font-semibold">
+                      {event.price?.toFixed(5)}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1447,7 +1869,9 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
                   <div className="text-zinc-400">Todos eventos confirmados</div>
                 ) : (
                   (wyckoff?.events_pending ?? []).map((event, idx) => (
-                    <div key={idx} className="text-zinc-300">{event.name}</div>
+                    <div key={idx} className="text-zinc-300">
+                      {event.name}
+                    </div>
                   ))
                 )}
               </div>
@@ -1458,10 +1882,16 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
             <div className="text-white text-2xl font-bold mb-4">Análise de Volume</div>
             <div className="rounded-2xl bg-yellow-950/20 border border-yellow-900/30 p-5 flex items-start justify-between gap-4">
               <div>
-                <div className="text-white text-2xl font-bold">{wyckoff?.volume_state ?? "NORMAL"}</div>
-                <div className="text-zinc-400 mt-2">Volume e esforço no contexto atual</div>
+                <div className="text-white text-2xl font-bold">
+                  {wyckoff?.volume_state ?? "NORMAL"}
+                </div>
+                <div className="text-zinc-400 mt-2">
+                  Volume e esforço no contexto atual
+                </div>
               </div>
-              <div className="text-yellow-400 text-2xl font-bold">{wyckoff?.volume_label ?? "MÉDIO"}</div>
+              <div className="text-yellow-400 text-2xl font-bold">
+                {wyckoff?.volume_label ?? "MÉDIO"}
+              </div>
             </div>
           </div>
         </div>
@@ -1473,19 +1903,28 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-zinc-400">Onda Atual</div>
-                <div className="text-white text-4xl font-bold mt-1">{elliott?.current_wave ?? "Onda A"}</div>
+                <div className="text-white text-4xl font-bold mt-1">
+                  {elliott?.current_wave ?? "Onda A"}
+                </div>
               </div>
               <div className="text-right">
                 <div className="px-4 py-2 rounded-xl bg-yellow-500/20 text-yellow-400 font-bold">
                   {elliott?.mode ?? "NEUTRA"}
                 </div>
-                <div className="text-zinc-400 mt-2">Confiança: {elliott?.confidence ?? 50}%</div>
+                <div className="text-zinc-400 mt-2">
+                  Confiança: {elliott?.confidence ?? 50}%
+                </div>
               </div>
             </div>
             <div className="mt-4">
-              <div className="text-zinc-400 text-sm mb-2">Progresso: {elliott?.progress ?? 50}%</div>
+              <div className="text-zinc-400 text-sm mb-2">
+                Progresso: {elliott?.progress ?? 50}%
+              </div>
               <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
-                <div className="h-full bg-yellow-400" style={{ width: `${elliott?.progress ?? 50}%` }} />
+                <div
+                  className="h-full bg-yellow-400"
+                  style={{ width: `${elliott?.progress ?? 50}%` }}
+                />
               </div>
             </div>
           </div>
@@ -1496,15 +1935,22 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
               {(elliott?.wave_points ?? []).map((point, i) => (
                 <div
                   key={i}
-                  className={`px-4 py-3 rounded-2xl border ${point.type === "green"
-                    ? "border-green-900/40 bg-green-950/25"
-                    : "border-yellow-900/40 bg-yellow-950/25"
-                    }`}
+                  className={`px-4 py-3 rounded-2xl border ${
+                    point.type === "green"
+                      ? "border-green-900/40 bg-green-950/25"
+                      : "border-yellow-900/40 bg-yellow-950/25"
+                  }`}
                 >
-                  <div className={`text-2xl font-bold ${point.type === "green" ? "text-green-400" : "text-yellow-400"}`}>
+                  <div
+                    className={`text-2xl font-bold ${
+                      point.type === "green" ? "text-green-400" : "text-yellow-400"
+                    }`}
+                  >
                     {point.label}
                   </div>
-                  <div className="text-zinc-400 text-sm mt-1">{point.price?.toFixed(2)}</div>
+                  <div className="text-zinc-400 text-sm mt-1">
+                    {point.price?.toFixed(2)}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1513,7 +1959,9 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <div className="rounded-3xl border border-cyan-900/40 bg-cyan-950/20 p-6 text-center">
               <div className="text-zinc-400">Próxima Onda</div>
-              <div className="text-cyan-400 text-4xl font-bold mt-2">{elliott?.next_wave ?? "Onda B"}</div>
+              <div className="text-cyan-400 text-4xl font-bold mt-2">
+                {elliott?.next_wave ?? "Onda B"}
+              </div>
               <div className="text-zinc-500 mt-1">Esperada</div>
             </div>
 
@@ -1526,9 +1974,13 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
           <div className="rounded-3xl border border-red-900/40 bg-red-950/25 p-6 flex items-center justify-between">
             <div>
               <div className="text-red-400 text-lg font-bold">Nível de Invalidação</div>
-              <div className="text-zinc-400 text-sm">Se rompido, a contagem é invalidada</div>
+              <div className="text-zinc-400 text-sm">
+                Se rompido, a contagem é invalidada
+              </div>
             </div>
-            <div className="text-red-400 text-2xl font-bold">{elliott?.invalidation?.toFixed(5)}</div>
+            <div className="text-red-400 text-2xl font-bold">
+              {elliott?.invalidation?.toFixed(5)}
+            </div>
           </div>
         </div>
       )}
@@ -1537,14 +1989,19 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
         <div className="space-y-6">
           <div className="rounded-3xl border border-yellow-900/40 bg-gradient-to-r from-yellow-950/30 via-green-950/20 to-cyan-950/20 p-6">
             <div className="text-zinc-400">Ângulo Dominante</div>
-            <div className="text-white text-4xl font-bold mt-1">{gann?.dominant_angle ?? "1x1"}</div>
+            <div className="text-white text-4xl font-bold mt-1">
+              {gann?.dominant_angle ?? "1x1"}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <div className="rounded-3xl border border-green-900/40 bg-green-950/20 p-5">
               <div className="text-green-400 font-bold mb-4">Ângulos de Suporte</div>
               {(gann?.support_angles ?? []).map((a, i) => (
-                <div key={i} className="items-center p-3 rounded-xl bg-green-950/30 border border-green-900/30 mb-2">
+                <div
+                  key={i}
+                  className="items-center p-3 rounded-xl bg-green-950/30 border border-green-900/30 mb-2"
+                >
                   <span className="text-white">{a.angle}</span>
                   <span className="text-green-400 font-bold">{a.price?.toFixed(5)}</span>
                 </div>
@@ -1554,7 +2011,10 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
             <div className="rounded-3xl border border-red-900/40 bg-red-950/20 p-5">
               <div className="text-red-400 font-bold mb-4">Ângulos de Resistência</div>
               {(gann?.resistance_angles ?? []).map((a, i) => (
-                <div key={i} className="items-center p-3 rounded-xl bg-red-950/30 border border-red-900/30 mb-2">
+                <div
+                  key={i}
+                  className="items-center p-3 rounded-xl bg-red-950/30 border border-red-900/30 mb-2"
+                >
                   <span className="text-white">{a.angle}</span>
                   <span className="text-red-400 font-bold">{a.price?.toFixed(5)}</span>
                 </div>
@@ -1567,15 +2027,21 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="rounded-2xl bg-cyan-950/20 p-4 text-center">
                 <div className="text-zinc-400">Ciclo Atual</div>
-                <div className="text-cyan-400 text-xl font-bold mt-1">{gann?.current_cycle_days} dias no ciclo atual</div>
+                <div className="text-cyan-400 text-xl font-bold mt-1">
+                  {gann?.current_cycle_days} dias no ciclo atual
+                </div>
               </div>
               <div className="rounded-2xl bg-yellow-950/20 p-4 text-center">
                 <div className="text-zinc-400">Próxima Reversão</div>
-                <div className="text-yellow-400 text-xl font-bold mt-1">{gann?.next_reversal}</div>
+                <div className="text-yellow-400 text-xl font-bold mt-1">
+                  {gann?.next_reversal}
+                </div>
               </div>
               <div className="rounded-2xl bg-yellow-950/20 p-4 text-center">
                 <div className="text-zinc-400">Dias no Ciclo</div>
-                <div className="text-yellow-400 text-xl font-bold mt-1">{gann?.days_in_cycle}</div>
+                <div className="text-yellow-400 text-xl font-bold mt-1">
+                  {gann?.days_in_cycle}
+                </div>
               </div>
             </div>
           </div>
@@ -1583,7 +2049,10 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
           <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
             <div className="text-white text-xl font-bold mb-4">Quadrado do Preço</div>
             {(gann?.price_square_levels ?? []).map((p, i) => (
-              <div key={i} className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 mb-2">
+              <div
+                key={i}
+                className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 mb-2"
+              >
                 <span className="text-white">{p.price?.toFixed(5)}</span>
                 <span className="text-zinc-400">{p.strength}</span>
               </div>
@@ -1617,10 +2086,20 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
             <div className="rounded-2xl bg-blue-950/30 border border-blue-900/30 p-5">
               <div className="flex items-center justify-between">
                 <div className="text-white text-2xl font-bold">{dow?.market_phase}</div>
-                <div className="text-white text-2xl font-bold">{dow?.market_phase_score}%</div>
+                <div className="text-white text-2xl font-bold">
+                  {dow?.market_phase_score}%
+                </div>
               </div>
               <div className="mt-3 h-3 bg-zinc-800 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-400" style={{ width: `${Math.max(0, Math.min(100, Math.abs(dow?.market_phase_score ?? 0)))}%` }} />
+                <div
+                  className="h-full bg-blue-400"
+                  style={{
+                    width: `${Math.max(
+                      0,
+                      Math.min(100, Math.abs(dow?.market_phase_score ?? 0))
+                    )}%`,
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -1630,11 +2109,15 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="rounded-2xl border border-red-900/40 bg-red-950/25 p-5 text-center">
                 <div className="text-zinc-400">Preço x Volume</div>
-                <div className="text-red-400 text-xl font-bold mt-2">{dow?.price_volume_confirmation}</div>
+                <div className="text-red-400 text-xl font-bold mt-2">
+                  {dow?.price_volume_confirmation}
+                </div>
               </div>
               <div className="rounded-2xl border border-green-900/40 bg-green-950/25 p-5 text-center">
                 <div className="text-zinc-400">Índices</div>
-                <div className="text-green-400 text-xl font-bold mt-2">{dow?.indices_confirmation}</div>
+                <div className="text-green-400 text-xl font-bold mt-2">
+                  {dow?.indices_confirmation}
+                </div>
               </div>
             </div>
             <div className="text-zinc-400 text-sm mt-4">{dow?.volume_note}</div>
@@ -1681,19 +2164,27 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
-            <div className="text-white text-xl font-bold">{historical?.return_pct?.toFixed(2)}%</div>
+            <div className="text-white text-xl font-bold">
+              {historical?.return_pct?.toFixed(2)}%
+            </div>
             <div className="text-zinc-400">Retorno</div>
           </div>
           <div className="text-center">
-            <div className="text-white text-xl font-bold">{historical?.volatility_pct?.toFixed(2)}%</div>
+            <div className="text-white text-xl font-bold">
+              {historical?.volatility_pct?.toFixed(2)}%
+            </div>
             <div className="text-zinc-400">Volatilidade</div>
           </div>
           <div className="text-center">
-            <div className="text-white text-xl font-bold">{historical?.sharpe?.toFixed(2)}</div>
+            <div className="text-white text-xl font-bold">
+              {historical?.sharpe?.toFixed(2)}
+            </div>
             <div className="text-zinc-400">Sharpe Ratio</div>
           </div>
           <div className="text-center">
-            <div className="text-red-400 text-xl font-bold">{historical?.max_drawdown_pct?.toFixed(2)}%</div>
+            <div className="text-red-400 text-xl font-bold">
+              {historical?.max_drawdown_pct?.toFixed(2)}%
+            </div>
             <div className="text-zinc-400">Max Drawdown</div>
           </div>
         </div>
@@ -1702,12 +2193,19 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
       <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5">
         <div className="text-white text-xl font-bold mb-4">Simulação Monte Carlo</div>
         <div className="h-6 rounded-full bg-gradient-to-r from-red-500 via-cyan-400 to-green-500 relative">
-          <div className="absolute left-[20%] top-[-10px] text-red-400 text-xs">{monteCarlo?.low?.toFixed(2)}</div>
-          <div className="absolute left-[50%] top-[-10px] text-cyan-400 text-xs">{monteCarlo?.mid?.toFixed(2)}</div>
-          <div className="absolute left-[80%] top-[-10px] text-green-400 text-xs">{monteCarlo?.high?.toFixed(2)}</div>
+          <div className="absolute left-[20%] top-[-10px] text-red-400 text-xs">
+            {monteCarlo?.low?.toFixed(2)}
+          </div>
+          <div className="absolute left-[50%] top-[-10px] text-cyan-400 text-xs">
+            {monteCarlo?.mid?.toFixed(2)}
+          </div>
+          <div className="absolute left-[80%] top-[-10px] text-green-400 text-xs">
+            {monteCarlo?.high?.toFixed(2)}
+          </div>
         </div>
         <div className="text-center text-zinc-400 mt-4">
-          Nível de confiança: <span className="text-cyan-400">{monteCarlo?.confidence_level}%</span>
+          Nível de confiança:{" "}
+          <span className="text-cyan-400">{monteCarlo?.confidence_level}%</span>
         </div>
       </div>
 
@@ -1715,32 +2213,41 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
         <div className="text-white text-xl font-bold mb-4">Cenários Probabilísticos</div>
 
         <div className="mb-4">
-          <div className="text-sm text-zinc-400">
+          <div className="text-sm text-zinc-400 flex items-center justify-between">
             <span>Alta (Bullish)</span>
             <span>{scenarios?.bullish}%</span>
           </div>
           <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
-            <div className="h-full bg-green-500" style={{ width: `${scenarios?.bullish ?? 0}%` }} />
+            <div
+              className="h-full bg-green-500"
+              style={{ width: `${scenarios?.bullish ?? 0}%` }}
+            />
           </div>
         </div>
 
         <div className="mb-4">
-          <div className="text-sm text-zinc-400">
+          <div className="text-sm text-zinc-400 flex items-center justify-between">
             <span>Neutro</span>
             <span>{scenarios?.neutral}%</span>
           </div>
           <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
-            <div className="h-full bg-cyan-400" style={{ width: `${scenarios?.neutral ?? 0}%` }} />
+            <div
+              className="h-full bg-cyan-400"
+              style={{ width: `${scenarios?.neutral ?? 0}%` }}
+            />
           </div>
         </div>
 
         <div>
-          <div className="text-sm text-zinc-400">
+          <div className="text-sm text-zinc-400 flex items-center justify-between">
             <span>Baixa (Bearish)</span>
             <span>{scenarios?.bearish}%</span>
           </div>
           <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
-            <div className="h-full bg-red-500" style={{ width: `${scenarios?.bearish ?? 0}%` }} />
+            <div
+              className="h-full bg-red-500"
+              style={{ width: `${scenarios?.bearish ?? 0}%` }}
+            />
           </div>
         </div>
       </div>
@@ -1749,7 +2256,10 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
         <div className="text-white text-xl font-bold mb-4">Sazonalidade</div>
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
           {seasonality.map((item, i) => (
-            <div key={i} className="rounded-xl p-3 bg-zinc-900/70 border border-zinc-800 text-center">
+            <div
+              key={i}
+              className="rounded-xl p-3 bg-zinc-900/70 border border-zinc-800 text-center"
+            >
               <div className="text-white">{item.month}</div>
               <div className="text-green-400 text-sm mt-1">+{item.value}%</div>
             </div>
@@ -1761,19 +2271,27 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
         <div className="text-white text-xl font-bold mb-4">Métricas de Risco</div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
-            <div className="text-red-400 text-xl font-bold">{riskMetrics?.var_95?.toFixed(2)}%</div>
+            <div className="text-red-400 text-xl font-bold">
+              {riskMetrics?.var_95?.toFixed(2)}%
+            </div>
             <div className="text-zinc-400">VaR 95%</div>
           </div>
           <div>
-            <div className="text-red-400 text-xl font-bold">{riskMetrics?.expected_shortfall?.toFixed(2)}%</div>
+            <div className="text-red-400 text-xl font-bold">
+              {riskMetrics?.expected_shortfall?.toFixed(2)}%
+            </div>
             <div className="text-zinc-400">Expected Shortfall</div>
           </div>
           <div>
-            <div className="text-white text-xl font-bold">{riskMetrics?.beta?.toFixed(2)}</div>
+            <div className="text-white text-xl font-bold">
+              {riskMetrics?.beta?.toFixed(2)}
+            </div>
             <div className="text-zinc-400">Beta</div>
           </div>
           <div>
-            <div className="text-white text-xl font-bold">{riskMetrics?.correlation?.toFixed(2)}</div>
+            <div className="text-white text-xl font-bold">
+              {riskMetrics?.correlation?.toFixed(2)}
+            </div>
             <div className="text-zinc-400">Correlação</div>
           </div>
         </div>
@@ -1835,10 +2353,11 @@ function CalculadoraTab({
           <div
             key={r}
             onClick={() => setRisk(r)}
-            className={`cursor-pointer rounded-2xl border p-5 text-center transition ${risk === r
-              ? "border-yellow-500 bg-yellow-950/20"
-              : "border-zinc-800 bg-zinc-950/60"
-              }`}
+            className={`cursor-pointer rounded-2xl border p-5 text-center transition ${
+              risk === r
+                ? "border-yellow-500 bg-yellow-950/20"
+                : "border-zinc-800 bg-zinc-950/60"
+            }`}
           >
             <div className="text-white text-xl font-bold">{r}</div>
             <div className="text-zinc-400 mt-1">Risco: {riskMap[r].label}</div>
@@ -1891,7 +2410,9 @@ function TimingTab({ analysisData }: { analysisData: AnalysisData | null }) {
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6">
-        <div className="text-white text-2xl font-bold">🔥 Melhores Horários para Operar</div>
+        <div className="text-white text-2xl font-bold">
+          🔥 Melhores Horários para Operar
+        </div>
         <div className="text-zinc-400 mt-2">
           {marketName} • Timezone: {timezone} • Status: {status}
         </div>
@@ -1904,10 +2425,15 @@ function TimingTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <div className="text-green-400 font-semibold">✓ Horários Recomendados</div>
+          <div className="text-green-400 font-semibold">
+            ✓ Horários Recomendados
+          </div>
 
           {recommended.map((item, idx) => (
-            <div key={idx} className="rounded-2xl border border-green-900/40 bg-green-950/25 p-5">
+            <div
+              key={idx}
+              className="rounded-2xl border border-green-900/40 bg-green-950/25 p-5"
+            >
               <div className="text-green-400 text-xl font-bold">
                 {item.start} - {item.end}
               </div>
@@ -1920,7 +2446,10 @@ function TimingTab({ analysisData }: { analysisData: AnalysisData | null }) {
           <div className="text-red-400 font-semibold">✗ Horários a Evitar</div>
 
           {avoid.map((item, idx) => (
-            <div key={idx} className="rounded-2xl border border-red-900/40 bg-red-950/25 p-5">
+            <div
+              key={idx}
+              className="rounded-2xl border border-red-900/40 bg-red-950/25 p-5"
+            >
               <div className="text-red-400 text-xl font-bold">
                 {item.start} - {item.end}
               </div>
@@ -1944,8 +2473,8 @@ function SinalFinalTab({ analysisData }: { analysisData: AnalysisData | null }) 
     signal.direction === "COMPRA"
       ? "text-green-400"
       : signal.direction === "VENDA"
-        ? "text-red-400"
-        : "text-yellow-400";
+      ? "text-red-400"
+      : "text-yellow-400";
 
   return (
     <div className="space-y-6">
@@ -1990,9 +2519,7 @@ function SinalFinalTab({ analysisData }: { analysisData: AnalysisData | null }) 
       </div>
 
       <div className="rounded-2xl border border-cyan-900/40 bg-cyan-950/20 p-5">
-        <div className="text-cyan-400 font-bold text-lg">
-          {signal.verdict}
-        </div>
+        <div className="text-cyan-400 font-bold text-lg">{signal.verdict}</div>
       </div>
     </div>
   );
@@ -2004,112 +2531,6 @@ function PlaceholderTab({ label }: { label: string }) {
       Conteúdo da aba <span className="text-white font-semibold">{label}</span> em desenvolvimento
     </div>
   );
-}
-
-type AssetCategoryLabel = "Índices" | "Ações" | "Forex" | "Crypto" | "B3" | "Futuros BR" | "Futuros US";
-
-type AssetOption = {
-  label: string;
-  value: string;
-  apiType: "index" | "stock" | "forex" | "crypto" | "b3" | "future_br" | "future_us";
-  tvSymbol?: string;
-};
-
-const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
-  "Índices": [
-    { label: "IBOV", value: "IBOV", apiType: "index", tvSymbol: "INDEX:IBOV" },
-    { label: "S&P 500", value: "SP500", apiType: "index", tvSymbol: "SP:SPX" },
-    { label: "NASDAQ", value: "NASDAQ", apiType: "index", tvSymbol: "NASDAQ:IXIC" },
-    { label: "Dow Jones", value: "DJI", apiType: "index", tvSymbol: "DJ:DJI" },
-    { label: "VIX", value: "VIX", apiType: "index", tvSymbol: "CBOE:VIX" },
-  ],
-
-  "Ações": [
-    { label: "Apple", value: "AAPL", apiType: "stock", tvSymbol: "NASDAQ:AAPL" },
-    { label: "Tesla", value: "TSLA", apiType: "stock", tvSymbol: "NASDAQ:TSLA" },
-    { label: "NVIDIA", value: "NVDA", apiType: "stock", tvSymbol: "NASDAQ:NVDA" },
-    { label: "Microsoft", value: "MSFT", apiType: "stock", tvSymbol: "NASDAQ:MSFT" },
-    { label: "Amazon", value: "AMZN", apiType: "stock", tvSymbol: "NASDAQ:AMZN" },
-  ],
-
-  "Forex": [
-    { label: "EUR/USD", value: "EURUSD", apiType: "forex", tvSymbol: "FX:EURUSD" },
-    { label: "GBP/USD", value: "GBPUSD", apiType: "forex", tvSymbol: "FX:GBPUSD" },
-    { label: "USD/JPY", value: "USDJPY", apiType: "forex", tvSymbol: "FX:USDJPY" },
-    { label: "AUD/USD", value: "AUDUSD", apiType: "forex", tvSymbol: "FX:AUDUSD" },
-    { label: "USD/CAD", value: "USDCAD", apiType: "forex", tvSymbol: "FX:USDCAD" },
-
-    // ✅ NOVO
-    { label: "Gold", value: "XAUUSD", apiType: "forex", tvSymbol: "OANDA:XAUUSD" },
-  ],
-
-  "Crypto": [
-    { label: "Bitcoin", value: "BTCUSDT", apiType: "crypto", tvSymbol: "BINANCE:BTCUSDT" },
-    { label: "Ethereum", value: "ETHUSDT", apiType: "crypto", tvSymbol: "BINANCE:ETHUSDT" },
-    { label: "Solana", value: "SOLUSDT", apiType: "crypto", tvSymbol: "BINANCE:SOLUSDT" },
-    { label: "BNB", value: "BNBUSDT", apiType: "crypto", tvSymbol: "BINANCE:BNBUSDT" },
-    { label: "XRP", value: "XRPUSDT", apiType: "crypto", tvSymbol: "BINANCE:XRPUSDT" },
-  ],
-
-  "B3": [
-    { label: "PETR4", value: "PETR4", apiType: "b3", tvSymbol: "BMFBOVESPA:PETR4" },
-    { label: "VALE3", value: "VALE3", apiType: "b3", tvSymbol: "BMFBOVESPA:VALE3" },
-    { label: "ITUB4", value: "ITUB4", apiType: "b3", tvSymbol: "BMFBOVESPA:ITUB4" },
-    { label: "BBDC4", value: "BBDC4", apiType: "b3", tvSymbol: "BMFBOVESPA:BBDC4" },
-    { label: "ABEV3", value: "ABEV3", apiType: "b3", tvSymbol: "BMFBOVESPA:ABEV3" },
-  ],
-
-  "Futuros BR": [
-    { label: "Mini Índice", value: "WIN", apiType: "future_br", tvSymbol: "BMFBOVESPA:WIN1!" },
-    { label: "Mini Dólar", value: "WDO", apiType: "future_br", tvSymbol: "BMFBOVESPA:WDO1!" },
-  ],
-
-  // ✅ NOVA CATEGORIA
-  "Futuros US": [
-    { label: "Mini Ouro", value: "NGCJ", apiType: "future_us", tvSymbol: "TVC:GOLD" },
-    { label: "Mini Nasdaq", value: "MNQ", apiType: "future_us", tvSymbol: "NASDAQ:NDX" },
-  ],
-};
-
-// =========================
-// FUNÇÕES AUXILIARES
-// =========================
-
-function getDefaultAssetByCategory(category: AssetCategoryLabel) {
-  return ASSET_OPTIONS[category]?.[0]?.value ?? "";
-}
-
-function getTradingViewSymbol(category: AssetCategoryLabel, asset: string) {
-  const found = ASSET_OPTIONS[category]?.find((item) => item.value === asset);
-
-  // ✅ prioridade total para tvSymbol definido
-  if (found?.tvSymbol) return found.tvSymbol;
-
-  // =========================
-  // FALLBACKS SEGUROS
-  // =========================
-
-  if (category === "Crypto") return `BINANCE:${asset}`;
-  if (category === "Forex") return `FX:${asset}`;
-  if (category === "B3") return `BMFBOVESPA:${asset}`;
-
-  if (category === "Futuros BR") {
-    if (asset === "WIN") return "BMFBOVESPA:WIN1!";
-    if (asset === "WDO") return "BMFBOVESPA:WDO1!";
-    return `BMFBOVESPA:${asset}`;
-  }
-
-  if (category === "Futuros US") {
-    if (asset === "MNQ") return "CME_MINI:MNQ1!";
-    if (asset === "NGCJ") return "COMEX_MINI:MGC1!";
-    return asset;
-  }
-
-  if (category === "Ações") return `NASDAQ:${asset}`;
-
-  if (category === "Índices") return asset;
-
-  return asset;
 }
 
 function AiThinkingOverlay({
@@ -2179,64 +2600,26 @@ function AiThinkingOverlay({
           </div>
 
           <div className="mt-3 flex items-center justify-between text-sm">
-            <span className="text-zinc-500">Processamento neural em andamento...</span>
+            <span className="text-zinc-500">
+              Processamento neural em andamento...
+            </span>
             <span className="font-bold text-emerald-300">{progress}%</span>
           </div>
-        </div>
-
-        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Módulo 1
-            </div>
-            <div className="mt-2 text-sm font-medium text-white">
-              Estrutura e contexto
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Módulo 2
-            </div>
-            <div className="mt-2 text-sm font-medium text-white">
-              Fluxo e probabilidade
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">
-              Módulo 3
-            </div>
-            <div className="mt-2 text-sm font-medium text-white">
-              Sinal final e setup
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5 flex items-center gap-2 text-xs text-zinc-500">
-          <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          Aguarde alguns instantes enquanto a análise é finalizada.
         </div>
       </div>
     </div>
   );
 }
 
-//export default function GlucksTraderIAUltra() {
-
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
-
-const AI_LOADING_STEPS = [
-  "Lendo estrutura do mercado...",
-  "Mapeando fluxo e liquidez...",
-  "Calculando confluências técnicas...",
-  "Validando tendência e timing...",
-  "Refinando o sinal final da IA...",
-];
+export default function DashboardPage() {
+  const navigate = useNavigate();
+  const token = getStoredToken();
+  const user = getStoredUser();
 
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [assetCategory, setAssetCategory] = useState<AssetCategoryLabel>("Índices");
+  const [assetCategory, setAssetCategory] =
+    useState<AssetCategoryLabel>("Índices");
   const [asset, setAsset] = useState("IBOV");
   const [customAsset, setCustomAsset] = useState("");
   const [tf, setTf] = useState("5m");
@@ -2335,13 +2718,12 @@ const AI_LOADING_STEPS = [
           } else {
             errorMessage = JSON.stringify(errorData);
           }
-
         } catch {
           errorMessage = `Erro ${response.status} ao analisar mercado`;
         }
 
-  throw new Error(errorMessage);
-}
+        throw new Error(errorMessage);
+      }
 
       const data = await response.json();
 
@@ -2426,10 +2808,14 @@ const AI_LOADING_STEPS = [
           <div className="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-5">
             <div className="flex flex-wrap items-end gap-3">
               <div className="min-w-[180px]">
-                <label className="block text-sm text-zinc-400 mb-2">Categoria</label>
+                <label className="block text-sm text-zinc-400 mb-2">
+                  Categoria
+                </label>
                 <select
                   value={assetCategory}
-                  onChange={(e) => setAssetCategory(e.target.value as AssetCategoryLabel)}
+                  onChange={(e) =>
+                    setAssetCategory(e.target.value as AssetCategoryLabel)
+                  }
                   className="h-10 w-full rounded-xl bg-zinc-900 border border-zinc-700 px-3 text-white"
                 >
                   <option value="Índices">Índices</option>
@@ -2443,12 +2829,14 @@ const AI_LOADING_STEPS = [
               </div>
 
               <div className="min-w-[220px]">
-                <label className="block text-sm text-zinc-400 mb-2">Ativo da lista</label>
+                <label className="block text-sm text-zinc-400 mb-2">
+                  Ativo da lista
+                </label>
                 <select
                   value={asset}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setAsset(e.target.value)
-                  }    
+                  }
                   className="h-10 w-full rounded-xl bg-zinc-900 border border-zinc-700 px-3 text-white"
                 >
                   {selectedAssetOptions.map((item) => (
@@ -2460,7 +2848,9 @@ const AI_LOADING_STEPS = [
               </div>
 
               <div className="min-w-[180px]">
-                <label className="block text-sm text-zinc-400 mb-2">Ativo manual</label>
+                <label className="block text-sm text-zinc-400 mb-2">
+                  Ativo manual
+                </label>
                 <input
                   value={customAsset}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -2472,7 +2862,9 @@ const AI_LOADING_STEPS = [
               </div>
 
               <div className="min-w-[140px]">
-                <label className="block text-sm text-zinc-400 mb-2">Timeframe</label>
+                <label className="block text-sm text-zinc-400 mb-2">
+                  Timeframe
+                </label>
                 <select
                   value={tf}
                   onChange={(e) => setTf(e.target.value)}
@@ -2500,10 +2892,14 @@ const AI_LOADING_STEPS = [
 
             <div className="mt-4 text-sm text-zinc-400">
               Símbolo enviado à análise:
-              <span className="text-white font-semibold ml-2">{resolvedAsset}</span>
+              <span className="text-white font-semibold ml-2">
+                {resolvedAsset}
+              </span>
               <span className="mx-2 text-zinc-700">•</span>
               Tipo:
-              <span className="text-white font-semibold ml-2">{resolvedAssetType}</span>
+              <span className="text-white font-semibold ml-2">
+                {resolvedAssetType}
+              </span>
             </div>
           </div>
 
@@ -2516,7 +2912,9 @@ const AI_LOADING_STEPS = [
           <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-4 items-start">
             <div className="rounded-3xl border border-zinc-900 bg-zinc-950/80 p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white font-semibold text-lg">Gráfico do Ativo</h3>
+                <h3 className="text-white font-semibold text-lg">
+                  Gráfico do Ativo
+                </h3>
                 <div className="text-sm text-zinc-400">
                   {assetCategory} • {resolvedAsset} •{" "}
                   {tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
@@ -2571,7 +2969,13 @@ const AI_LOADING_STEPS = [
             </span>
           </div>
 
-          {mainTab === "Resumo" && null}
+          {mainTab === "Resumo" && (
+            <ResumoAvancadoTab
+              asset={resolvedAsset}
+              tf={tf}
+              analysisData={analysisData}
+            />
+          )}
 
           {mainTab === "Técnica" && (
             <TechnicalTab
