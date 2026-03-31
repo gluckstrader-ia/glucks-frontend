@@ -232,6 +232,33 @@ type AnalysisData = {
     }[];
   };
 
+  scenarios?: {
+    buy?: {
+      probability?: number;
+      entry_trigger?: number;
+      entry_reason?: string;
+      stop?: number;
+      targets?: {
+        label?: string;
+        price?: number;
+        probability?: number;
+        rr?: string;
+      }[];
+    };
+    sell?: {
+      probability?: number;
+      entry_trigger?: number;
+      entry_reason?: string;
+      stop?: number;
+      targets?: {
+        label?: string;
+        price?: number;
+        probability?: number;
+        rr?: string;
+      }[];
+    };
+  };  
+
   final_signal?: {
     direction?: string;
     strength?: string;
@@ -514,6 +541,18 @@ function SummaryTab({
   const smartMoneyLabel = summary.smart_money_label ?? "NEUTRO";
   const tp2 = summary.tp2 ?? 0;
   const tp3 = summary.tp3 ?? 0;
+
+  const currentScenarioTargets =
+    direction === "VENDA"
+      ? analysisData?.scenarios?.sell?.targets ?? []
+      : analysisData?.scenarios?.buy?.targets ?? [];
+
+  const tp2Confidence =
+    currentScenarioTargets.find((t) => t.label === "TP2")?.probability ?? null;
+
+  const tp3Confidence =
+    currentScenarioTargets.find((t) => t.label === "TP3")?.probability ?? null;
+
   const confidence =
     analysisData?.confidence ??
     summary.confidence ??
@@ -637,12 +676,24 @@ function SummaryTab({
               <div className="text-green-400 text-2xl font-bold mt-2">
                 {formatPrice(tp2, assetType)}
               </div>
+              <div className="text-zinc-400 text-xs mt-2">
+                Confiança:{" "}
+                <span className="text-cyan-400 font-semibold">
+                  {tp2Confidence ?? "--"}%
+                </span>
+              </div>
             </div>
 
             <div className="rounded-2xl border border-green-900/60 bg-green-950/20 p-4">
               <div className="text-green-400 text-xs">TP3</div>
               <div className="text-green-400 text-2xl font-bold mt-2">
                 {formatPrice(tp3, assetType)}
+              </div>
+              <div className="text-zinc-400 text-xs mt-2">
+                Confiança:{" "}
+                <span className="text-cyan-400 font-semibold">
+                  {tp3Confidence ?? "--"}%
+                </span>
               </div>
             </div>
           </div>
