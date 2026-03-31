@@ -614,14 +614,14 @@ function SummaryTab({
             </div>
 
             <div className="rounded-2xl border border-green-900/60 bg-green-950/20 p-3">
-              <div className="text-green-400 text-xs">TP1</div>
+              <div className="text-green-400 text-xs">Take 1</div>
               <div className="text-green-400 text-2xl font-bold mt-1">
                 {formatPrice(target, assetType)}
               </div>
             </div>
 
             <div className="rounded-2xl border border-zinc-800 bg-black/40 p-3">
-              <div className="text-zinc-400 text-xs">R:R</div>
+              <div className="text-zinc-400 text-xs">Risco:Retorno</div>
               <div className="text-cyan-400 text-2xl font-bold mt-1">
                 1:{rr.toFixed(2)}
               </div>
@@ -672,7 +672,7 @@ function SummaryTab({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-2xl border border-green-900/60 bg-green-950/20 p-4">
-              <div className="text-green-400 text-xs">TP2</div>
+              <div className="text-green-400 text-xs">Take 2</div>
               <div className="text-green-400 text-2xl font-bold mt-2">
                 {formatPrice(tp2, assetType)}
               </div>
@@ -685,7 +685,7 @@ function SummaryTab({
             </div>
 
             <div className="rounded-2xl border border-green-900/60 bg-green-950/20 p-4">
-              <div className="text-green-400 text-xs">TP3</div>
+              <div className="text-green-400 text-xs">Take 3</div>
               <div className="text-green-400 text-2xl font-bold mt-2">
                 {formatPrice(tp3, assetType)}
               </div>
