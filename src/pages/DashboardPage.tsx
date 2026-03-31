@@ -2514,7 +2514,7 @@ const AI_LOADING_STEPS = [
           )}
 
           <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-4 items-start">
-            <div className="rounded-3xl border border-zinc-850 bg-zinc-950/80 p-4">
+            <div className="rounded-3xl border border-zinc-900 bg-zinc-950/80 p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-white font-semibold text-lg">Gráfico do Ativo</h3>
                 <div className="text-sm text-zinc-400">
