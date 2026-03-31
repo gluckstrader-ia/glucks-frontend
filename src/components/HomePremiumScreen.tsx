@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  BrainCircuit,
   CandlestickChart,
   Copy,
   Crown,
@@ -62,12 +61,26 @@ export default function HomePremiumScreen({
     <div className="min-h-screen bg-[#03070d] text-white">
       <div className="sticky top-0 z-30 border-b border-zinc-900/80 bg-[#03070d]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-3 md:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-black ring-1 ring-zinc-800">
-              <BrainCircuit className="h-5 w-5 text-cyan-400" />
-            </div>
-            <div className="text-2xl font-bold tracking-tight">Gluck&apos;s Trader IA</div>
+          <div className="flex items-center gap-3 cursor-pointer group">
+          {/* LOGO COM GLOW + ANIMAÇÃO */}
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-black ring-1 ring-zinc-800 transition-all duration-300 group-hover:ring-green-500/50">
+
+          {/* GLOW ANIMADO */}
+              <div className="absolute inset-0 rounded-2xl bg-green-500/20 blur-md opacity-0 transition-all duration-500 group-hover:opacity-100 animate-pulse" />
+
+          {/* LOGO */}
+              <img
+                src="/logo.png"
+                alt="Gluck's Trader IA"
+                className="relative h-6 w-6 object-contain transition-transform duration-300 group-hover:scale-110"
+              />
           </div>
+
+            {/* TEXTO COM GRADIENTE */}
+          <div className="text-2xl font-bold tracking-tight bg-gradient-to-r from-green-400 via-emerald-400 to-green-600 bg-clip-text text-transparent">
+            Gluck&apos;s Trader IA
+          </div>
+        </div>
 
           <div className="flex items-center gap-3">
             <TopBadge icon={<Crown className="h-4 w-4" />} value={userPlan.toUpperCase()} color="yellow" />
