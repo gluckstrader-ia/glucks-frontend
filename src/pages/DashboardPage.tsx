@@ -962,7 +962,7 @@ function SummaryTab({
                   direction === "VENDA" ? "text-red-400" : "text-green-400"
                 }`}
               >
-                TP2
+                Take 2
               </div>
 
               <div
@@ -993,7 +993,7 @@ function SummaryTab({
                     direction === "VENDA" ? "text-red-400" : "text-green-400"
                 }`}
               >
-                TP3
+                Take 3
               </div>
 
               <div
