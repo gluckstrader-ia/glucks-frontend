@@ -275,6 +275,7 @@ type AssetCategoryLabel =
   | "Forex"
   | "Crypto"
   | "B3"
+  | "Commodities"
   | "Futuros BR"
   | "Futuros US";
 
@@ -287,6 +288,7 @@ type AssetOption = {
     | "forex"
     | "crypto"
     | "b3"
+    | "commodity"
     | "future_br"
     | "future_us";
   tvSymbol?: string;
@@ -304,103 +306,135 @@ const AI_LOADING_STEPS = [
 
 const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
   Índices: [
-    { label: "IBOV", value: "IBOV", apiType: "index", tvSymbol: "INDEX:IBOV" },
-    { label: "S&P 500", value: "SP500", apiType: "index", tvSymbol: "SP:SPX" },
-    {
-      label: "NASDAQ",
-      value: "NASDAQ",
-      apiType: "index",
-      tvSymbol: "NASDAQ:IXIC",
-    },
+    { label: "S&P 500", value: "SPX", apiType: "index", tvSymbol: "SP:SPX" },
+    { label: "Ibovespa", value: "IBOV", apiType: "index", tvSymbol: "INDEX:IBOV" },
+    { label: "NASDAQ 100", value: "NDX", apiType: "index", tvSymbol: "NASDAQ:NDX" },
+    { label: "NASDAQ Composite", value: "NASDAQ", apiType: "index", tvSymbol: "NASDAQ:IXIC" },
     { label: "Dow Jones", value: "DJI", apiType: "index", tvSymbol: "DJ:DJI" },
+    { label: "DAX", value: "DAX", apiType: "index", tvSymbol: "XETR:DAX" },
+    { label: "Nikkei 225", value: "JP225", apiType: "index", tvSymbol: "INDEX:NKY" },
     { label: "VIX", value: "VIX", apiType: "index", tvSymbol: "CBOE:VIX" },
   ],
+
   Ações: [
     { label: "Apple", value: "AAPL", apiType: "stock", tvSymbol: "NASDAQ:AAPL" },
+    { label: "Microsoft", value: "MSFT", apiType: "stock", tvSymbol: "NASDAQ:MSFT" },
+    { label: "Google", value: "GOOGL", apiType: "stock", tvSymbol: "NASDAQ:GOOGL" },
+    { label: "Amazon", value: "AMZN", apiType: "stock", tvSymbol: "NASDAQ:AMZN" },
     { label: "Tesla", value: "TSLA", apiType: "stock", tvSymbol: "NASDAQ:TSLA" },
     { label: "NVIDIA", value: "NVDA", apiType: "stock", tvSymbol: "NASDAQ:NVDA" },
-    {
-      label: "Microsoft",
-      value: "MSFT",
-      apiType: "stock",
-      tvSymbol: "NASDAQ:MSFT",
-    },
-    { label: "Amazon", value: "AMZN", apiType: "stock", tvSymbol: "NASDAQ:AMZN" },
+    { label: "Meta", value: "META", apiType: "stock", tvSymbol: "NASDAQ:META" },
+    { label: "Netflix", value: "NFLX", apiType: "stock", tvSymbol: "NASDAQ:NFLX" },
+    { label: "AMD", value: "AMD", apiType: "stock", tvSymbol: "NASDAQ:AMD" },
+    { label: "Intel", value: "INTC", apiType: "stock", tvSymbol: "NASDAQ:INTC" },
+    { label: "Disney", value: "DIS", apiType: "stock", tvSymbol: "NYSE:DIS" },
+    { label: "PayPal", value: "PYPL", apiType: "stock", tvSymbol: "NASDAQ:PYPL" },
+    { label: "Uber", value: "UBER", apiType: "stock", tvSymbol: "NYSE:UBER" },
+    { label: "Salesforce", value: "CRM", apiType: "stock", tvSymbol: "NYSE:CRM" },
+    { label: "Oracle", value: "ORCL", apiType: "stock", tvSymbol: "NYSE:ORCL" },
+    { label: "Coinbase", value: "COIN", apiType: "stock", tvSymbol: "NASDAQ:COIN" },
+    { label: "Block (Square)", value: "SQ", apiType: "stock", tvSymbol: "NYSE:SQ" },
+    { label: "Palantir", value: "PLTR", apiType: "stock", tvSymbol: "NASDAQ:PLTR" },
+    { label: "Snap", value: "SNAP", apiType: "stock", tvSymbol: "NYSE:SNAP" },
+    { label: "Shopify", value: "SHOP", apiType: "stock", tvSymbol: "NYSE:SHOP" },
+    { label: "Spotify", value: "SPOT", apiType: "stock", tvSymbol: "NYSE:SPOT" },
+    { label: "Boeing", value: "BA", apiType: "stock", tvSymbol: "NYSE:BA" },
+    { label: "JPMorgan", value: "JPM", apiType: "stock", tvSymbol: "NYSE:JPM" },
+    { label: "Visa", value: "V", apiType: "stock", tvSymbol: "NYSE:V" },
+    { label: "Mastercard", value: "MA", apiType: "stock", tvSymbol: "NYSE:MA" },
+    { label: "Walmart", value: "WMT", apiType: "stock", tvSymbol: "NYSE:WMT" },
+    { label: "Coca-Cola", value: "KO", apiType: "stock", tvSymbol: "NYSE:KO" },
+    { label: "PepsiCo", value: "PEP", apiType: "stock", tvSymbol: "NASDAQ:PEP" },
+    { label: "Johnson & Johnson", value: "JNJ", apiType: "stock", tvSymbol: "NYSE:JNJ" },
+    { label: "Pfizer", value: "PFE", apiType: "stock", tvSymbol: "NYSE:PFE" },
+    { label: "Exxon Mobil", value: "XOM", apiType: "stock", tvSymbol: "NYSE:XOM" },
+    { label: "Airbnb", value: "ABNB", apiType: "stock", tvSymbol: "NASDAQ:ABNB" },
+    { label: "Roblox", value: "RBLX", apiType: "stock", tvSymbol: "NYSE:RBLX" },
   ],
+
   Forex: [
     { label: "EUR/USD", value: "EURUSD", apiType: "forex", tvSymbol: "FX:EURUSD" },
     { label: "GBP/USD", value: "GBPUSD", apiType: "forex", tvSymbol: "FX:GBPUSD" },
     { label: "USD/JPY", value: "USDJPY", apiType: "forex", tvSymbol: "FX:USDJPY" },
+    { label: "USD/CHF", value: "USDCHF", apiType: "forex", tvSymbol: "FX:USDCHF" },
     { label: "AUD/USD", value: "AUDUSD", apiType: "forex", tvSymbol: "FX:AUDUSD" },
     { label: "USD/CAD", value: "USDCAD", apiType: "forex", tvSymbol: "FX:USDCAD" },
-    { label: "Gold", value: "XAUUSD", apiType: "forex", tvSymbol: "OANDA:XAUUSD" },
+    { label: "NZD/USD", value: "NZDUSD", apiType: "forex", tvSymbol: "FX:NZDUSD" },
+    { label: "EUR/GBP", value: "EURGBP", apiType: "forex", tvSymbol: "FX:EURGBP" },
+    { label: "EUR/JPY", value: "EURJPY", apiType: "forex", tvSymbol: "FX:EURJPY" },
+    { label: "GBP/JPY", value: "GBPJPY", apiType: "forex", tvSymbol: "FX:GBPJPY" },
+    { label: "USD/BRL", value: "USDBRL", apiType: "forex", tvSymbol: "FX_IDC:USDBRL" },
   ],
+
   Crypto: [
-    {
-      label: "Bitcoin",
-      value: "BTCUSDT",
-      apiType: "crypto",
-      tvSymbol: "BINANCE:BTCUSDT",
-    },
-    {
-      label: "Ethereum",
-      value: "ETHUSDT",
-      apiType: "crypto",
-      tvSymbol: "BINANCE:ETHUSDT",
-    },
-    {
-      label: "Solana",
-      value: "SOLUSDT",
-      apiType: "crypto",
-      tvSymbol: "BINANCE:SOLUSDT",
-    },
-    {
-      label: "BNB",
-      value: "BNBUSDT",
-      apiType: "crypto",
-      tvSymbol: "BINANCE:BNBUSDT",
-    },
-    {
-      label: "XRP",
-      value: "XRPUSDT",
-      apiType: "crypto",
-      tvSymbol: "BINANCE:XRPUSDT",
-    },
+    { label: "Bitcoin", value: "BTCUSDT", apiType: "crypto", tvSymbol: "BINANCE:BTCUSDT" },
+    { label: "Ethereum", value: "ETHUSDT", apiType: "crypto", tvSymbol: "BINANCE:ETHUSDT" },
+    { label: "Solana", value: "SOLUSDT", apiType: "crypto", tvSymbol: "BINANCE:SOLUSDT" },
+    { label: "BNB", value: "BNBUSDT", apiType: "crypto", tvSymbol: "BINANCE:BNBUSDT" },
+    { label: "XRP", value: "XRPUSDT", apiType: "crypto", tvSymbol: "BINANCE:XRPUSDT" },
+    { label: "Cardano", value: "ADAUSDT", apiType: "crypto", tvSymbol: "BINANCE:ADAUSDT" },
+    { label: "Dogecoin", value: "DOGEUSDT", apiType: "crypto", tvSymbol: "BINANCE:DOGEUSDT" },
+    { label: "Polkadot", value: "DOTUSDT", apiType: "crypto", tvSymbol: "BINANCE:DOTUSDT" },
+    { label: "Avalanche", value: "AVAXUSDT", apiType: "crypto", tvSymbol: "BINANCE:AVAXUSDT" },
+    { label: "Polygon", value: "MATICUSDT", apiType: "crypto", tvSymbol: "BINANCE:MATICUSDT" },
+    { label: "Chainlink", value: "LINKUSDT", apiType: "crypto", tvSymbol: "BINANCE:LINKUSDT" },
+    { label: "Litecoin", value: "LTCUSDT", apiType: "crypto", tvSymbol: "BINANCE:LTCUSDT" },
+    { label: "Uniswap", value: "UNIUSDT", apiType: "crypto", tvSymbol: "BINANCE:UNIUSDT" },
+    { label: "Shiba Inu", value: "SHIBUSDT", apiType: "crypto", tvSymbol: "BINANCE:SHIBUSDT" },
+    { label: "Cosmos", value: "ATOMUSDT", apiType: "crypto", tvSymbol: "BINANCE:ATOMUSDT" },
+    { label: "NEAR", value: "NEARUSDT", apiType: "crypto", tvSymbol: "BINANCE:NEARUSDT" },
+    { label: "Fantom", value: "FTMUSDT", apiType: "crypto", tvSymbol: "BINANCE:FTMUSDT" },
   ],
+
   B3: [
     { label: "PETR4", value: "PETR4", apiType: "b3", tvSymbol: "BMFBOVESPA:PETR4" },
     { label: "VALE3", value: "VALE3", apiType: "b3", tvSymbol: "BMFBOVESPA:VALE3" },
     { label: "ITUB4", value: "ITUB4", apiType: "b3", tvSymbol: "BMFBOVESPA:ITUB4" },
     { label: "BBDC4", value: "BBDC4", apiType: "b3", tvSymbol: "BMFBOVESPA:BBDC4" },
+    { label: "BBAS3", value: "BBAS3", apiType: "b3", tvSymbol: "BMFBOVESPA:BBAS3" },
     { label: "ABEV3", value: "ABEV3", apiType: "b3", tvSymbol: "BMFBOVESPA:ABEV3" },
+    { label: "B3SA3", value: "B3SA3", apiType: "b3", tvSymbol: "BMFBOVESPA:B3SA3" },
+    { label: "WEGE3", value: "WEGE3", apiType: "b3", tvSymbol: "BMFBOVESPA:WEGE3" },
+    { label: "MGLU3", value: "MGLU3", apiType: "b3", tvSymbol: "BMFBOVESPA:MGLU3" },
+    { label: "RENT3", value: "RENT3", apiType: "b3", tvSymbol: "BMFBOVESPA:RENT3" },
+    { label: "SUZB3", value: "SUZB3", apiType: "b3", tvSymbol: "BMFBOVESPA:SUZB3" },
+    { label: "RAIL3", value: "RAIL3", apiType: "b3", tvSymbol: "BMFBOVESPA:RAIL3" },
+    { label: "EMBR3", value: "EMBR3", apiType: "b3", tvSymbol: "BMFBOVESPA:EMBR3" },
+    { label: "VIVT3", value: "VIVT3", apiType: "b3", tvSymbol: "BMFBOVESPA:VIVT3" },
+    { label: "ELET3", value: "ELET3", apiType: "b3", tvSymbol: "BMFBOVESPA:ELET3" },
+    { label: "CSAN3", value: "CSAN3", apiType: "b3", tvSymbol: "BMFBOVESPA:CSAN3" },
+    { label: "PRIO3", value: "PRIO3", apiType: "b3", tvSymbol: "BMFBOVESPA:PRIO3" },
+    { label: "HAPV3", value: "HAPV3", apiType: "b3", tvSymbol: "BMFBOVESPA:HAPV3" },
+    { label: "RADL3", value: "RADL3", apiType: "b3", tvSymbol: "BMFBOVESPA:RADL3" },
+    { label: "JBSS3", value: "JBSS3", apiType: "b3", tvSymbol: "BMFBOVESPA:JBSS3" },
+    { label: "TOTS3", value: "TOTS3", apiType: "b3", tvSymbol: "BMFBOVESPA:TOTS3" },
+    { label: "LREN3", value: "LREN3", apiType: "b3", tvSymbol: "BMFBOVESPA:LREN3" },
+    { label: "ENEV3", value: "ENEV3", apiType: "b3", tvSymbol: "BMFBOVESPA:ENEV3" },
+    { label: "KLBN11", value: "KLBN11", apiType: "b3", tvSymbol: "BMFBOVESPA:KLBN11" },
+    { label: "SBSP3", value: "SBSP3", apiType: "b3", tvSymbol: "BMFBOVESPA:SBSP3" },
   ],
+
+  Commodities: [
+    { label: "Ouro", value: "XAU", apiType: "commodity", tvSymbol: "TVC:GOLD" },
+    { label: "Prata", value: "XAG", apiType: "commodity", tvSymbol: "TVC:SILVER" },
+    { label: "Petróleo WTI", value: "WTI", apiType: "commodity", tvSymbol: "NYMEX:CL1!" },
+    { label: "Petróleo Brent", value: "BRENT", apiType: "commodity", tvSymbol: "TVC:UKOIL" },
+    { label: "Gás Natural", value: "NG", apiType: "commodity", tvSymbol: "NYMEX:NG1!" },
+    { label: "Soja", value: "SOJA", apiType: "commodity", tvSymbol: "CBOT:ZS1!" },
+    { label: "Milho", value: "MILHO", apiType: "commodity", tvSymbol: "CBOT:ZC1!" },
+    { label: "Café", value: "CAFE", apiType: "commodity", tvSymbol: "ICEUS:KC1!" },
+  ],
+
   "Futuros BR": [
-    {
-      label: "Mini Índice",
-      value: "WIN",
-      apiType: "future_br",
-      tvSymbol: "BMFBOVESPA:WIN1!",
-    },
-    {
-      label: "Mini Dólar",
-      value: "WDO",
-      apiType: "future_br",
-      tvSymbol: "BMFBOVESPA:WDO1!",
-    },
+    { label: "Mini Índice", value: "WIN", apiType: "future_br", tvSymbol: "BMFBOVESPA:WIN1!" },
+    { label: "Mini Dólar", value: "WDO", apiType: "future_br", tvSymbol: "BMFBOVESPA:WDO1!" },
   ],
+
   "Futuros US": [
-    {
-      label: "Mini Ouro",
-      value: "NGCJ",
-      apiType: "future_us",
-      tvSymbol: "TVC:GOLD",
-    },
-    {
-      label: "Mini Nasdaq",
-      value: "MNQ",
-      apiType: "future_us",
-      tvSymbol: "NASDAQ:NDX",
-    },
+    { label: "Mini Ouro", value: "MGC", apiType: "future_us", tvSymbol: "COMEX_MINI:MGC1!" },
+    { label: "Mini Nasdaq", value: "MNQ", apiType: "future_us", tvSymbol: "CME_MINI:MNQ1!" },
+    { label: "E-mini S&P 500", value: "ES", apiType: "future_us", tvSymbol: "CME_MINI:ES1!" },
+    { label: "Crude Oil", value: "CL", apiType: "future_us", tvSymbol: "NYMEX:CL1!" },
   ],
 };
 
@@ -451,6 +485,18 @@ function getTradingViewSymbol(category: AssetCategoryLabel, asset: string) {
   if (category === "Forex") return `FX:${asset}`;
   if (category === "B3") return `BMFBOVESPA:${asset}`;
 
+  if (category === "Commodities") {
+    if (asset === "XAU") return "TVC:GOLD";
+    if (asset === "XAG") return "TVC:SILVER";
+    if (asset === "WTI") return "NYMEX:CL1!";
+    if (asset === "BRENT") return "TVC:UKOIL";
+    if (asset === "NG") return "NYMEX:NG1!";
+    if (asset === "SOJA") return "CBOT:ZS1!";
+    if (asset === "MILHO") return "CBOT:ZC1!";
+    if (asset === "CAFE") return "ICEUS:KC1!";
+    return asset;
+  }
+
   if (category === "Futuros BR") {
     if (asset === "WIN") return "BMFBOVESPA:WIN1!";
     if (asset === "WDO") return "BMFBOVESPA:WDO1!";
@@ -459,12 +505,24 @@ function getTradingViewSymbol(category: AssetCategoryLabel, asset: string) {
 
   if (category === "Futuros US") {
     if (asset === "MNQ") return "CME_MINI:MNQ1!";
-    if (asset === "NGCJ") return "COMEX_MINI:MGC1!";
+    if (asset === "MGC") return "COMEX_MINI:MGC1!";
+    if (asset === "ES") return "CME_MINI:ES1!";
+    if (asset === "CL") return "NYMEX:CL1!";
     return asset;
   }
 
   if (category === "Ações") return `NASDAQ:${asset}`;
-  if (category === "Índices") return asset;
+
+  if (category === "Índices") {
+    if (asset === "SPX") return "SP:SPX";
+    if (asset === "IBOV") return "INDEX:IBOV";
+    if (asset === "NDX") return "NASDAQ:NDX";
+    if (asset === "NASDAQ") return "NASDAQ:IXIC";
+    if (asset === "DJI") return "DJ:DJI";
+    if (asset === "DAX") return "XETR:DAX";
+    if (asset === "JP225") return "INDEX:NKY";
+    return asset;
+  }
 
   return asset;
 }
@@ -2852,19 +2910,24 @@ export default function DashboardPage() {
   );
 
   const resolvedAsset = (customAsset.trim() || asset).toUpperCase();
-  const resolvedAssetType =
-    selectedAssetConfig?.apiType ??
-    (assetCategory === "Índices"
-      ? "index"
-      : assetCategory === "Ações"
-      ? "stock"
-      : assetCategory === "Forex"
-      ? "forex"
-      : assetCategory === "B3"
-      ? "b3"
-      : assetCategory === "Futuros BR"
-      ? "future_br"
-      : "crypto");
+
+const resolvedAssetType =
+  selectedAssetConfig?.apiType ??
+  (assetCategory === "Índices"
+    ? "index"
+    : assetCategory === "Ações"
+    ? "stock"
+    : assetCategory === "Forex"
+    ? "forex"
+    : assetCategory === "B3"
+    ? "b3"
+    : assetCategory === "Commodities"
+    ? "commodity"
+    : assetCategory === "Futuros BR"
+    ? "future_br"
+    : assetCategory === "Futuros US"
+    ? "future_us"
+    : "crypto");
 
   const tvSymbol = getTradingViewSymbol(assetCategory, resolvedAsset);
 
@@ -3012,6 +3075,7 @@ export default function DashboardPage() {
                   <option value="Forex">Forex</option>
                   <option value="Crypto">Crypto</option>
                   <option value="B3">B3</option>
+                  <option value="Commodities">Commodities</option>
                   <option value="Futuros BR">Futuros BR</option>
                   <option value="Futuros US">Futuros US</option>
                 </select>
