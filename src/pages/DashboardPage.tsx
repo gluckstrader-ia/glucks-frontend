@@ -946,16 +946,34 @@ function SummaryTab({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-4">
-          <div className="text-zinc-400 text-xs mb-3">Alvos adicionais</div>
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5">
+          <div className="text-zinc-400 text-sm mb-4">Alvos Adicionais</div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-green-900/60 bg-green-950/20 p-4">
-              <div className="text-green-400 text-xs">Take 2</div>
-              <div className="text-green-400 text-2xl font-bold mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              className={`rounded-2xl border p-5 ${
+                direction === "VENDA"
+                  ? "border-red-900/60 bg-red-950/20"
+                  : "border-green-900/60 bg-green-950/20"
+              }`}
+            >
+              <div
+                className={`text-sm ${
+                  direction === "VENDA" ? "text-red-400" : "text-green-400"
+                }`}
+              >
+                TP2
+              </div>
+
+              <div
+                className={`text-3xl font-bold mt-2 ${
+                  direction === "VENDA" ? "text-red-400" : "text-green-400"
+                }`}
+              >
                 {formatPrice(tp2, assetType)}
               </div>
-              <div className="text-zinc-400 text-xs mt-2">
+
+              <div className="text-zinc-400 text-sm mt-3">
                 Confiança:{" "}
                 <span className="text-cyan-400 font-semibold">
                   {tp2Confidence ?? "--"}%
@@ -963,12 +981,30 @@ function SummaryTab({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-green-900/60 bg-green-950/20 p-4">
-              <div className="text-green-400 text-xs">Take 3</div>
-              <div className="text-green-400 text-2xl font-bold mt-2">
+            <div
+              className={`rounded-2xl border p-5 ${
+                direction === "VENDA"
+                  ? "border-red-900/60 bg-red-950/20"
+                  : "border-green-900/60 bg-green-950/20"
+                }`}
+              >
+                <div
+                  className={`text-sm ${
+                    direction === "VENDA" ? "text-red-400" : "text-green-400"
+                }`}
+              >
+                TP3
+              </div>
+
+              <div
+                className={`text-3xl font-bold mt-2 ${
+                  direction === "VENDA" ? "text-red-400" : "text-green-400"
+                }`}
+              >
                 {formatPrice(tp3, assetType)}
               </div>
-              <div className="text-zinc-400 text-xs mt-2">
+
+              <div className="text-zinc-400 text-sm mt-3">
                 Confiança:{" "}
                 <span className="text-cyan-400 font-semibold">
                   {tp3Confidence ?? "--"}%
@@ -1057,21 +1093,49 @@ function SummaryTab({
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
           <div className="text-yellow-400 text-sm">Tendência</div>
-          <div className="text-green-400 text-4xl font-bold mt-3">
+          <div
+            className={`text-4xl font-bold mt-3 ${
+              trendLabel === "ALTA" || trendLabel === "COMPRA"
+                ? "text-green-400"
+                : trendLabel === "BAIXA" || trendLabel === "VENDA"
+                ? "text-red-400"
+                : "text-yellow-400"
+            }`}
+          >
             {trendLabel}
           </div>
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
           <div className="text-green-400 text-sm">Técnico</div>
-          <div className="text-green-400 text-4xl font-bold mt-3">
+          <div
+            className={`text-4xl font-bold mt-3 ${
+              technicalLabel === "ALTA" || technicalLabel === "COMPRA"
+                ? "text-green-400"
+                : technicalLabel === "BAIXA" || technicalLabel === "VENDA"
+                ? "text-red-400"
+                : "text-yellow-400"
+            }`}
+          >
             {technicalLabel}
           </div>
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
           <div className="text-yellow-400 text-sm">Smart Money</div>
-          <div className="text-red-400 text-4xl font-bold mt-3">
+          <div
+            className={`text-4xl font-bold mt-3 ${
+              smartMoneyLabel === "ALTA" ||
+              smartMoneyLabel === "COMPRA" ||
+              smartMoneyLabel === "BULLISH"
+                ? "text-green-400"
+                : smartMoneyLabel === "BAIXA" ||
+                  smartMoneyLabel === "VENDA" ||
+                  smartMoneyLabel === "BEARISH"
+                ? "text-red-400"
+                : "text-yellow-400"
+            }`}
+          >
             {smartMoneyLabel}
           </div>
         </div>
@@ -1187,7 +1251,7 @@ function ResumoAvancadoTab({
                 {formatPrice(t.price, assetType)}
               </div>
 
-              <div className="ml-auto flex items-center gap-3 w-48">
+              <div className="ml-auto flex items-center gap-3 min-w-[220px] max-w-[260px] w-full md:w-[240px]">
                 <div className="flex-1 h-2 bg-zinc-800 rounded-full">
                   <div
                     className="h-2 bg-emerald-400 rounded-full"
@@ -1255,7 +1319,7 @@ function ResumoAvancadoTab({
                 {formatPrice(t.price, assetType)}
               </div>
 
-              <div className="ml-auto flex items-center gap-3 w-48">
+              <div className="ml-auto flex items-center gap-3 min-w-[220px] max-w-[260px] w-full md:w-[240px]">
                 <div className="flex-1 h-2 bg-zinc-800 rounded-full">
                   <div
                     className="h-2 bg-red-400 rounded-full"
@@ -2582,6 +2646,7 @@ function TimingTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
 function SinalFinalTab({ analysisData }: { analysisData: AnalysisData | null }) {
   const signal = analysisData?.final_signal;
+  const assetType = analysisData?.asset_type ?? "crypto";
 
   if (!signal) {
     return <div className="text-zinc-400">Sem dados</div>;
@@ -2609,22 +2674,28 @@ function SinalFinalTab({ analysisData }: { analysisData: AnalysisData | null }) 
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="p-4 bg-zinc-900 rounded-xl">
           <div className="text-zinc-400 text-sm">Entrada</div>
-          <div className="text-white text-xl">{signal.entry?.toFixed(2)}</div>
-        </div>
+          <div className="text-white text-xl">
+            {formatPrice(signal.entry, assetType)}
+          </div>
+      </div>
 
-        <div className="p-4 bg-zinc-900 rounded-xl">
-          <div className="text-zinc-400 text-sm">Stop</div>
-          <div className="text-white text-xl">{signal.stop?.toFixed(2)}</div>
-        </div>
-
-        <div className="p-4 bg-zinc-900 rounded-xl">
-          <div className="text-zinc-400 text-sm">Alvo</div>
-          <div className="text-white text-xl">{signal.target?.toFixed(2)}</div>
+      <div className="p-4 bg-zinc-900 rounded-xl">
+        <div className="text-zinc-400 text-sm">Stop</div>
+        <div className="text-white text-xl">
+          {formatPrice(signal.stop, assetType)}
         </div>
       </div>
+
+      <div className="p-4 bg-zinc-900 rounded-xl">
+        <div className="text-zinc-400 text-sm">Alvo</div>
+        <div className="text-white text-xl">
+          {formatPrice(signal.target, assetType)}
+        </div>
+      </div>
+    </div>
 
       <div className="rounded-2xl border border-zinc-800 p-5">
         <div className="text-white font-semibold mb-3">📊 Justificativa</div>
