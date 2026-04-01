@@ -1145,14 +1145,14 @@ function SummaryTab({
         <div className="text-zinc-400 text-sm mb-4">Alvos Adicionais</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="rounded-2xl border border-green-900/60 bg-green-950/20 p-5">
-            <div className="text-green-400 text-sm">TP2</div>
+            <div className="text-green-400 text-sm">Take 2</div>
             <div className="text-green-400 text-3xl font-bold mt-2">
               {formatPrice(tp2, assetType)}
             </div>
           </div>
 
           <div className="rounded-2xl border border-green-900/60 bg-green-950/20 p-5">
-            <div className="text-green-400 text-sm">TP3</div>
+            <div className="text-green-400 text-sm">Take 3</div>
             <div className="text-green-400 text-3xl font-bold mt-2">
               {formatPrice(tp3, assetType)}
             </div>
