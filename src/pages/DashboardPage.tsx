@@ -308,7 +308,7 @@ const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
   Índices: [
     { label: "S&P 500", value: "SPX", apiType: "index", tvSymbol: "SP:SPX" },
     { label: "Ibovespa", value: "IBOV", apiType: "index", tvSymbol: "INDEX:IBOV" },
-    { label: "NASDAQ 100", value: "NDX", apiType: "index", tvSymbol: "FOREXCOM:US100" },
+    { label: "NASDAQ 100", value: "NDX", apiType: "index", tvSymbol: "FOREXCOM:NAS100" },
     { label: "NASDAQ Composite", value: "NASDAQ", apiType: "index", tvSymbol: "NASDAQ:IXIC" },
     { label: "Dow Jones", value: "DJI", apiType: "index", tvSymbol: "DJ:DJI" },
     { label: "DAX", value: "DAX", apiType: "index", tvSymbol: "XETR:DAX" },
@@ -516,7 +516,7 @@ function getTradingViewSymbol(category: AssetCategoryLabel, asset: string) {
   if (category === "Índices") {
     if (asset === "SPX") return "SP:SPX";
     if (asset === "IBOV") return "INDEX:IBOV";
-    if (asset === "NDX") return "NASDAQ:NDX";
+    if (asset === "NDX") return "FOREXCOM:NAS100";
     if (asset === "NASDAQ") return "NASDAQ:IXIC";
     if (asset === "DJI") return "DJ:DJI";
     if (asset === "DAX") return "XETR:DAX";
