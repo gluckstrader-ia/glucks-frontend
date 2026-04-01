@@ -469,14 +469,36 @@ function getTradingViewSymbol(category: AssetCategoryLabel, asset: string) {
   return asset;
 }
 
+type NewsItem = {
+  title: string;
+  summary: string;
+  source: string;
+  time: string;
+  author: string;
+  highlight?: boolean;
+  url?: string;
+};
+
+type EconomicEventItem = {
+  time: string;
+  country: string;
+  event: string;
+  actual: string;
+  forecast: string;
+  previous: string;
+  color: string;
+};
+
 function NewsPanel({
   newsTab,
   setNewsTab,
+  token,
 }: {
   newsTab: "news" | "events";
   setNewsTab: (tab: "news" | "events") => void;
+  token?: string | null;
 }) {
-  const newsItems = [
+  const fallbackNews: NewsItem[] = [
     {
       title:
         "Viana diz que decisão do STF impediu análise de dados de filho de Lula na CPMI",
@@ -519,7 +541,7 @@ function NewsPanel({
     },
   ];
 
-  const events = [
+  const fallbackEvents: EconomicEventItem[] = [
     {
       time: "09:00",
       country: "🇧🇷 BR",
@@ -558,6 +580,96 @@ function NewsPanel({
     },
   ];
 
+  const [newsItems, setNewsItems] = useState<NewsItem[]>(fallbackNews);
+  const [events, setEvents] = useState<EconomicEventItem[]>(fallbackEvents);
+  const [loadingNews, setLoadingNews] = useState(false);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [lastNewsUpdate, setLastNewsUpdate] = useState("");
+  const [lastEventsUpdate, setLastEventsUpdate] = useState("");
+
+  async function fetchNews() {
+    try {
+      setLoadingNews(true);
+
+      const response = await fetch(`${API_URL}/news`, {
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : undefined,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao carregar notícias: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      const normalized: NewsItem[] = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.items)
+        ? data.items
+        : [];
+
+      if (normalized.length > 0) {
+        setNewsItems(normalized);
+        setLastNewsUpdate(new Date().toLocaleTimeString("pt-BR"));
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar notícias:", error);
+    } finally {
+      setLoadingNews(false);
+    }
+  }
+
+  async function fetchEvents() {
+    try {
+      setLoadingEvents(true);
+
+      const response = await fetch(`${API_URL}/economic-events`, {
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : undefined,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao carregar eventos: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      const normalized: EconomicEventItem[] = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.items)
+        ? data.items
+        : [];
+
+      if (normalized.length > 0) {
+        setEvents(normalized);
+        setLastEventsUpdate(new Date().toLocaleTimeString("pt-BR"));
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar eventos:", error);
+    } finally {
+      setLoadingEvents(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchNews();
+    fetchEvents();
+
+    const newsInterval = setInterval(fetchNews, 5 * 60 * 1000);
+    const eventsInterval = setInterval(fetchEvents, 60 * 1000);
+
+    return () => {
+      clearInterval(newsInterval);
+      clearInterval(eventsInterval);
+    };
+  }, []);
+
   return (
     <Card className="bg-zinc-900 border-zinc-800 xl:col-span-5 overflow-hidden">
       <CardContent className="p-4 md:p-6 space-y-4">
@@ -571,7 +683,7 @@ function NewsPanel({
                 : "text-zinc-400 border-transparent hover:text-white"
             }`}
           >
-            📰 Notícias (10)
+            📰 Notícias ({newsItems.length})
           </button>
           <button
             type="button"
@@ -588,6 +700,11 @@ function NewsPanel({
 
         {newsTab === "news" ? (
           <div className="space-y-4">
+            <div className="text-xs text-zinc-500 flex items-center justify-between">
+              <span>{loadingNews ? "Atualizando notícias..." : "Notícias carregadas"}</span>
+              <span>{lastNewsUpdate ? `Última atualização: ${lastNewsUpdate}` : ""}</span>
+            </div>
+
             {newsItems.map((item, index) => (
               <div
                 key={index}
@@ -615,11 +732,8 @@ function NewsPanel({
                       <span>por {item.author}</span>
                     </div>
                   </div>
-                  <div
-                    className={`text-lg shrink-0 ${
-                      item.highlight ? "text-cyan-400" : "text-zinc-500"
-                    }`}
-                  >
+
+                  <div className={`text-lg shrink-0 ${item.highlight ? "text-cyan-400" : "text-zinc-500"}`}>
                     ↗
                   </div>
                 </div>
@@ -628,6 +742,11 @@ function NewsPanel({
           </div>
         ) : (
           <div className="space-y-4">
+            <div className="text-xs text-zinc-500 flex items-center justify-between">
+              <span>{loadingEvents ? "Atualizando eventos..." : "Eventos carregados"}</span>
+              <span>{lastEventsUpdate ? `Última atualização: ${lastEventsUpdate}` : ""}</span>
+            </div>
+
             <div className="rounded-3xl border border-zinc-800 bg-gradient-to-r from-zinc-950 to-zinc-900/70 p-4 md:p-5 overflow-x-auto">
               <div className="min-w-[720px]">
                 <div className="grid grid-cols-12 gap-4 text-xs uppercase tracking-wide text-zinc-500 border-b border-zinc-800 pb-3 mb-3">
@@ -639,6 +758,7 @@ function NewsPanel({
                   <div className="col-span-1">Prev.</div>
                   <div className="col-span-1">Ant.</div>
                 </div>
+
                 {events.map((item, index) => (
                   <div
                     key={index}
@@ -652,9 +772,7 @@ function NewsPanel({
                     </div>
                     <div className="col-span-4 text-white">{item.event}</div>
                     <div className="col-span-1">
-                      <span
-                        className={`inline-block h-2.5 w-2.5 rounded-full ${item.color}`}
-                      />
+                      <span className={`inline-block h-2.5 w-2.5 rounded-full ${item.color}`} />
                     </div>
                     <div className="col-span-1 text-cyan-400">{item.actual}</div>
                     <div className="col-span-1 text-zinc-300">{item.forecast}</div>
@@ -3012,7 +3130,7 @@ export default function DashboardPage() {
           {!tabs.includes(mainTab) && <PlaceholderTab label={mainTab} />}
 
           <div className="grid grid-cols-1 gap-6">
-            <NewsPanel newsTab={newsTab} setNewsTab={setNewsTab} />
+            <NewsPanel newsTab={newsTab} setNewsTab={setNewsTab} token={token} />
           </div>
         </div>
       </main>
