@@ -308,7 +308,7 @@ const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
   Índices: [
     { label: "S&P 500", value: "SPX", apiType: "index", tvSymbol: "SP:SPX" },
     { label: "Ibovespa", value: "IBOV", apiType: "index", tvSymbol: "INDEX:IBOV" },
-    { label: "NASDAQ 100", value: "NDX", apiType: "index", tvSymbol: "NASDAQ:NDX" },
+    { label: "NASDAQ 100", value: "NDX", apiType: "index", tvSymbol: "FOREXCOM:US100" },
     { label: "NASDAQ Composite", value: "NASDAQ", apiType: "index", tvSymbol: "NASDAQ:IXIC" },
     { label: "Dow Jones", value: "DJI", apiType: "index", tvSymbol: "DJ:DJI" },
     { label: "DAX", value: "DAX", apiType: "index", tvSymbol: "XETR:DAX" },
