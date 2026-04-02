@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Shield, UserCheck, UserX, RefreshCw } from "lucide-react";
+import { getStoredUser } from "../lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const navigate = useNavigate();
 
 type AdminUser = {
   id: number;
@@ -124,8 +127,20 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    loadUsers();
-  }, []);
+  const user = getStoredUser();
+
+  if (!user) {
+    navigate("/login", { replace: true });
+    return;
+  }
+
+  if (!user.is_admin) {
+    navigate("/home-premium", { replace: true });
+    return;
+  }
+
+  loadUsers();
+}, [navigate]);
 
   const summary = useMemo(() => {
     const total = users.length;

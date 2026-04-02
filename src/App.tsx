@@ -5,9 +5,10 @@ import RegisterPage from "./pages/RegisterPage";
 import PremiumPage from "./pages/PremiumPage";
 import PremiumHomePage from "./pages/PremiumHomePage";
 import DashboardPage from "./pages/DashboardPage";
+import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
-import AdminPage from "./pages/AdminPage";
+import AdminRoute from "./routes/AdminRoute";
 
 export default function App() {
   return (
@@ -24,6 +25,9 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/home-premium" element={<PremiumHomePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+        </Route>
+
+        <Route element={<AdminRoute />}>
           <Route path="/admin" element={<AdminPage />} />
         </Route>
 
