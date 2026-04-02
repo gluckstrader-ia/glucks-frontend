@@ -1,20 +1,35 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { clearAuth, getStoredUser } from "../lib/auth";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+
+type PlanId = "mensal" | "trimestral" | "semestral";
 
 export default function PremiumPage() {
   const navigate = useNavigate();
   const user = getStoredUser();
   const [searchParams] = useSearchParams();
 
-  const selectedPlan = useMemo(() => {
+  const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null);
+  const [error, setError] = useState("");
+
+  const selectedPlan = useMemo<PlanId>(() => {
     const plan = (searchParams.get("plan") || "mensal").toLowerCase();
     return ["mensal", "trimestral", "semestral"].includes(plan)
-      ? plan
+      ? (plan as PlanId)
       : "mensal";
   }, [searchParams]);
 
-  const plans = [
+  const plans: {
+    id: PlanId;
+    name: string;
+    price: string;
+    period: string;
+    description: string;
+    badge?: string;
+    features: string[];
+  }[] = [
     {
       id: "mensal",
       name: "Mensal",
@@ -65,31 +80,48 @@ export default function PremiumPage() {
     navigate("/");
   }
 
-  function handleSelectPlan(planId: string) {
+  function handleSelectPlan(planId: PlanId) {
     navigate(`/premium?plan=${planId}`);
   }
 
-  function handleWhatsApp(planId: string) {
-    const phone = "5551994830003"; // TROQUE PELO SEU NÚMERO COM DDI + DDD
+  async function handleCheckout(planId: PlanId) {
+    const token = localStorage.getItem("token");
 
-    let message = "";
-
-    if (planId === "mensal") {
-      message =
-        "Olá, quero assinar o plano MENSAL do Gluck’s Trader IA. Pode me passar os dados de pagamento?";
-    } else if (planId === "trimestral") {
-      message =
-        "Olá, quero assinar o plano TRIMESTRAL do Gluck’s Trader IA. Pode me passar os dados de pagamento?";
-    } else if (planId === "semestral") {
-      message =
-        "Olá, quero assinar o plano SEMESTRAL do Gluck’s Trader IA. Pode me passar os dados de pagamento?";
-    } else {
-      message =
-        "Olá, quero assinar o Gluck’s Trader IA. Pode me passar os dados de pagamento?";
+    if (!token) {
+      setError("Faça login novamente para continuar com a assinatura.");
+      navigate("/login");
+      return;
     }
 
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank");
+    setLoadingPlan(planId);
+    setError("");
+
+    try {
+      const response = await fetch(`${API_URL}/payments/create-checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ plan: planId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.detail || "Erro ao criar checkout");
+      }
+
+      if (!data?.checkout_url) {
+        throw new Error("Checkout não retornou URL de pagamento");
+      }
+
+      window.location.href = data.checkout_url;
+    } catch (err: any) {
+      setError(err?.message || "Erro ao iniciar pagamento");
+    } finally {
+      setLoadingPlan(null);
+    }
   }
 
   return (
@@ -106,10 +138,17 @@ export default function PremiumPage() {
             </p>
           </div>
 
+          {error ? (
+            <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-300">
+              {error}
+            </div>
+          ) : null}
+
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {plans.map((plan) => {
               const isSelected = selectedPlan === plan.id;
               const isHighlighted = plan.id === "trimestral";
+              const isLoading = loadingPlan === plan.id;
 
               return (
                 <div
@@ -162,10 +201,11 @@ export default function PremiumPage() {
                     </button>
 
                     <button
-                      onClick={() => handleWhatsApp(plan.id)}
-                      className="w-full rounded-xl bg-green-600 hover:bg-green-700 text-white py-3 font-semibold transition"
+                      onClick={() => handleCheckout(plan.id)}
+                      disabled={isLoading}
+                      className="w-full rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed text-white py-3 font-semibold transition"
                     >
-                      Assinar agora
+                      {isLoading ? "Redirecionando..." : "Assinar agora"}
                     </button>
                   </div>
                 </div>
