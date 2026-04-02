@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, RefreshCw, Search, Shield, UserCheck, UserX } from "lucide-react";
+import {
+  AlertTriangle,
+  BadgeDollarSign,
+  RefreshCw,
+  Search,
+  Shield,
+  UserCheck,
+  UserX,
+} from "lucide-react";
 import { getStoredUser } from "../lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
@@ -19,8 +27,26 @@ type AdminUser = {
   updated_at: string | null;
 };
 
+type AdminPayment = {
+  id: number;
+  user_id: number;
+  user_name: string;
+  user_email: string;
+  provider: string;
+  plan: string;
+  reference_id: string;
+  external_id: string | null;
+  checkout_url: string | null;
+  status: string;
+  amount: number;
+  amount_brl: number;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
 type PlanFilter = "todos" | "mensal" | "trimestral" | "semestral";
 type StatusFilter = "todos" | "ativos" | "inativos" | "bloqueados" | "admins" | "expirando";
+type PaymentStatusFilter = "todos" | "pending" | "paid";
 
 function getToken() {
   return localStorage.getItem("token");
@@ -33,11 +59,20 @@ function formatDate(value?: string | null) {
   return d.toLocaleString("pt-BR");
 }
 
-function badgeClass(kind: "green" | "red" | "yellow" | "blue" | "zinc") {
+function formatCurrency(value?: number | null) {
+  const amount = Number(value ?? 0);
+  return amount.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
+function badgeClass(kind: "green" | "red" | "yellow" | "blue" | "zinc" | "purple") {
   if (kind === "green") return "border-green-500/30 bg-green-500/10 text-green-300";
   if (kind === "red") return "border-red-500/30 bg-red-500/10 text-red-300";
   if (kind === "yellow") return "border-yellow-500/30 bg-yellow-500/10 text-yellow-300";
   if (kind === "blue") return "border-cyan-500/30 bg-cyan-500/10 text-cyan-300";
+  if (kind === "purple") return "border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300";
   return "border-zinc-700 bg-zinc-800/70 text-zinc-300";
 }
 
@@ -70,11 +105,16 @@ export default function AdminPage() {
   const navigate = useNavigate();
 
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [payments, setPayments] = useState<AdminPayment[]>([]);
   const [loading, setLoading] = useState(false);
-  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<PlanFilter>("todos");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
+  const [paymentSearch, setPaymentSearch] = useState("");
+  const [paymentStatusFilter, setPaymentStatusFilter] =
+    useState<PaymentStatusFilter>("todos");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -130,6 +170,49 @@ export default function AdminPage() {
     }
   }
 
+  async function loadPayments(searchTerm = "", status: PaymentStatusFilter = "todos") {
+    const token = getToken();
+
+    if (!token) {
+      setError("Token não encontrado. Faça login novamente.");
+      return;
+    }
+
+    setPaymentsLoading(true);
+    setError("");
+
+    try {
+      const url = new URL(`${API_URL}/admin/payments`);
+
+      if (searchTerm.trim()) {
+        url.searchParams.set("search", searchTerm.trim());
+      }
+
+      if (status !== "todos") {
+        url.searchParams.set("status_filter", status);
+      }
+
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.detail || "Erro ao carregar pagamentos");
+      }
+
+      setPayments(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      setError(err?.message || "Erro ao carregar pagamentos");
+    } finally {
+      setPaymentsLoading(false);
+    }
+  }
+
   async function toggleUserStatus(userId: number, type: "active" | "block") {
     const token = getToken();
 
@@ -138,7 +221,7 @@ export default function AdminPage() {
       return;
     }
 
-    setActionLoadingId(userId);
+    setActionLoadingId(`user-${userId}-${type}`);
     setError("");
     setSuccess("");
 
@@ -254,7 +337,10 @@ export default function AdminPage() {
     }
   }
 
-  async function quickRenewUser(user: AdminUser, plan: "mensal" | "trimestral" | "semestral") {
+  async function quickRenewUser(
+    user: AdminUser,
+    plan: "mensal" | "trimestral" | "semestral"
+  ) {
     const token = getToken();
 
     if (!token) {
@@ -262,7 +348,7 @@ export default function AdminPage() {
       return;
     }
 
-    setActionLoadingId(user.id);
+    setActionLoadingId(`renew-${user.id}-${plan}`);
     setError("");
     setSuccess("");
 
@@ -320,6 +406,87 @@ export default function AdminPage() {
     }
   }
 
+  async function confirmPayment(payment: AdminPayment) {
+    const token = getToken();
+
+    if (!token) {
+      setError("Token não encontrado. Faça login novamente.");
+      return;
+    }
+
+    setActionLoadingId(`payment-confirm-${payment.id}`);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(`${API_URL}/admin/payments/${payment.id}/confirm`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          payment_id: payment.id,
+          activate_user: true,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.detail || "Erro ao confirmar pagamento");
+      }
+
+      setSuccess(data?.message || "Pagamento confirmado com sucesso");
+      await Promise.all([
+        loadUsers(search),
+        loadPayments(paymentSearch, paymentStatusFilter),
+      ]);
+    } catch (err: any) {
+      setError(err?.message || "Erro ao confirmar pagamento");
+    } finally {
+      setActionLoadingId(null);
+    }
+  }
+
+  async function markPaymentPending(payment: AdminPayment) {
+    const token = getToken();
+
+    if (!token) {
+      setError("Token não encontrado. Faça login novamente.");
+      return;
+    }
+
+    setActionLoadingId(`payment-pending-${payment.id}`);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/admin/payments/${payment.id}/mark-pending`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.detail || "Erro ao marcar pagamento como pendente");
+      }
+
+      setSuccess(data?.message || "Pagamento marcado como pendente");
+      await loadPayments(paymentSearch, paymentStatusFilter);
+    } catch (err: any) {
+      setError(err?.message || "Erro ao marcar pagamento");
+    } finally {
+      setActionLoadingId(null);
+    }
+  }
+
   useEffect(() => {
     const user = getStoredUser();
 
@@ -334,6 +501,7 @@ export default function AdminPage() {
     }
 
     loadUsers();
+    loadPayments();
   }, [navigate]);
 
   const filteredUsers = useMemo(() => {
@@ -379,6 +547,17 @@ export default function AdminPage() {
     return { total, active, blocked, admins };
   }, [users]);
 
+  const paymentSummary = useMemo(() => {
+    const total = payments.length;
+    const pending = payments.filter((p) => p.status === "pending").length;
+    const paid = payments.filter((p) => p.status === "paid").length;
+    const totalRevenue = payments
+      .filter((p) => p.status === "paid")
+      .reduce((sum, p) => sum + (p.amount_brl || 0), 0);
+
+    return { total, pending, paid, totalRevenue };
+  }, [payments]);
+
   return (
     <div className="min-h-screen bg-[#03070d] text-white">
       <div className="border-b border-zinc-900/80 bg-[#03070d]/90 backdrop-blur-xl">
@@ -388,17 +567,20 @@ export default function AdminPage() {
               Painel Administrativo
             </h1>
             <p className="mt-1 text-sm text-zinc-400">
-              Gerencie usuários, acesso, assinaturas e renovações
+              Gerencie usuários, assinaturas, pagamentos e renovações
             </p>
           </div>
 
           <button
             type="button"
-            onClick={() => loadUsers(search)}
+            onClick={() => {
+              loadUsers(search);
+              loadPayments(paymentSearch, paymentStatusFilter);
+            }}
             className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-cyan-500/30 hover:text-white"
           >
             <RefreshCw className="h-4 w-4" />
-            Atualizar
+            Atualizar tudo
           </button>
         </div>
       </div>
@@ -433,7 +615,7 @@ export default function AdminPage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      disabled={actionLoadingId === user.id}
+                      disabled={actionLoadingId === `renew-${user.id}-mensal`}
                       onClick={() => quickRenewUser(user, "mensal")}
                       className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
                     >
@@ -441,7 +623,7 @@ export default function AdminPage() {
                     </button>
                     <button
                       type="button"
-                      disabled={actionLoadingId === user.id}
+                      disabled={actionLoadingId === `renew-${user.id}-trimestral`}
                       onClick={() => quickRenewUser(user, "trimestral")}
                       className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
                     >
@@ -449,7 +631,7 @@ export default function AdminPage() {
                     </button>
                     <button
                       type="button"
-                      disabled={actionLoadingId === user.id}
+                      disabled={actionLoadingId === `renew-${user.id}-semestral`}
                       onClick={() => quickRenewUser(user, "semestral")}
                       className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
                     >
@@ -540,7 +722,7 @@ export default function AdminPage() {
               </div>
 
               <div className="flex items-end">
-                <div className="h-11 w-full rounded-xl border border-zinc-800 bg-zinc-900/70 px-4 text-sm text-zinc-400 flex items-center">
+                <div className="flex h-11 w-full items-center rounded-xl border border-zinc-800 bg-zinc-900/70 px-4 text-sm text-zinc-400">
                   Mostrando {filteredUsers.length} de {users.length} usuários
                 </div>
               </div>
@@ -677,7 +859,7 @@ export default function AdminPage() {
 
                             <button
                               type="button"
-                              disabled={actionLoadingId === user.id}
+                              disabled={actionLoadingId === `user-${user.id}-active`}
                               onClick={() => toggleUserStatus(user.id, "active")}
                               className="rounded-xl border border-green-500/20 bg-green-500/10 px-3 py-2 text-xs font-medium text-green-300 transition hover:bg-green-500/20 disabled:opacity-60"
                             >
@@ -686,7 +868,7 @@ export default function AdminPage() {
 
                             <button
                               type="button"
-                              disabled={actionLoadingId === user.id}
+                              disabled={actionLoadingId === `user-${user.id}-block`}
                               onClick={() => toggleUserStatus(user.id, "block")}
                               className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300 transition hover:bg-red-500/20 disabled:opacity-60"
                             >
@@ -695,7 +877,7 @@ export default function AdminPage() {
 
                             <button
                               type="button"
-                              disabled={actionLoadingId === user.id}
+                              disabled={actionLoadingId === `renew-${user.id}-mensal`}
                               onClick={() => quickRenewUser(user, "mensal")}
                               className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
                             >
@@ -704,7 +886,7 @@ export default function AdminPage() {
 
                             <button
                               type="button"
-                              disabled={actionLoadingId === user.id}
+                              disabled={actionLoadingId === `renew-${user.id}-trimestral`}
                               onClick={() => quickRenewUser(user, "trimestral")}
                               className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
                             >
@@ -713,7 +895,7 @@ export default function AdminPage() {
 
                             <button
                               type="button"
-                              disabled={actionLoadingId === user.id}
+                              disabled={actionLoadingId === `renew-${user.id}-semestral`}
                               onClick={() => quickRenewUser(user, "semestral")}
                               className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
                             >
@@ -727,6 +909,186 @@ export default function AdminPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <div className="mb-4 flex items-center gap-2">
+            <BadgeDollarSign className="h-5 w-5 text-fuchsia-300" />
+            <h2 className="text-xl font-semibold text-white">Pagamentos e Assinaturas</h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <SummaryCard
+              label="Pagamentos"
+              value={paymentSummary.total}
+              icon={<BadgeDollarSign className="h-5 w-5" />}
+            />
+            <SummaryCard
+              label="Pendentes"
+              value={paymentSummary.pending}
+              icon={<AlertTriangle className="h-5 w-5" />}
+            />
+            <SummaryCard
+              label="Pagos"
+              value={paymentSummary.paid}
+              icon={<UserCheck className="h-5 w-5" />}
+            />
+            <MoneyCard label="Receita confirmada" value={paymentSummary.totalRevenue} />
+          </div>
+
+          <div className="mt-6 rounded-[28px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
+                <div>
+                  <label className="mb-2 block text-sm text-zinc-400">Buscar pagamento</label>
+                  <input
+                    value={paymentSearch}
+                    onChange={(e) => setPaymentSearch(e.target.value)}
+                    placeholder="Nome, e-mail, referência..."
+                    className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm text-white outline-none transition focus:border-fuchsia-500/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm text-zinc-400">Status</label>
+                  <select
+                    value={paymentStatusFilter}
+                    onChange={(e) =>
+                      setPaymentStatusFilter(e.target.value as PaymentStatusFilter)
+                    }
+                    className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm text-white outline-none transition focus:border-fuchsia-500/40"
+                  >
+                    <option value="todos">Todos</option>
+                    <option value="pending">Pendentes</option>
+                    <option value="paid">Pagos</option>
+                  </select>
+                </div>
+
+                <div className="flex items-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => loadPayments(paymentSearch, paymentStatusFilter)}
+                    className="h-11 flex-1 rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/10 px-4 text-sm font-medium text-fuchsia-300 transition hover:bg-fuchsia-500/20"
+                  >
+                    Buscar pagamentos
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentSearch("");
+                      setPaymentStatusFilter("todos");
+                      loadPayments("", "todos");
+                    }}
+                    className="h-11 rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-zinc-300 transition hover:text-white"
+                  >
+                    Limpar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 overflow-x-auto">
+              <table className="min-w-full border-separate border-spacing-y-3">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-zinc-500">
+                    <th className="px-4 py-2">Usuário</th>
+                    <th className="px-4 py-2">Plano</th>
+                    <th className="px-4 py-2">Valor</th>
+                    <th className="px-4 py-2">Status</th>
+                    <th className="px-4 py-2">Referência</th>
+                    <th className="px-4 py-2">Criado em</th>
+                    <th className="px-4 py-2">Ações</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {paymentsLoading ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-8 text-center text-zinc-400">
+                        Carregando pagamentos...
+                      </td>
+                    </tr>
+                  ) : payments.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-8 text-center text-zinc-400">
+                        Nenhum pagamento encontrado.
+                      </td>
+                    </tr>
+                  ) : (
+                    payments.map((payment) => (
+                      <tr
+                        key={payment.id}
+                        className="rounded-2xl border border-zinc-800 bg-zinc-900/60"
+                      >
+                        <td className="rounded-l-2xl px-4 py-4 align-middle">
+                          <div className="font-medium text-white">{payment.user_name}</div>
+                          <div className="mt-1 text-sm text-zinc-400">{payment.user_email}</div>
+                        </td>
+
+                        <td className="px-4 py-4 align-middle">
+                          <span className="inline-flex rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 px-3 py-1 text-xs font-medium text-fuchsia-300">
+                            {payment.plan}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-4 align-middle text-sm text-zinc-300">
+                          {formatCurrency(payment.amount_brl)}
+                        </td>
+
+                        <td className="px-4 py-4 align-middle">
+                          <span
+                            className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                              payment.status === "paid"
+                                ? badgeClass("green")
+                                : payment.status === "pending"
+                                ? badgeClass("yellow")
+                                : badgeClass("zinc")
+                            }`}
+                          >
+                            {payment.status}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-4 align-middle text-sm text-zinc-300">
+                          <div>{payment.reference_id || "—"}</div>
+                          <div className="mt-1 text-xs text-zinc-500">
+                            {payment.external_id || "sem external_id"}
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-4 align-middle text-sm text-zinc-300">
+                          {formatDate(payment.created_at)}
+                        </td>
+
+                        <td className="rounded-r-2xl px-4 py-4 align-middle">
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              disabled={actionLoadingId === `payment-confirm-${payment.id}`}
+                              onClick={() => confirmPayment(payment)}
+                              className="rounded-xl border border-green-500/20 bg-green-500/10 px-3 py-2 text-xs font-medium text-green-300 transition hover:bg-green-500/20 disabled:opacity-60"
+                            >
+                              Confirmar pagamento
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={actionLoadingId === `payment-pending-${payment.id}`}
+                              onClick={() => markPaymentPending(payment)}
+                              className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-3 py-2 text-xs font-medium text-yellow-300 transition hover:bg-yellow-500/20 disabled:opacity-60"
+                            >
+                              Marcar pendente
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -926,6 +1288,23 @@ function SummaryCard({
 
       <div className="mt-4 text-3xl font-bold tracking-tight text-white">
         {value}
+      </div>
+    </div>
+  );
+}
+
+function MoneyCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-[24px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-5">
+      <div className="text-sm text-zinc-400">{label}</div>
+      <div className="mt-4 text-3xl font-bold tracking-tight text-fuchsia-300">
+        {formatCurrency(value)}
       </div>
     </div>
   );
