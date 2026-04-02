@@ -4,7 +4,6 @@ import { Search, Shield, UserCheck, UserX, RefreshCw } from "lucide-react";
 import { getStoredUser } from "../lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
-const navigate = useNavigate();
 
 type AdminUser = {
   id: number;
@@ -40,6 +39,7 @@ function badgeClass(kind: "green" | "red" | "yellow" | "blue" | "zinc") {
 }
 
 export default function AdminPage() {
+  const navigate = useNavigate();  
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
