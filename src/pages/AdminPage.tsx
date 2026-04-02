@@ -39,13 +39,26 @@ function badgeClass(kind: "green" | "red" | "yellow" | "blue" | "zinc") {
 }
 
 export default function AdminPage() {
-  const navigate = useNavigate();  
+  const navigate = useNavigate();
+
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPlan, setEditPlan] = useState("mensal");
+  const [editPlanStatus, setEditPlanStatus] = useState("active");
+  const [editExpiresAt, setEditExpiresAt] = useState("");
+  const [editIsActive, setEditIsActive] = useState(true);
+  const [editIsBlocked, setEditIsBlocked] = useState(false);
+  const [editIsAdmin, setEditIsAdmin] = useState(false);
 
   async function loadUsers(searchTerm = "") {
     const token = getToken();
@@ -126,21 +139,91 @@ export default function AdminPage() {
     }
   }
 
+  function openEditModal(user: AdminUser) {
+    setEditingUser(user);
+    setEditName(user.name || "");
+    setEditEmail(user.email || "");
+    setEditPlan(user.plan || "mensal");
+    setEditPlanStatus(user.plan_status || "active");
+    setEditExpiresAt(
+      user.access_expires_at
+        ? new Date(user.access_expires_at).toISOString().slice(0, 16)
+        : ""
+    );
+    setEditIsActive(user.is_active);
+    setEditIsBlocked(user.is_blocked);
+    setEditIsAdmin(user.is_admin);
+    setError("");
+    setSuccess("");
+  }
+
+  async function saveUserEdit() {
+    if (!editingUser) return;
+
+    const token = getToken();
+
+    if (!token) {
+      setError("Token não encontrado. Faça login novamente.");
+      return;
+    }
+
+    setSavingEdit(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(`${API_URL}/admin/users/${editingUser.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: editingUser.id,
+          name: editName,
+          email: editEmail,
+          plan: editPlan,
+          plan_status: editPlanStatus,
+          access_expires_at: editExpiresAt
+            ? new Date(editExpiresAt).toISOString()
+            : null,
+          is_active: editIsActive,
+          is_blocked: editIsBlocked,
+          is_admin: editIsAdmin,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.detail || "Erro ao salvar usuário");
+      }
+
+      setSuccess(data?.message || "Usuário atualizado com sucesso");
+      setEditingUser(null);
+      await loadUsers(search);
+    } catch (err: any) {
+      setError(err?.message || "Erro ao salvar usuário");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
   useEffect(() => {
-  const user = getStoredUser();
+    const user = getStoredUser();
 
-  if (!user) {
-    navigate("/login", { replace: true });
-    return;
-  }
+    if (!user) {
+      navigate("/login", { replace: true });
+      return;
+    }
 
-  if (!user.is_admin) {
-    navigate("/home-premium", { replace: true });
-    return;
-  }
+    if (!user.is_admin) {
+      navigate("/home-premium", { replace: true });
+      return;
+    }
 
-  loadUsers();
-}, [navigate]);
+    loadUsers();
+  }, [navigate]);
 
   const summary = useMemo(() => {
     const total = users.length;
@@ -275,9 +358,7 @@ export default function AdminPage() {
                         <div className="flex flex-wrap gap-2">
                           <span
                             className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                              user.is_active
-                                ? badgeClass("green")
-                                : badgeClass("yellow")
+                              user.is_active ? badgeClass("green") : badgeClass("yellow")
                             }`}
                           >
                             {user.is_active ? "Ativo" : "Inativo"}
@@ -285,9 +366,7 @@ export default function AdminPage() {
 
                           <span
                             className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                              user.is_blocked
-                                ? badgeClass("red")
-                                : badgeClass("zinc")
+                              user.is_blocked ? badgeClass("red") : badgeClass("zinc")
                             }`}
                           >
                             {user.is_blocked ? "Bloqueado" : "Liberado"}
@@ -311,6 +390,14 @@ export default function AdminPage() {
 
                       <td className="rounded-r-2xl px-4 py-4 align-middle">
                         <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(user)}
+                            className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20"
+                          >
+                            Editar
+                          </button>
+
                           <button
                             type="button"
                             disabled={actionLoadingId === user.id}
@@ -338,6 +425,134 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+
+      {editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-2xl rounded-[28px] border border-zinc-800 bg-[#0b1118] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Editar usuário</h2>
+                <p className="mt-1 text-sm text-zinc-400">
+                  Atualize plano, status, validade e permissões
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setEditingUser(null)}
+                className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 transition hover:text-white"
+              >
+                Fechar
+              </button>
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm text-zinc-400">Nome</label>
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm text-white outline-none focus:border-cyan-500/40"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm text-zinc-400">E-mail</label>
+                <input
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm text-white outline-none focus:border-cyan-500/40"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm text-zinc-400">Plano</label>
+                <select
+                  value={editPlan}
+                  onChange={(e) => setEditPlan(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm text-white outline-none focus:border-cyan-500/40"
+                >
+                  <option value="mensal">Mensal</option>
+                  <option value="trimestral">Trimestral</option>
+                  <option value="semestral">Semestral</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm text-zinc-400">Status do plano</label>
+                <select
+                  value={editPlanStatus}
+                  onChange={(e) => setEditPlanStatus(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm text-white outline-none focus:border-cyan-500/40"
+                >
+                  <option value="active">Ativo</option>
+                  <option value="pending">Pendente</option>
+                  <option value="expired">Expirado</option>
+                  <option value="cancelled">Cancelado</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm text-zinc-400">Expira em</label>
+                <input
+                  type="datetime-local"
+                  value={editExpiresAt}
+                  onChange={(e) => setEditExpiresAt(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm text-white outline-none focus:border-cyan-500/40"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+              <label className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/70 px-4 py-3 text-sm text-zinc-300">
+                <input
+                  type="checkbox"
+                  checked={editIsActive}
+                  onChange={(e) => setEditIsActive(e.target.checked)}
+                />
+                Usuário ativo
+              </label>
+
+              <label className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/70 px-4 py-3 text-sm text-zinc-300">
+                <input
+                  type="checkbox"
+                  checked={editIsBlocked}
+                  onChange={(e) => setEditIsBlocked(e.target.checked)}
+                />
+                Usuário bloqueado
+              </label>
+
+              <label className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/70 px-4 py-3 text-sm text-zinc-300">
+                <input
+                  type="checkbox"
+                  checked={editIsAdmin}
+                  onChange={(e) => setEditIsAdmin(e.target.checked)}
+                />
+                Administrador
+              </label>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setEditingUser(null)}
+                className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:text-white"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                disabled={savingEdit}
+                onClick={saveUserEdit}
+                className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
+              >
+                {savingEdit ? "Salvando..." : "Salvar alterações"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
