@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Shield, UserCheck, UserX, RefreshCw } from "lucide-react";
+import { RefreshCw, Search, Shield, UserCheck, UserX } from "lucide-react";
 import { getStoredUser } from "../lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
@@ -74,6 +74,7 @@ export default function AdminPage() {
 
     try {
       const url = new URL(`${API_URL}/admin/users`);
+
       if (searchTerm.trim()) {
         url.searchParams.set("search", searchTerm.trim());
       }
@@ -155,6 +156,24 @@ export default function AdminPage() {
     setEditIsAdmin(user.is_admin);
     setError("");
     setSuccess("");
+  }
+
+  function applyPlanDuration(plan: string) {
+    const now = new Date();
+
+    if (plan === "mensal") {
+      now.setDate(now.getDate() + 30);
+    } else if (plan === "trimestral") {
+      now.setDate(now.getDate() + 90);
+    } else if (plan === "semestral") {
+      now.setDate(now.getDate() + 180);
+    }
+
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+
+    setEditExpiresAt(local);
   }
 
   async function saveUserEdit() {
@@ -469,7 +488,11 @@ export default function AdminPage() {
                 <label className="mb-2 block text-sm text-zinc-400">Plano</label>
                 <select
                   value={editPlan}
-                  onChange={(e) => setEditPlan(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setEditPlan(value);
+                    applyPlanDuration(value);
+                  }}
                   className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm text-white outline-none focus:border-cyan-500/40"
                 >
                   <option value="mensal">Mensal</option>
@@ -500,6 +523,46 @@ export default function AdminPage() {
                   onChange={(e) => setEditExpiresAt(e.target.value)}
                   className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm text-white outline-none focus:border-cyan-500/40"
                 />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm text-zinc-400">
+                  Atalhos de validade
+                </label>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => applyPlanDuration("mensal")}
+                    className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20"
+                  >
+                    +30 dias
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => applyPlanDuration("trimestral")}
+                    className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20"
+                  >
+                    +90 dias
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => applyPlanDuration("semestral")}
+                    className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20"
+                  >
+                    +180 dias
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditExpiresAt("")}
+                    className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-300 transition hover:text-white"
+                  >
+                    Limpar validade
+                  </button>
+                </div>
               </div>
             </div>
 
