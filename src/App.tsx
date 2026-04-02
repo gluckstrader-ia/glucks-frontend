@@ -7,6 +7,7 @@ import PremiumHomePage from "./pages/PremiumHomePage";
 import DashboardPage from "./pages/DashboardPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
+import AdminPage from "./pages/AdminPage";
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/home-premium" element={<PremiumHomePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
