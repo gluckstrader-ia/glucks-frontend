@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { RefreshCw, Search, Shield, UserCheck, UserX } from "lucide-react";
+import { AlertTriangle, RefreshCw, Search, Shield, UserCheck, UserX } from "lucide-react";
 import { getStoredUser } from "../lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
@@ -18,6 +18,9 @@ type AdminUser = {
   created_at: string | null;
   updated_at: string | null;
 };
+
+type PlanFilter = "todos" | "mensal" | "trimestral" | "semestral";
+type StatusFilter = "todos" | "ativos" | "inativos" | "bloqueados" | "admins" | "expirando";
 
 function getToken() {
   return localStorage.getItem("token");
@@ -38,6 +41,31 @@ function badgeClass(kind: "green" | "red" | "yellow" | "blue" | "zinc") {
   return "border-zinc-700 bg-zinc-800/70 text-zinc-300";
 }
 
+function isExpiringSoon(value?: string | null, days = 7) {
+  if (!value) return false;
+  const target = new Date(value).getTime();
+  if (Number.isNaN(target)) return false;
+
+  const now = Date.now();
+  const diff = target - now;
+  const limit = days * 24 * 60 * 60 * 1000;
+
+  return diff >= 0 && diff <= limit;
+}
+
+function isExpired(value?: string | null) {
+  if (!value) return false;
+  const target = new Date(value).getTime();
+  if (Number.isNaN(target)) return false;
+  return target < Date.now();
+}
+
+function toLocalDatetimeInput(date: Date) {
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+}
+
 export default function AdminPage() {
   const navigate = useNavigate();
 
@@ -45,6 +73,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  const [planFilter, setPlanFilter] = useState<PlanFilter>("todos");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -169,11 +199,7 @@ export default function AdminPage() {
       now.setDate(now.getDate() + 180);
     }
 
-    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 16);
-
-    setEditExpiresAt(local);
+    setEditExpiresAt(toLocalDatetimeInput(now));
   }
 
   async function saveUserEdit() {
@@ -228,6 +254,72 @@ export default function AdminPage() {
     }
   }
 
+  async function quickRenewUser(user: AdminUser, plan: "mensal" | "trimestral" | "semestral") {
+    const token = getToken();
+
+    if (!token) {
+      setError("Token não encontrado. Faça login novamente.");
+      return;
+    }
+
+    setActionLoadingId(user.id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const baseDate =
+        user.access_expires_at && !isExpired(user.access_expires_at)
+          ? new Date(user.access_expires_at)
+          : new Date();
+
+      const nextDate = new Date(baseDate);
+
+      if (plan === "mensal") {
+        nextDate.setDate(nextDate.getDate() + 30);
+      } else if (plan === "trimestral") {
+        nextDate.setDate(nextDate.getDate() + 90);
+      } else {
+        nextDate.setDate(nextDate.getDate() + 180);
+      }
+
+      const response = await fetch(`${API_URL}/admin/users/${user.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          name: user.name,
+          email: user.email,
+          plan,
+          plan_status: "active",
+          access_expires_at: nextDate.toISOString(),
+          is_active: true,
+          is_blocked: user.is_blocked,
+          is_admin: user.is_admin,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.detail || "Erro ao renovar usuário");
+      }
+
+      setSuccess(
+        `Acesso renovado com sucesso: ${user.name} → ${plan} até ${formatDate(
+          nextDate.toISOString()
+        )}`
+      );
+      await loadUsers(search);
+    } catch (err: any) {
+      setError(err?.message || "Erro ao renovar usuário");
+    } finally {
+      setActionLoadingId(null);
+    }
+  }
+
   useEffect(() => {
     const user = getStoredUser();
 
@@ -243,6 +335,40 @@ export default function AdminPage() {
 
     loadUsers();
   }, [navigate]);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      const byPlan =
+        planFilter === "todos" ? true : user.plan === planFilter;
+
+      const byStatus =
+        statusFilter === "todos"
+          ? true
+          : statusFilter === "ativos"
+          ? user.is_active
+          : statusFilter === "inativos"
+          ? !user.is_active
+          : statusFilter === "bloqueados"
+          ? user.is_blocked
+          : statusFilter === "admins"
+          ? user.is_admin
+          : statusFilter === "expirando"
+          ? isExpiringSoon(user.access_expires_at, 7)
+          : true;
+
+      return byPlan && byStatus;
+    });
+  }, [users, planFilter, statusFilter]);
+
+  const expiringSoonUsers = useMemo(() => {
+    return users
+      .filter((u) => isExpiringSoon(u.access_expires_at, 7))
+      .sort((a, b) => {
+        const da = a.access_expires_at ? new Date(a.access_expires_at).getTime() : 0;
+        const db = b.access_expires_at ? new Date(b.access_expires_at).getTime() : 0;
+        return da - db;
+      });
+  }, [users]);
 
   const summary = useMemo(() => {
     const total = users.length;
@@ -262,7 +388,7 @@ export default function AdminPage() {
               Painel Administrativo
             </h1>
             <p className="mt-1 text-sm text-zinc-400">
-              Gerencie usuários, acesso e status da plataforma
+              Gerencie usuários, acesso, assinaturas e renovações
             </p>
           </div>
 
@@ -285,33 +411,139 @@ export default function AdminPage() {
           <SummaryCard label="Admins" value={summary.admins} icon={<Shield className="h-5 w-5" />} />
         </div>
 
+        {expiringSoonUsers.length > 0 && (
+          <div className="mt-6 rounded-[24px] border border-yellow-500/20 bg-yellow-500/10 p-5">
+            <div className="flex items-center gap-2 text-yellow-300">
+              <AlertTriangle className="h-5 w-5" />
+              <div className="text-lg font-semibold">Expiram em breve</div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {expiringSoonUsers.map((user) => (
+                <div
+                  key={user.id}
+                  className="rounded-2xl border border-yellow-500/20 bg-black/20 p-4"
+                >
+                  <div className="font-medium text-white">{user.name}</div>
+                  <div className="mt-1 text-sm text-zinc-400">{user.email}</div>
+                  <div className="mt-3 text-sm text-yellow-300">
+                    Expira em: {formatDate(user.access_expires_at)}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={actionLoadingId === user.id}
+                      onClick={() => quickRenewUser(user, "mensal")}
+                      className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
+                    >
+                      +30 dias
+                    </button>
+                    <button
+                      type="button"
+                      disabled={actionLoadingId === user.id}
+                      onClick={() => quickRenewUser(user, "trimestral")}
+                      className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
+                    >
+                      +90 dias
+                    </button>
+                    <button
+                      type="button"
+                      disabled={actionLoadingId === user.id}
+                      onClick={() => quickRenewUser(user, "semestral")}
+                      className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
+                    >
+                      +180 dias
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 rounded-[28px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-5">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="text-xl font-semibold">Usuários</div>
-              <div className="mt-1 text-sm text-zinc-400">
-                Busque, revise e altere status de acesso
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-xl font-semibold">Usuários</div>
+                <div className="mt-1 text-sm text-zinc-400">
+                  Busque, filtre, revise e renove acessos rapidamente
+                </div>
+              </div>
+
+              <div className="flex w-full max-w-xl items-center gap-3">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar por nome ou e-mail"
+                    className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 pl-10 pr-4 text-sm text-white outline-none transition focus:border-cyan-500/40"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => loadUsers(search)}
+                  className="h-11 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20"
+                >
+                  Buscar
+                </button>
               </div>
             </div>
 
-            <div className="flex w-full max-w-xl items-center gap-3">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar por nome ou e-mail"
-                  className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 pl-10 pr-4 text-sm text-white outline-none transition focus:border-cyan-500/40"
-                />
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div>
+                <label className="mb-2 block text-sm text-zinc-400">Filtro por plano</label>
+                <select
+                  value={planFilter}
+                  onChange={(e) => setPlanFilter(e.target.value as PlanFilter)}
+                  className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm text-white outline-none focus:border-cyan-500/40"
+                >
+                  <option value="todos">Todos os planos</option>
+                  <option value="mensal">Mensal</option>
+                  <option value="trimestral">Trimestral</option>
+                  <option value="semestral">Semestral</option>
+                </select>
               </div>
 
-              <button
-                type="button"
-                onClick={() => loadUsers(search)}
-                className="h-11 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20"
-              >
-                Buscar
-              </button>
+              <div>
+                <label className="mb-2 block text-sm text-zinc-400">Filtro por status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                  className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm text-white outline-none focus:border-cyan-500/40"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="ativos">Ativos</option>
+                  <option value="inativos">Inativos</option>
+                  <option value="bloqueados">Bloqueados</option>
+                  <option value="admins">Admins</option>
+                  <option value="expirando">Expiram em breve</option>
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlanFilter("todos");
+                    setStatusFilter("todos");
+                    setSearch("");
+                    loadUsers("");
+                  }}
+                  className="h-11 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-zinc-300 transition hover:text-white"
+                >
+                  Limpar filtros
+                </button>
+              </div>
+
+              <div className="flex items-end">
+                <div className="h-11 w-full rounded-xl border border-zinc-800 bg-zinc-900/70 px-4 text-sm text-zinc-400 flex items-center">
+                  Mostrando {filteredUsers.length} de {users.length} usuários
+                </div>
+              </div>
             </div>
           </div>
 
@@ -347,97 +579,151 @@ export default function AdminPage() {
                       Carregando usuários...
                     </td>
                   </tr>
-                ) : users.length === 0 ? (
+                ) : filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-zinc-400">
                       Nenhum usuário encontrado.
                     </td>
                   </tr>
                 ) : (
-                  users.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="rounded-2xl border border-zinc-800 bg-zinc-900/60"
-                    >
-                      <td className="rounded-l-2xl px-4 py-4 align-middle">
-                        <div className="font-medium text-white">{user.name}</div>
-                        <div className="mt-1 text-sm text-zinc-400">{user.email}</div>
-                      </td>
+                  filteredUsers.map((user) => {
+                    const expiringSoon = isExpiringSoon(user.access_expires_at, 7);
+                    const expired = isExpired(user.access_expires_at);
 
-                      <td className="px-4 py-4 align-middle">
-                        <div className="inline-flex rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">
-                          {user.plan || "none"}
-                        </div>
-                        <div className="mt-2 text-xs text-zinc-500">
-                          {user.plan_status || "pending"}
-                        </div>
-                      </td>
+                    return (
+                      <tr
+                        key={user.id}
+                        className={`rounded-2xl border bg-zinc-900/60 ${
+                          expired
+                            ? "border-red-500/20"
+                            : expiringSoon
+                            ? "border-yellow-500/20"
+                            : "border-zinc-800"
+                        }`}
+                      >
+                        <td className="rounded-l-2xl px-4 py-4 align-middle">
+                          <div className="font-medium text-white">{user.name}</div>
+                          <div className="mt-1 text-sm text-zinc-400">{user.email}</div>
+                        </td>
 
-                      <td className="px-4 py-4 align-middle">
-                        <div className="flex flex-wrap gap-2">
+                        <td className="px-4 py-4 align-middle">
+                          <div className="inline-flex rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">
+                            {user.plan || "none"}
+                          </div>
+                          <div className="mt-2 text-xs text-zinc-500">
+                            {user.plan_status || "pending"}
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-4 align-middle">
+                          <div className="flex flex-wrap gap-2">
+                            <span
+                              className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                                user.is_active ? badgeClass("green") : badgeClass("yellow")
+                              }`}
+                            >
+                              {user.is_active ? "Ativo" : "Inativo"}
+                            </span>
+
+                            <span
+                              className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                                user.is_blocked ? badgeClass("red") : badgeClass("zinc")
+                              }`}
+                            >
+                              {user.is_blocked ? "Bloqueado" : "Liberado"}
+                            </span>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-4 align-middle text-sm">
+                          <div
+                            className={
+                              expired
+                                ? "text-red-300"
+                                : expiringSoon
+                                ? "text-yellow-300"
+                                : "text-zinc-300"
+                            }
+                          >
+                            {formatDate(user.access_expires_at)}
+                          </div>
+
+                          {expired ? (
+                            <div className="mt-1 text-xs text-red-400">Expirado</div>
+                          ) : expiringSoon ? (
+                            <div className="mt-1 text-xs text-yellow-400">Expira em breve</div>
+                          ) : null}
+                        </td>
+
+                        <td className="px-4 py-4 align-middle">
                           <span
                             className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                              user.is_active ? badgeClass("green") : badgeClass("yellow")
+                              user.is_admin ? badgeClass("blue") : badgeClass("zinc")
                             }`}
                           >
-                            {user.is_active ? "Ativo" : "Inativo"}
+                            {user.is_admin ? "Admin" : "Usuário"}
                           </span>
+                        </td>
 
-                          <span
-                            className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                              user.is_blocked ? badgeClass("red") : badgeClass("zinc")
-                            }`}
-                          >
-                            {user.is_blocked ? "Bloqueado" : "Liberado"}
-                          </span>
-                        </div>
-                      </td>
+                        <td className="rounded-r-2xl px-4 py-4 align-middle">
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(user)}
+                              className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20"
+                            >
+                              Editar
+                            </button>
 
-                      <td className="px-4 py-4 align-middle text-sm text-zinc-300">
-                        {formatDate(user.access_expires_at)}
-                      </td>
+                            <button
+                              type="button"
+                              disabled={actionLoadingId === user.id}
+                              onClick={() => toggleUserStatus(user.id, "active")}
+                              className="rounded-xl border border-green-500/20 bg-green-500/10 px-3 py-2 text-xs font-medium text-green-300 transition hover:bg-green-500/20 disabled:opacity-60"
+                            >
+                              {user.is_active ? "Desativar" : "Ativar"}
+                            </button>
 
-                      <td className="px-4 py-4 align-middle">
-                        <span
-                          className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                            user.is_admin ? badgeClass("blue") : badgeClass("zinc")
-                          }`}
-                        >
-                          {user.is_admin ? "Admin" : "Usuário"}
-                        </span>
-                      </td>
+                            <button
+                              type="button"
+                              disabled={actionLoadingId === user.id}
+                              onClick={() => toggleUserStatus(user.id, "block")}
+                              className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300 transition hover:bg-red-500/20 disabled:opacity-60"
+                            >
+                              {user.is_blocked ? "Desbloquear" : "Bloquear"}
+                            </button>
 
-                      <td className="rounded-r-2xl px-4 py-4 align-middle">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(user)}
-                            className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20"
-                          >
-                            Editar
-                          </button>
+                            <button
+                              type="button"
+                              disabled={actionLoadingId === user.id}
+                              onClick={() => quickRenewUser(user, "mensal")}
+                              className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
+                            >
+                              Renovar 30d
+                            </button>
 
-                          <button
-                            type="button"
-                            disabled={actionLoadingId === user.id}
-                            onClick={() => toggleUserStatus(user.id, "active")}
-                            className="rounded-xl border border-green-500/20 bg-green-500/10 px-3 py-2 text-xs font-medium text-green-300 transition hover:bg-green-500/20 disabled:opacity-60"
-                          >
-                            {user.is_active ? "Desativar" : "Ativar"}
-                          </button>
+                            <button
+                              type="button"
+                              disabled={actionLoadingId === user.id}
+                              onClick={() => quickRenewUser(user, "trimestral")}
+                              className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
+                            >
+                              Renovar 90d
+                            </button>
 
-                          <button
-                            type="button"
-                            disabled={actionLoadingId === user.id}
-                            onClick={() => toggleUserStatus(user.id, "block")}
-                            className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-300 transition hover:bg-red-500/20 disabled:opacity-60"
-                          >
-                            {user.is_blocked ? "Desbloquear" : "Bloquear"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                            <button
+                              type="button"
+                              disabled={actionLoadingId === user.id}
+                              onClick={() => quickRenewUser(user, "semestral")}
+                              className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-60"
+                            >
+                              Renovar 180d
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
