@@ -109,18 +109,39 @@ export default function LandingPage() {
           WhatsApp
         </a>
 
-          <nav className="hidden items-center gap-6 text-sm text-zinc-300 md:flex">
-            <a href="#beneficios" className="transition hover:text-white">
+          <nav className="hidden items-center gap-6 md:flex">
+            <a href="#beneficios" className="text-sm text-zinc-300 transition hover:text-white">
               Benefícios
             </a>
-            <a href="#como-funciona" className="transition hover:text-white">
+            <a href="#como-funciona" className="text-sm text-zinc-300 transition hover:text-white">
               Como funciona
             </a>
-            <a href="#planos" className="transition hover:text-white">
+            <a href="#planos" className="text-sm text-zinc-300 transition hover:text-white">
               Planos
             </a>
-            <a href="#faq" className="transition hover:text-white">
+            <a href="#faq" className="text-sm text-zinc-300 transition hover:text-white">
               FAQ
+            </a>
+
+            <a
+              href="/indicador"
+              className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/20 hover:text-white"
+            >
+              Indicador
+            </a>
+
+            <a
+              href="/robo"
+              className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20 hover:text-white"
+            >
+              Robô
+            </a>
+
+            <a
+              href="/curso"
+              className="rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-300 transition hover:bg-amber-500/20 hover:text-white"
+            >
+              Curso
             </a>
           </nav>
 
