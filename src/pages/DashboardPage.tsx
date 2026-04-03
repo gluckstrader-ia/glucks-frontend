@@ -5,6 +5,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { BrainCircuit, BarChart3 } from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
+import { useB3MarketData } from "../hooks/useB3MarketData";
 
 type AnalysisModules = {
   technical?: number;
@@ -846,36 +847,87 @@ function NewsPanel({
   );
 }
 
+type B3MarketData = {
+  symbol?: string;
+  last_price?: number | null;
+  open_price?: number | null;
+  high_price?: number | null;
+  low_price?: number | null;
+  close_price?: number | null;
+  volume?: number | null;
+  bid?: number | null;
+  ask?: number | null;
+  last_trade_ts?: number | null;
+  source?: string;
+};
+
+
 function SummaryTab({
   asset,
   tf,
   analysisData,
   compact = false,
+  b3Data,
+  isB3Future = false,
 }: {
   asset: string;
   tf: string;
   analysisData: AnalysisData | null;
   compact?: boolean;
+  b3Data?: B3MarketData | null;
+  isB3Future?: boolean;
 }) {
   const normalizedAsset =
     analysisData?.asset || asset.trim().toUpperCase() || "IBOV";
 
+  const assetType = analysisData?.asset_type ?? (isB3Future ? "future_br" : "crypto");
+
   const direction = analysisData?.direction ?? "NEUTRO";
-  const entry = analysisData?.entry ?? 0;
-  const stop = analysisData?.stop ?? 0;
-  const target = analysisData?.target ?? 0;
+
+  const entry =
+    analysisData?.entry ??
+    (isB3Future ? b3Data?.last_price ?? 0 : 0);
+
+  const stop =
+    analysisData?.stop ??
+    (isB3Future ? b3Data?.low_price ?? 0 : 0);
+
+  const target =
+    analysisData?.target ??
+    (isB3Future ? b3Data?.high_price ?? 0 : 0);
+
   const rr = analysisData?.risk_reward ?? 0;
-  const assetType = analysisData?.asset_type ?? "crypto";
 
   const summary = (analysisData as any)?.summary ?? {};
 
-  const signalLabel = summary.signal_label ?? direction;
-  const confluence = summary.confluence ?? "0/10";
-  const trendLabel = summary.trend_label ?? direction;
-  const technicalLabel = summary.technical_label ?? "NEUTRO";
-  const smartMoneyLabel = summary.smart_money_label ?? "NEUTRO";
-  const tp2 = summary.tp2 ?? 0;
-  const tp3 = summary.tp3 ?? 0;
+  const signalLabel =
+    summary.signal_label ??
+    analysisData?.direction ??
+    (isB3Future ? "TEMPO REAL" : "NEUTRO");
+
+  const confluence =
+    summary.confluence ??
+    (isB3Future ? "Realtime" : "0/10");
+
+  const trendLabel =
+    summary.trend_label ??
+    analysisData?.direction ??
+    (isB3Future
+      ? (b3Data?.last_price ?? 0) >= (b3Data?.open_price ?? 0)
+        ? "ALTA"
+        : "BAIXA"
+      : "NEUTRO");
+
+  const technicalLabel =
+    summary.technical_label ??
+    (isB3Future ? "REALTIME" : "NEUTRO");
+
+  const smartMoneyLabel =
+    summary.smart_money_label ??
+    (isB3Future ? "REALTIME" : "NEUTRO");
+
+  const tp2 = summary.tp2 ?? (isB3Future ? b3Data?.high_price ?? 0 : 0);
+  const tp3 = summary.tp3 ?? (isB3Future ? b3Data?.high_price ?? 0 : 0);
 
   const currentScenarioTargets =
     direction === "VENDA"
@@ -893,6 +945,8 @@ function SummaryTab({
     summary.confidence ??
     (typeof confluence === "string" && confluence.includes("/10")
       ? Math.round((Number(confluence.split("/")[0]) || 0) * 10)
+      : isB3Future
+      ? 50
       : 0);
 
   const directionColor =
@@ -964,6 +1018,52 @@ function SummaryTab({
               </div>
             </div>
           </div>
+
+          {isB3Future && (
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3">
+                <div className="text-zinc-400 text-xs">Abertura</div>
+                <div className="text-white text-xl font-bold mt-1">
+                  {formatPrice(b3Data?.open_price ?? 0, assetType)}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3">
+                <div className="text-zinc-400 text-xs">Fechamento</div>
+                <div className="text-white text-xl font-bold mt-1">
+                  {formatPrice(b3Data?.close_price ?? 0, assetType)}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-green-900/60 bg-green-950/20 p-3">
+                <div className="text-green-400 text-xs">Máxima</div>
+                <div className="text-green-400 text-xl font-bold mt-1">
+                  {formatPrice(b3Data?.high_price ?? 0, assetType)}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-red-900/60 bg-red-950/20 p-3">
+                <div className="text-red-400 text-xs">Mínima</div>
+                <div className="text-red-400 text-xl font-bold mt-1">
+                  {formatPrice(b3Data?.low_price ?? 0, assetType)}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3">
+                <div className="text-zinc-400 text-xs">Bid</div>
+                <div className="text-green-400 text-xl font-bold mt-1">
+                  {formatPrice(b3Data?.bid ?? 0, assetType)}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3">
+                <div className="text-zinc-400 text-xs">Ask</div>
+                <div className="text-red-400 text-xl font-bold mt-1">
+                  {formatPrice(b3Data?.ask ?? 0, assetType)}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -2875,6 +2975,9 @@ export default function DashboardPage() {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [apiError, setApiError] = useState("");
 
+  const selectedAsset = (customAsset.trim() || asset).toUpperCase();
+  const { data: b3Data, isB3Future } = useB3MarketData(selectedAsset);
+
   const tradingViewIntervalMap: Record<string, string> = {
     "1m": "1",
     "5m": "5",
@@ -2909,7 +3012,7 @@ export default function DashboardPage() {
     [selectedAssetOptions, asset]
   );
 
-  const resolvedAsset = (customAsset.trim() || asset).toUpperCase();
+  const resolvedAsset = selectedAsset;
 
 const resolvedAssetType =
   selectedAssetConfig?.apiType ??
@@ -3193,6 +3296,8 @@ const resolvedAssetType =
                 tf={tf}
                 analysisData={analysisData}
                 compact
+                b3Data={b3Data}
+                isB3Future={isB3Future}
               />
             </div>
           </div>
