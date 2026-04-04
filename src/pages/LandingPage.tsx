@@ -98,17 +98,6 @@ export default function LandingPage() {
           </div>
         </div>
 
-
-        {/* BOTÃO WHATSAPP NO HEADER (opcional) */}
-        <a
-          href="https://wa.me/5551994830003?text=Olá! Quero saber mais sobre a Gluck's Trader IA."
-          target="_blank"
-          rel="noreferrer"
-          className="hidden md:flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-500 transition"
-        >
-          WhatsApp
-        </a>
-
           <nav className="hidden items-center gap-6 md:flex">
             <a href="#beneficios" className="text-sm text-zinc-300 transition hover:text-white">
               Benefícios
