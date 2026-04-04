@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchB3MarketData, B3MarketData } from "../lib/marketData";
+import { fetchB3MarketData } from "../lib/marketData";
+import type { B3MarketData } from "../lib/marketData";
 
 export function useB3MarketData(asset: string) {
   const [data, setData] = useState<B3MarketData | null>(null);
