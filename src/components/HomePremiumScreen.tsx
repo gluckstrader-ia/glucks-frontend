@@ -6,12 +6,10 @@ import {
   CandlestickChart,
   Copy,
   Flame,
-  Globe,
   History,
   LineChart,
   Lock,
   Settings,
-  Sparkles,
   TrendingUp,
   User,
   Wallet,
@@ -223,7 +221,7 @@ export default function HomePremiumScreen({
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1500px] px-4 py-8 md:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1200px] px-4 py-8 md:px-6 lg:px-8">
         <motion.div
           initial="hidden"
           animate="show"
@@ -286,11 +284,7 @@ export default function HomePremiumScreen({
             })}
           </motion.section>
 
-          <motion.section
-            variants={cardMotion}
-            className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"
-          >
-            <CommunityCard />
+          <motion.section variants={cardMotion}>
             <RecentAnalysesCard onOpenDashboard={onOpenDashboard} />
           </motion.section>
         </motion.div>
@@ -361,7 +355,6 @@ function HeroActionCard({
 
             {tag2 && (
               <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm font-medium text-green-300">
-                <Sparkles className="h-4 w-4" />
                 {tag2}
               </div>
             )}
@@ -373,72 +366,6 @@ function HeroActionCard({
         </div>
       </div>
     </button>
-  );
-}
-
-function CommunityCard() {
-  return (
-    <div className="rounded-[30px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(17,24,39,0.92),rgba(7,10,16,0.96))] p-6 shadow-[0_16px_50px_rgba(0,0,0,0.28)]">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-4xl font-bold tracking-tight">
-            <Sparkles className="h-7 w-7 text-cyan-400" />
-            <span>Comunidade Lucrando Global</span>
-            <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
-          </div>
-          <div className="mt-2 text-lg text-zinc-400">Análises em tempo real de traders globais</div>
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-sm text-cyan-300">
-            BR Função em breve para o Brasil
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 text-lg font-semibold text-white transition hover:text-cyan-300"
-        >
-          Ver mais
-          <ArrowRight className="h-5 w-5" />
-        </button>
-      </div>
-
-      <div className="mt-5 rounded-[24px] border border-zinc-800 bg-zinc-900/45 p-5">
-        <div className="flex items-center gap-3 text-2xl font-semibold">
-          <Globe className="h-6 w-6 text-cyan-400" />
-          Mercados Ativos:
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-3">
-          {["GBP", "EUR", "CHF", "USD", "CAD"].map((item) => (
-            <span
-              key={item}
-              className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300"
-            >
-              {item}
-            </span>
-          ))}
-
-          <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-300">
-            🔥 Crypto
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard label="Análises hoje" value="8277" />
-        <StatCard
-          label="Taxa de acerto"
-          value="86.6%"
-          valueClassName="text-green-400"
-          cardClassName="border-green-500/30 bg-green-500/10"
-        />
-        <StatCard
-          label="Lucro total"
-          value="$872K"
-          valueClassName="text-cyan-300"
-          cardClassName="border-cyan-500/30 bg-cyan-500/10"
-        />
-      </div>
-    </div>
   );
 }
 
@@ -507,25 +434,6 @@ function RecentAnalysesCard({ onOpenDashboard }: { onOpenDashboard: () => void }
           accent="amber"
         />
       </div>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  valueClassName = "text-white",
-  cardClassName = "border-zinc-800 bg-zinc-900/45",
-}: {
-  label: string;
-  value: string;
-  valueClassName?: string;
-  cardClassName?: string;
-}) {
-  return (
-    <div className={`rounded-[22px] border p-5 text-center ${cardClassName}`}>
-      <div className={`text-5xl font-bold tracking-tight ${valueClassName}`}>{value}</div>
-      <div className="mt-2 text-lg text-zinc-400">{label}</div>
     </div>
   );
 }
