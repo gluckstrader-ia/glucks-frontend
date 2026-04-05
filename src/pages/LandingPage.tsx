@@ -1,5 +1,6 @@
 
 import WhatsAppButton from "../components/WhatsAppButton";
+import { Link } from "react-router-dom";
 
 export default function LandingPage() {
   const plans = [
@@ -112,12 +113,12 @@ export default function LandingPage() {
               FAQ
             </a>
 
-            <a
-              href="/indicador"
-              className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/20 hover:text-white"
+            <Link
+              to="/indicador"
+              className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/30 hover:text-white hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]"
             >
               Indicador
-            </a>
+            </Link>
 
             <a
               href="/robo"

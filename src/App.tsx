@@ -9,6 +9,7 @@ import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
 import AdminRoute from "./routes/AdminRoute";
+import IndicadorPage from "./pages/IndicadorPage";
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         </Route>
 
         <Route path="/premium" element={<PremiumPage />} />
+        <Route path="/indicador" element={<IndicadorPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/home-premium" element={<PremiumHomePage />} />
