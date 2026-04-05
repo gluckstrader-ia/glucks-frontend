@@ -379,13 +379,10 @@ export default function CursoPage() {
             <p className="mt-5 max-w-2xl text-base leading-8 text-zinc-300">
               Com mais de 5 anos de experiência no mercado financeiro, Alan Selle construiu sua trajetória unindo prática, estudo e desenvolvimento de uma visão estratégica sobre o day trade. Sua atuação é marcada por uma leitura técnica refinada, foco em clareza operacional e compromisso com a evolução consistente de seus alunos.
 
-              Especialista em Fibonacci e Ondas de Elliott, Alan aplica esses fundamentos para interpretar a dinâmica do mercado com mais profundidade, identificando estruturas, movimentos e possíveis pontos de reação com maior precisão. Na Mentoria Gluck's Trader, seu objetivo é transformar conhecimento em aprendizado aplicável, conduzindo cada aluno de forma acessível, progressiva e profissional.
             </p>
 
             <p className="mt-4 max-w-2xl text-base leading-8 text-zinc-400">
-              O ideal aqui é usar uma foto real forte, acompanhada de uma narrativa
-              objetiva sobre trajetória, experiência prática e visão de ensino,
-              reforçando autoridade sem perder proximidade.
+              Especialista em Fibonacci e Ondas de Elliott, Alan aplica esses fundamentos para interpretar a dinâmica do mercado com mais profundidade, identificando estruturas, movimentos e possíveis pontos de reação com maior precisão. Na Mentoria Gluck's Trader, seu objetivo é transformar conhecimento em aprendizado aplicável, conduzindo cada aluno de forma acessível, progressiva e profissional.
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
