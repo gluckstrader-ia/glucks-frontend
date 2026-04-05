@@ -2741,70 +2741,197 @@ function TimingTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
 function SinalFinalTab({ analysisData }: { analysisData: AnalysisData | null }) {
   const signal = analysisData?.final_signal;
-  const assetType = analysisData?.asset_type ?? "crypto";
+  const assetType = analysisData?.asset_type;
 
-  if (!signal) {
-    return <div className="text-zinc-400">Sem dados</div>;
+  if (!analysisData) {
+    return (
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
+        Gere uma análise para visualizar o sinal final.
+      </div>
+    );
   }
 
+  if (!signal) {
+    return (
+      <div className="rounded-3xl border border-yellow-900/40 bg-yellow-950/10 p-6 text-center text-zinc-300">
+        <div className="text-xl font-semibold text-yellow-400">
+          Sinal final indisponível
+        </div>
+        <div className="mt-2 text-sm text-zinc-400">
+          O backend não retornou o bloco <span className="text-white">final_signal</span>.
+        </div>
+      </div>
+    );
+  }
+
+  const direction = signal.direction ?? null;
+  const strength = signal.strength ?? null;
+  const confidence =
+    typeof signal.confidence === "number" ? signal.confidence : null;
+  const entry =
+    typeof signal.entry === "number" ? signal.entry : null;
+  const stop =
+    typeof signal.stop === "number" ? signal.stop : null;
+  const target =
+    typeof signal.target === "number" ? signal.target : null;
+  const riskReward =
+    typeof signal.risk_reward === "number" ? signal.risk_reward : null;
+  const confluenceScore =
+    typeof signal.confluence_score === "number" ? signal.confluence_score : null;
+  const verdict = signal.verdict ?? null;
+  const justification = Array.isArray(signal.justification)
+    ? signal.justification.filter(Boolean)
+    : [];
+
+  const normalizedDirection = (direction || "").toUpperCase();
+
   const color =
-    signal.direction === "COMPRA"
+    normalizedDirection === "COMPRA"
       ? "text-green-400"
-      : signal.direction === "VENDA"
+      : normalizedDirection === "VENDA"
       ? "text-red-400"
       : "text-yellow-400";
+
+  const bgCard =
+    normalizedDirection === "COMPRA"
+      ? "border-green-900/60 bg-gradient-to-br from-green-950/30 via-zinc-950 to-black"
+      : normalizedDirection === "VENDA"
+      ? "border-red-900/60 bg-gradient-to-br from-red-950/30 via-zinc-950 to-black"
+      : "border-yellow-900/60 bg-gradient-to-br from-yellow-950/20 via-zinc-950 to-black";
+
+  const icon =
+    normalizedDirection === "COMPRA"
+      ? "↗"
+      : normalizedDirection === "VENDA"
+      ? "↘"
+      : "→";
+
+  const confidenceColor =
+    confidence === null
+      ? "text-zinc-400"
+      : confidence >= 70
+      ? "text-green-400"
+      : confidence >= 50
+      ? "text-yellow-400"
+      : "text-red-400";
+
+  const safeFormatPrice = (value: number | null) => {
+    if (value === null) return "—";
+    return formatPrice(value, assetType);
+  };
 
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6">
         <div className="text-white text-2xl font-bold">🎯 Sinal Final</div>
-      </div>
-
-      <div className="rounded-2xl border border-zinc-800 p-6">
-        <div className={`text-4xl font-bold ${color}`}>
-          {signal.direction} • {signal.strength}
-        </div>
         <div className="text-zinc-400 mt-2">
-          Confiança: {signal.confidence}%
+          Consolidação final da leitura da IA com base nos módulos retornados.
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 bg-zinc-900 rounded-xl">
-          <div className="text-zinc-400 text-sm">Entrada</div>
-          <div className="text-white text-xl">
-            {formatPrice(signal.entry, assetType)}
+      <div className={`rounded-3xl border p-6 ${bgCard}`}>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div
+              className={`h-16 w-16 rounded-3xl border flex items-center justify-center text-3xl ${
+                normalizedDirection === "COMPRA"
+                  ? "bg-green-500/15 border-green-500/30 text-green-400"
+                  : normalizedDirection === "VENDA"
+                  ? "bg-red-500/15 border-red-500/30 text-red-400"
+                  : "bg-yellow-500/15 border-yellow-500/30 text-yellow-400"
+              }`}
+            >
+              {icon}
+            </div>
+
+            <div>
+              <div className="text-zinc-500 uppercase tracking-wide text-sm">
+                Direção final
+              </div>
+              <div className={`text-4xl font-bold mt-1 ${color}`}>
+                {direction ?? "—"}
+              </div>
+              <div className="text-zinc-400 mt-2 text-lg">
+                Força:{" "}
+                <span className="text-white font-semibold">
+                  {strength ?? "—"}
+                </span>
+              </div>
+            </div>
           </div>
-      </div>
 
-      <div className="p-4 bg-zinc-900 rounded-xl">
-        <div className="text-zinc-400 text-sm">Stop</div>
-        <div className="text-white text-xl">
-          {formatPrice(signal.stop, assetType)}
+          <div className="text-right">
+            <div className="text-zinc-500 text-sm uppercase tracking-wide">
+              Confiança
+            </div>
+            <div className={`text-4xl font-bold mt-1 ${confidenceColor}`}>
+              {confidence !== null ? `${confidence}%` : "—"}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="p-4 bg-zinc-900 rounded-xl">
-        <div className="text-zinc-400 text-sm">Alvo</div>
-        <div className="text-white text-xl">
-          {formatPrice(signal.target, assetType)}
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
+          <div className="text-zinc-400 text-sm">Entrada</div>
+          <div className="text-white text-2xl font-bold mt-2">
+            {safeFormatPrice(entry)}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-red-900/50 bg-red-950/20 p-4">
+          <div className="text-red-400 text-sm">Stop</div>
+          <div className="text-red-400 text-2xl font-bold mt-2">
+            {safeFormatPrice(stop)}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-green-900/50 bg-green-950/20 p-4">
+          <div className="text-green-400 text-sm">Alvo</div>
+          <div className="text-green-400 text-2xl font-bold mt-2">
+            {safeFormatPrice(target)}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
+          <div className="text-zinc-400 text-sm">Risco/Retorno</div>
+          <div className="text-cyan-400 text-2xl font-bold mt-2">
+            {riskReward !== null ? `1:${riskReward.toFixed(2)}` : "—"}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
+          <div className="text-zinc-400 text-sm">Score de Confluência</div>
+          <div className="text-white text-2xl font-bold mt-2">
+            {confluenceScore !== null ? confluenceScore : "—"}
+          </div>
         </div>
       </div>
-    </div>
 
-      <div className="rounded-2xl border border-zinc-800 p-5">
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
         <div className="text-white font-semibold mb-3">📊 Justificativa</div>
 
-        {signal.justification?.map((item, i) => (
-          <div key={i} className="text-zinc-400">
-            • {item}
+        {justification.length > 0 ? (
+          <div className="space-y-3">
+            {justification.map((item, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-zinc-800 bg-black/20 px-4 py-3 text-zinc-300"
+              >
+                • {item}
+              </div>
+            ))}
           </div>
-        ))}
+        ) : (
+          <div className="text-zinc-400">Sem justificativas retornadas.</div>
+        )}
       </div>
 
-      <div className="rounded-2xl border border-cyan-900/40 bg-cyan-950/20 p-5">
-        <div className="text-cyan-400 font-bold text-lg">{signal.verdict}</div>
-      </div>
+      {verdict && (
+        <div className="rounded-2xl border border-cyan-900/40 bg-cyan-950/20 p-5">
+          <div className="text-cyan-400 font-bold text-lg">{verdict}</div>
+        </div>
+      )}
     </div>
   );
 }
