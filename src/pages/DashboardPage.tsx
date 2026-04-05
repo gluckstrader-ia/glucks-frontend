@@ -1850,7 +1850,7 @@ function TechnicalTab({
 
 function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
   const smc = analysisData?.smc;
-  const assetType = analysisData?.asset_type ?? "crypto";
+  const assetType = analysisData?.asset_type;
 
   if (!analysisData) {
     return (
@@ -1875,225 +1875,368 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
   const bias = smc.bias ?? null;
   const structureLabel = smc.structure_label ?? null;
-  const lastBos =
-    typeof smc.last_bos === "number" ? smc.last_bos : null;
+  const lastBos = typeof smc.last_bos === "number" ? smc.last_bos : null;
 
-  const context = smc.context;
-  const structure = smc.structure;
-  const trigger = smc.trigger;
+  const context = smc.context ?? null;
+  const structure = smc.structure ?? null;
+  const trigger = smc.trigger ?? null;
 
   const divergence = smc.divergence ?? null;
-
-  const orderBlocks = smc.order_blocks ?? [];
-  const fvgs = smc.fvgs ?? [];
-  const liquidity = smc.liquidity ?? [];
-  const structureBreaks = smc.structure_breaks ?? [];
-
+  const orderBlocks = Array.isArray(smc.order_blocks) ? smc.order_blocks : [];
+  const fvgs = Array.isArray(smc.fvgs) ? smc.fvgs : [];
+  const liquidity = Array.isArray(smc.liquidity) ? smc.liquidity : [];
+  const structureBreaks = Array.isArray(smc.structure_breaks)
+    ? smc.structure_breaks
+    : [];
   const summary = smc.summary ?? null;
 
-  const normalizedBias = (bias || "").toUpperCase();
+  const normalize = (value?: string | null) => (value || "").toUpperCase();
 
-  const biasColor =
+  const normalizedBias = normalize(bias);
+
+  const biasPillClass =
     normalizedBias === "BULLISH"
-      ? "text-green-400"
+      ? "bg-green-500/15 border-green-500/20 text-green-400"
       : normalizedBias === "BEARISH"
-      ? "text-red-400"
-      : "text-yellow-400";
+      ? "bg-red-500/15 border-red-500/20 text-red-400"
+      : "bg-zinc-900 border-zinc-800 text-zinc-300";
+
+  const biasLabel =
+    normalizedBias === "BULLISH"
+      ? "↗ VIÉS ALTISTA"
+      : normalizedBias === "BEARISH"
+      ? "↘ VIÉS BAIXISTA"
+      : bias ?? "—";
+
+  const safeFormatPrice = (value?: number | null) => {
+    if (typeof value !== "number") return "—";
+    return formatPrice(value, assetType);
+  };
+
+  const getBiasTone = (value?: string | null) => {
+    const v = normalize(value);
+
+    if (["ALTA", "BULLISH", "COMPRA", "HH/HL"].includes(v)) {
+      return {
+        card: "border-green-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(3,7,13,0.88))]",
+        text: "text-green-400",
+        icon: "↗",
+      };
+    }
+
+    if (["BAIXA", "BEARISH", "VENDA", "LH/LL"].includes(v)) {
+      return {
+        card: "border-red-500/20 bg-[linear-gradient(135deg,rgba(239,68,68,0.16),rgba(3,7,13,0.88))]",
+        text: "text-red-400",
+        icon: "↘",
+      };
+    }
+
+    return {
+      card: "border-zinc-800 bg-[linear-gradient(135deg,rgba(39,39,42,0.65),rgba(3,7,13,0.88))]",
+      text: "text-zinc-300",
+      icon: "–",
+    };
+  };
+
+  const getStrengthBadgeClass = (strength?: string | null) => {
+    const s = normalize(strength);
+
+    if (s.includes("ALTA") || s.includes("FORTE")) {
+      return "bg-cyan-500/15 text-cyan-300 border border-cyan-500/20";
+    }
+
+    if (s.includes("MÉDIA") || s.includes("MEDIA")) {
+      return "bg-yellow-500/15 text-yellow-300 border border-yellow-500/20";
+    }
+
+    return "bg-zinc-800 text-zinc-300 border border-zinc-700";
+  };
 
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <div className="text-white text-2xl font-bold">
-              Smart Money Concept (SMC)
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5 md:p-6 shadow-[0_0_40px_rgba(0,0,0,0.25)]">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-500/20 bg-purple-500/10 text-purple-300 shadow-[0_0_25px_rgba(168,85,247,0.15)]">
+              ⌘
             </div>
-            <div className="text-zinc-400 mt-1">
-              Leitura institucional do mercado
+
+            <div>
+              <div className="text-white text-2xl font-bold">
+                Smart Money Concept (SMC)
+              </div>
+              <div className="text-zinc-400 text-sm md:text-base">
+                Análise de fluxo institucional
+              </div>
             </div>
           </div>
 
-          <div className={`text-2xl font-bold ${biasColor}`}>
-            {bias ?? "—"}
+          <div
+            className={`inline-flex items-center rounded-full border px-5 py-3 text-lg font-bold ${biasPillClass}`}
+          >
+            {biasLabel}
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="mt-5 flex flex-wrap gap-2 border-t border-zinc-800 pt-4">
           {structureLabel && (
-            <div className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300">
+            <div className="rounded-xl border border-green-500/15 bg-green-500/10 px-4 py-2 text-sm text-green-300">
               {structureLabel}
             </div>
           )}
 
           {lastBos !== null && (
-            <div className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300">
-              BOS: {formatPrice(lastBos, assetType)}
+            <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-300">
+              Último BOS: {safeFormatPrice(lastBos)}
             </div>
           )}
         </div>
       </div>
 
-      {/* MULTI TIMEFRAME */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { label: "Contexto", data: context },
-          { label: "Estrutura", data: structure },
-          { label: "Gatilho", data: trigger },
-        ].map((item, i) => (
-          <div
-            key={i}
-            className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5"
-          >
-            <div className="text-zinc-400 text-sm">{item.label}</div>
+      <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5 md:p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-white text-2xl font-bold">📊 Análise Multi-Período</div>
 
-            <div className="text-white text-3xl font-bold mt-3">
-              {item.data?.candles ?? "—"}
+          {divergence && (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+              ⊗ Divergente
             </div>
+          )}
+        </div>
 
-            <div className="text-zinc-500 mt-1">velas</div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {[
+            { label: "CONTEXTO", data: context },
+            { label: "ESTRUTURA", data: structure },
+            { label: "GATILHO", data: trigger },
+          ].map((item, index) => {
+            const tone = getBiasTone(item.data?.bias);
 
-            <div className="mt-3 text-lg font-semibold text-white">
-              {item.data?.bias ?? "—"}
-            </div>
+            return (
+              <div
+                key={index}
+                className={`rounded-2xl border p-4 md:p-5 ${tone.card}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="text-zinc-400 text-sm font-semibold tracking-wide">
+                    {item.label}
+                  </div>
+                  <div className={`text-lg font-bold ${tone.text}`}>{tone.icon}</div>
+                </div>
+
+                <div className="mt-3 text-4xl font-bold text-white">
+                  {typeof item.data?.candles === "number" ? item.data.candles : "—"}
+                </div>
+
+                <div className="mt-1 text-zinc-500">Velas</div>
+
+                <div className={`mt-3 text-lg font-semibold ${tone.text}`}>
+                  {item.data?.bias ?? "—"}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {divergence && (
+          <div className="mt-4 rounded-2xl border border-red-500/15 bg-[linear-gradient(90deg,rgba(127,29,29,0.45),rgba(69,10,10,0.18))] px-4 py-3 text-sm md:text-base text-red-300">
+            ⚠ Divergência: {divergence}
           </div>
-        ))}
+        )}
       </div>
 
-      {/* DIVERGÊNCIA */}
-      {divergence && (
-        <div className="rounded-2xl border border-yellow-900/40 bg-yellow-950/20 p-4 text-yellow-300">
-          ⚠ Divergência: {divergence}
-        </div>
-      )}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5 md:p-6">
+          <div className="mb-4 text-white text-2xl font-bold">◈ Order Blocks</div>
 
-      {/* ORDER BLOCKS */}
-      {orderBlocks.length > 0 && (
-        <div className="space-y-3">
-          <div className="text-white text-xl font-bold">
-            Order Blocks
-          </div>
+          {orderBlocks.length > 0 ? (
+            <div className="space-y-3">
+              {orderBlocks.map((item, idx) => {
+                const bullish = item.bullish === true;
+                const cardClass = bullish
+                  ? "border-green-500/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(3,7,13,0.88))]"
+                  : "border-red-500/25 bg-[linear-gradient(135deg,rgba(239,68,68,0.16),rgba(3,7,13,0.88))]";
 
-          {orderBlocks.map((item, idx) => (
-            <div
-              key={idx}
-              className={`rounded-2xl border p-4 ${
-                item.bullish
-                  ? "border-green-900/50 bg-green-950/20"
-                  : "border-red-900/50 bg-red-950/20"
-              }`}
-            >
-              <div className="flex justify-between">
-                <div>
-                  <div className="text-white font-bold">
-                    {item.title ?? "OB"}
+                const titleClass = bullish ? "text-green-400" : "text-red-400";
+
+                return (
+                  <div key={idx} className={`rounded-2xl border p-4 ${cardClass}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className={`font-semibold text-lg ${titleClass}`}>
+                          ● {item.title ?? "Order Block"}
+                        </div>
+
+                        <div className="mt-2 text-white text-2xl font-bold">
+                          {item.price ?? "—"}
+                        </div>
+
+                        {item.desc && (
+                          <div className="mt-2 text-sm text-zinc-400">{item.desc}</div>
+                        )}
+                      </div>
+
+                      {item.strength && (
+                        <div className="text-sm text-zinc-300 whitespace-nowrap">
+                          Força: {item.strength}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-zinc-400">Sem Order Blocks retornados.</div>
+          )}
+        </div>
 
-                  <div className="text-xl mt-1">
-                    {item.price ?? "—"}
+        <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5 md:p-6">
+          <div className="mb-4 text-white text-2xl font-bold">💲 Fair Value Gaps (FVG)</div>
+
+          {fvgs.length > 0 ? (
+            <div className="space-y-3">
+              {fvgs.map((item, idx) => {
+                const bullish = item.bullish === true;
+                const cardClass = bullish
+                  ? "border-green-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(3,7,13,0.88))]"
+                  : "border-red-500/20 bg-[linear-gradient(135deg,rgba(239,68,68,0.14),rgba(3,7,13,0.88))]";
+
+                const titleClass = bullish ? "text-green-400" : "text-red-400";
+
+                return (
+                  <div key={idx} className={`rounded-2xl border p-4 ${cardClass}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className={`font-semibold text-lg ${titleClass}`}>
+                          ▮ {item.title ?? "FVG"}
+                        </div>
+
+                        <div className="mt-2 text-sm text-zinc-400">
+                          Zona: <span className="text-zinc-200">{item.zone ?? "—"}</span>
+                        </div>
+                      </div>
+
+                      {item.state && (
+                        <div
+                          className={`rounded-lg px-3 py-1 text-sm whitespace-nowrap ${
+                            item.state.toUpperCase() === "ABERTO"
+                              ? "bg-yellow-500/15 text-yellow-300 border border-yellow-500/20"
+                              : "bg-zinc-800 text-zinc-300 border border-zinc-700"
+                          }`}
+                        >
+                          {item.state}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-zinc-400">Sem FVGs retornados.</div>
+          )}
+        </div>
+      </div>
 
-                  <div className="text-zinc-400 text-sm mt-2">
-                    {item.desc}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5 md:p-6">
+          <div className="mb-4 text-white text-2xl font-bold">💰 Zonas de Liquidez</div>
+
+          {liquidity.length > 0 ? (
+            <div className="space-y-3">
+              {liquidity.map((item, idx) => {
+                const descText = item.desc || "";
+                const isSellSide =
+                  descText.toUpperCase().includes("SELL") ||
+                  descText.toUpperCase().includes("SSL") ||
+                  descText.toUpperCase().includes("EQUAL LOWS");
+
+                const title = isSellSide ? "Sell-Side Liquidity" : "Buy-Side Liquidity";
+
+                const cardClass = isSellSide
+                  ? "border-red-500/20 bg-[linear-gradient(135deg,rgba(239,68,68,0.14),rgba(3,7,13,0.88))]"
+                  : "border-green-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(3,7,13,0.88))]";
+
+                const titleClass = isSellSide ? "text-red-400" : "text-green-400";
+
+                return (
+                  <div key={idx} className={`rounded-2xl border p-4 ${cardClass}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className={`font-semibold text-lg ${titleClass}`}>
+                          💰 {title}
+                        </div>
+
+                        <div className="mt-2 text-white text-2xl font-bold">
+                          {safeFormatPrice(item.price)}
+                        </div>
+
+                        {item.desc && (
+                          <div className="mt-2 text-sm text-zinc-400">{item.desc}</div>
+                        )}
+                      </div>
+
+                      {item.tag && (
+                        <div
+                          className={`rounded-lg px-3 py-1 text-sm whitespace-nowrap ${getStrengthBadgeClass(
+                            item.tag
+                          )}`}
+                        >
+                          {item.tag}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-
-                <div className="text-sm text-zinc-400">
-                  {item.strength ?? ""}
-                </div>
-              </div>
+                );
+              })}
             </div>
-          ))}
+          ) : (
+            <div className="text-zinc-400">Sem zonas de liquidez retornadas.</div>
+          )}
         </div>
-      )}
 
-      {/* FVG */}
-      {fvgs.length > 0 && (
-        <div className="space-y-3">
-          <div className="text-white text-xl font-bold">
-            Fair Value Gaps
-          </div>
+        <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5 md:p-6">
+          <div className="mb-4 text-white text-2xl font-bold">↗ Quebras de Estrutura</div>
 
-          {fvgs.map((item, idx) => (
-            <div
-              key={idx}
-              className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4"
-            >
-              <div className="text-white font-semibold">
-                {item.title ?? "FVG"}
-              </div>
+          {structureBreaks.length > 0 ? (
+            <div className="space-y-3">
+              {structureBreaks.map((item, idx) => {
+                const bullish = item.bullish === true;
+                const cardClass = bullish
+                  ? "border-green-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(3,7,13,0.88))]"
+                  : "border-red-500/20 bg-[linear-gradient(135deg,rgba(239,68,68,0.14),rgba(3,7,13,0.88))]";
 
-              <div className="text-zinc-400 mt-1">
-                Zona: {item.zone ?? "—"}
-              </div>
+                const titleClass = bullish ? "text-green-400" : "text-red-400";
 
-              <div className="text-sm mt-2 text-yellow-400">
-                {item.state ?? ""}
-              </div>
+                return (
+                  <div key={idx} className={`rounded-2xl border p-4 ${cardClass}`}>
+                    <div className={`font-semibold text-lg ${titleClass}`}>
+                      {item.title ?? "Quebra de Estrutura"}
+                    </div>
+
+                    <div className="mt-2 text-white text-2xl font-bold">
+                      {safeFormatPrice(item.price)}
+                    </div>
+
+                    {item.desc && (
+                      <div className="mt-2 text-sm text-zinc-400 leading-relaxed">
+                        {item.desc}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          ) : (
+            <div className="text-zinc-400">Sem quebras de estrutura retornadas.</div>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* LIQUIDEZ */}
-      {liquidity.length > 0 && (
-        <div className="space-y-3">
-          <div className="text-white text-xl font-bold">
-            Liquidez
-          </div>
-
-          {liquidity.map((item, idx) => (
-            <div
-              key={idx}
-              className="rounded-2xl border border-cyan-900/40 bg-cyan-950/20 p-4"
-            >
-              <div className="text-white text-lg">
-                {formatPrice(item.price, assetType)}
-              </div>
-
-              <div className="text-zinc-400 text-sm mt-2">
-                {item.desc}
-              </div>
-
-              <div className="text-cyan-400 text-sm mt-2">
-                {item.tag ?? ""}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* QUEBRA DE ESTRUTURA */}
-      {structureBreaks.length > 0 && (
-        <div className="space-y-3">
-          <div className="text-white text-xl font-bold">
-            Quebras de Estrutura
-          </div>
-
-          {structureBreaks.map((item, idx) => (
-            <div
-              key={idx}
-              className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4"
-            >
-              <div className="text-white font-semibold">
-                {item.title}
-              </div>
-
-              <div className="text-xl mt-1">
-                {item.price?.toFixed(2) ?? "—"}
-              </div>
-
-              <div className="text-zinc-400 text-sm mt-2">
-                {item.desc}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* RESUMO FINAL */}
       {summary && (
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5 text-white">
+        <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(30,27,75,0.35),rgba(3,7,13,0.95))] p-5 text-white text-lg leading-relaxed">
           {summary}
         </div>
       )}
