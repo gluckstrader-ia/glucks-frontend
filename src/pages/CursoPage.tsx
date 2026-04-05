@@ -240,7 +240,7 @@ export default function CursoPage() {
 
                         <div className="rounded-2xl border border-cyan-400/15 bg-cyan-500/10 p-4">
                           <div className="text-[11px] uppercase tracking-[0.24em] text-cyan-300">
-                            Arte IA
+                            Arte IA 
                           </div>
                           <div className="mt-2 text-lg font-bold">Atmosfera</div>
                         </div>
@@ -377,10 +377,9 @@ export default function CursoPage() {
             <h2 className="mt-3 text-3xl font-black sm:text-5xl">Alan Selle</h2>
 
             <p className="mt-5 max-w-2xl text-base leading-8 text-zinc-300">
-              Alan Selle conduz a mentoria com uma proposta clara:
-              transformar conhecimento em aprendizado aplicável.
-              Nesta seção, a ideia é apresentar sua trajetória, sua visão de mercado
-              e a forma como ele orienta os alunos com proximidade, clareza e método.
+              Com mais de 5 anos de experiência no mercado financeiro, Alan Selle construiu sua trajetória unindo prática, estudo e desenvolvimento de uma visão estratégica sobre o day trade. Sua atuação é marcada por uma leitura técnica refinada, foco em clareza operacional e compromisso com a evolução consistente de seus alunos.
+
+              Especialista em Fibonacci e Ondas de Elliott, Alan aplica esses fundamentos para interpretar a dinâmica do mercado com mais profundidade, identificando estruturas, movimentos e possíveis pontos de reação com maior precisão. Na Mentoria Gluck's Trader, seu objetivo é transformar conhecimento em aprendizado aplicável, conduzindo cada aluno de forma acessível, progressiva e profissional.
             </p>
 
             <p className="mt-4 max-w-2xl text-base leading-8 text-zinc-400">
