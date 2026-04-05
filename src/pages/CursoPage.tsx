@@ -351,10 +351,6 @@ export default function CursoPage() {
               </p>
 
               <div className="mt-8 h-28 rounded-[1.2rem] border border-white/10 bg-black/15" />
-
-              <div className="mt-6 text-xs uppercase tracking-[0.24em] text-zinc-400 transition group-hover:text-white">
-                Visual tipo catálogo premium
-              </div>
             </div>
           ))}
         </div>
