@@ -273,35 +273,33 @@ export default function CursoPage() {
               </div>
 
               <h2 className="mt-4 text-3xl font-black sm:text-4xl">
-                Uma mentoria com apresentação forte, linguagem acessível e visual de curso premium
+                A Mentoria Gluck's Trader foi desenvolvida para quem quer sair da confusão e começar a entender o mercado de forma mais clara e objetiva.
               </h2>
 
               <p className="mt-5 max-w-xl text-base leading-7 text-zinc-300">
-                A proposta desta página é mostrar valor antes da oferta final,
-                conduzindo o visitante por uma jornada visual mais rica, com seções amplas,
-                narrativa clara e uma percepção de qualidade muito mais alta.
+                Aqui, o foco não é apenas ensinar conceitos, mas ajudar o aluno a desenvolver raciocínio, leitura de contexto e confiança para evoluir com consistência ao longo do tempo.
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-[1.6rem] border border-emerald-400/20 bg-emerald-500/10 p-5">
-                <div className="text-sm font-semibold text-emerald-300">Atração</div>
+                <div className="text-sm font-semibold text-emerald-300">Clareza</div>
                 <p className="mt-2 text-sm leading-6 text-zinc-100">
-                  Hero forte com imagem, profundidade e posicionamento.
+                  Você aprende o que realmente importa, sem excesso de informação ou conteúdo desconectado. Cada etapa da mentoria tem um propósito claro.
                 </p>
               </div>
 
               <div className="rounded-[1.6rem] border border-cyan-400/20 bg-cyan-500/10 p-5">
-                <div className="text-sm font-semibold text-cyan-300">Engajamento</div>
+                <div className="text-sm font-semibold text-cyan-300">Método</div>
                 <p className="mt-2 text-sm leading-6 text-zinc-100">
-                  Trilha visual, seções amplas e copy que mantém interesse.
+                  Uma sequência organizada de aprendizado, que conduz do básico ao avançado, ajudando o aluno a evoluir com direção e sem se perder.
                 </p>
               </div>
 
               <div className="rounded-[1.6rem] border border-yellow-400/20 bg-yellow-500/10 p-5">
-                <div className="text-sm font-semibold text-yellow-300">Conversão</div>
+                <div className="text-sm font-semibold text-yellow-300">Evolução</div>
                 <p className="mt-2 text-sm leading-6 text-zinc-100">
-                  Oferta final mais forte, com benefícios e bônus em destaque.
+                  Mais do que aprender, você desenvolve uma forma de pensar o mercado, ganhando confiança para tomar decisões com mais consciência.
                 </p>
               </div>
             </div>
