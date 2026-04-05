@@ -2245,48 +2245,68 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
   const [subTab, setSubTab] = useState("Wyckoff");
   const subTabs = ["Wyckoff", "Elliott", "Gann", "Dow"];
 
-  const bias = wegd?.bias ?? "NEUTRO";
-  const confluence = wegd?.confluence ?? "5/10";
-  const summary = wegd?.summary ?? "Sem leitura WEGD disponível.";
+  if (!analysisData) {
+    return (
+      <div className="p-6 text-center text-zinc-400">
+        Gere uma análise para visualizar o WEGD.
+      </div>
+    );
+  }
 
-  const wyckoff = wegd?.wyckoff;
-  const elliott = wegd?.elliott;
-  const gann = wegd?.gann;
-  const dow = wegd?.dow;
+  if (!wegd) {
+    return (
+      <div className="p-6 text-center text-yellow-400">
+        Dados WEGD não disponíveis
+      </div>
+    );
+  }
+
+  const bias = wegd.bias ?? null;
+  const confluence = wegd.confluence ?? null;
+  const summary = wegd.summary ?? null;
+
+  const wyckoff = wegd.wyckoff;
+  const elliott = wegd.elliott;
+  const gann = wegd.gann;
+  const dow = wegd.dow;
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-cyan-900/40 bg-gradient-to-r from-cyan-950/30 via-emerald-950/10 to-yellow-950/10 p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="h-14 w-14 rounded-full bg-gradient-to-br from-cyan-400 to-yellow-300 text-black font-bold flex items-center justify-center text-2xl">
-              W
+      {/* HEADER */}
+      <div className="p-6 border border-zinc-800 rounded-3xl">
+        <div className="flex justify-between">
+          <div>
+            <div className="text-white text-2xl font-bold">
+              Análise WEGD
             </div>
-            <div>
-              <div className="text-white text-3xl font-bold">Análise WEGD</div>
-              <div className="text-zinc-400">Wyckoff • Elliott • Gann • Dow</div>
+            <div className="text-zinc-400">
+              Wyckoff • Elliott • Gann • Dow
             </div>
           </div>
+
           <div className="text-right">
-            <div className="inline-flex px-5 py-3 rounded-2xl bg-zinc-800 text-zinc-300 font-bold text-2xl">
-              {bias}
+            <div className="text-xl font-bold text-white">
+              {bias ?? "—"}
             </div>
-            <div className="text-zinc-400 mt-2">Confluência: {confluence}</div>
+            <div className="text-zinc-400">
+              Confluência: {confluence ?? "—"}
+            </div>
           </div>
         </div>
-        <div className="text-zinc-300 mt-5 text-lg">{summary}</div>
+
+        {summary && (
+          <div className="text-zinc-300 mt-4">{summary}</div>
+        )}
       </div>
 
-      <div className="rounded-2xl border border-zinc-900 bg-zinc-950/80 p-2 flex flex-wrap gap-2">
+      {/* TABS */}
+      <div className="flex gap-2">
         {subTabs.map((tab) => (
           <button
             key={tab}
-            type="button"
             onClick={() => setSubTab(tab)}
-            className={`flex-1 min-w-[140px] px-4 py-3 rounded-xl text-sm border transition ${
-              subTab === tab
-                ? "bg-black text-white border-zinc-800 font-semibold"
-                : "bg-transparent text-zinc-400 border-transparent hover:text-white hover:bg-zinc-900"
+            className={`px-4 py-2 rounded ${
+              subTab === tab ? "bg-white text-black" : "text-zinc-400"
             }`}
           >
             {tab}
@@ -2294,344 +2314,91 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
         ))}
       </div>
 
+      {/* WYCKOFF */}
       {subTab === "Wyckoff" && (
         <div className="space-y-4">
-          <div className="rounded-3xl border border-zinc-800 bg-slate-500/20 p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-white text-4xl font-bold">
-                  {wyckoff?.phase ?? "INDEFINIDO"}
+          {wyckoff ? (
+            <>
+              <div className="p-4 border rounded-xl">
+                <div className="text-white text-xl">
+                  Fase: {wyckoff.phase ?? "—"}
                 </div>
-                <div className="text-zinc-300 mt-1">Fase de mercado Wyckoff</div>
-              </div>
-              <div className="text-right">
-                <div className="text-white text-5xl font-bold">
-                  {wyckoff?.progress ?? 50}%
-                </div>
-                <div className="text-zinc-300">Progresso</div>
-              </div>
-            </div>
-            <div className="mt-4 h-3 rounded-full overflow-hidden bg-zinc-700">
-              <div
-                className="h-full bg-zinc-200"
-                style={{ width: `${wyckoff?.progress ?? 50}%` }}
-              />
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
-              <div className="text-white text-2xl font-bold mb-4">Ciclo de Mercado</div>
-              <div className="grid grid-cols-3 gap-4 items-center">
-                <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
-                  <div className="text-zinc-400">Atual</div>
-                  <div className="text-white text-3xl font-bold mt-2">
-                    {wyckoff?.phase ?? "INDEFINIDO"}
-                  </div>
-                </div>
-                <div className="text-center text-zinc-400 text-4xl">→</div>
-                <div className="rounded-2xl bg-cyan-950/30 p-5 text-center border border-cyan-900/30">
-                  <div className="text-zinc-400">Próximo</div>
-                  <div className="text-cyan-400 text-3xl font-bold mt-2">
-                    {wyckoff?.next_phase ?? "INDEFINIDO"}
-                  </div>
-                </div>
-              </div>
-              <div className="text-zinc-400 mt-4 text-center">
-                Confiança: {wyckoff?.confidence ?? 40}%
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
-              <div className="text-white text-2xl font-bold mb-4">Composite Man</div>
-              <div className="rounded-2xl bg-zinc-900/70 p-8 text-center">
-                <div className="h-12 w-12 rounded-full border-4 border-slate-400 mx-auto mb-4" />
-                <div className="text-slate-300 text-3xl font-bold">
-                  {wyckoff?.composite_man ?? "NEUTRO"}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
-            <div className="text-white text-2xl font-bold mb-4">Eventos Wyckoff</div>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <div>
-                <div className="text-green-400 font-semibold mb-3">✓ Confirmados</div>
-                {(wyckoff?.events_confirmed ?? []).map((event, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-2xl border border-green-900/40 bg-green-950/25 p-4 flex items-start justify-between gap-4"
-                  >
-                    <div>
-                      <div className="text-green-400 text-2xl font-bold">{event.name}</div>
-                      <div className="text-zinc-400 mt-1">{event.desc}</div>
-                    </div>
-                    <div className="text-white font-semibold">
-                      {event.price?.toFixed(5)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div>
-                <div className="text-yellow-400 font-semibold mb-3">⏳ Pendentes</div>
-                {(wyckoff?.events_pending ?? []).length === 0 ? (
-                  <div className="text-zinc-400">Todos eventos confirmados</div>
-                ) : (
-                  (wyckoff?.events_pending ?? []).map((event, idx) => (
-                    <div key={idx} className="text-zinc-300">
-                      {event.name}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
-            <div className="text-white text-2xl font-bold mb-4">Análise de Volume</div>
-            <div className="rounded-2xl bg-yellow-950/20 border border-yellow-900/30 p-5 flex items-start justify-between gap-4">
-              <div>
-                <div className="text-white text-2xl font-bold">
-                  {wyckoff?.volume_state ?? "NORMAL"}
-                </div>
                 <div className="text-zinc-400 mt-2">
-                  Volume e esforço no contexto atual
+                  Progresso:{" "}
+                  {wyckoff.progress !== undefined
+                    ? `${wyckoff.progress}%`
+                    : "—"}
                 </div>
               </div>
-              <div className="text-yellow-400 text-2xl font-bold">
-                {wyckoff?.volume_label ?? "MÉDIO"}
+
+              <div className="p-4 border rounded-xl">
+                Composite Man: {wyckoff.composite_man ?? "—"}
               </div>
-            </div>
-          </div>
+            </>
+          ) : (
+            <div className="text-zinc-400">Sem dados Wyckoff</div>
+          )}
         </div>
       )}
 
+      {/* ELLIOTT */}
       {subTab === "Elliott" && (
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-yellow-900/40 bg-gradient-to-r from-yellow-950/30 to-zinc-950 p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-zinc-400">Onda Atual</div>
-                <div className="text-white text-4xl font-bold mt-1">
-                  {elliott?.current_wave ?? "Onda A"}
-                </div>
+        <div>
+          {elliott ? (
+            <>
+              <div className="text-white text-xl">
+                Onda: {elliott.current_wave ?? "—"}
               </div>
-              <div className="text-right">
-                <div className="px-4 py-2 rounded-xl bg-yellow-500/20 text-yellow-400 font-bold">
-                  {elliott?.mode ?? "NEUTRA"}
-                </div>
-                <div className="text-zinc-400 mt-2">
-                  Confiança: {elliott?.confidence ?? 50}%
-                </div>
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="text-zinc-400 text-sm mb-2">
-                Progresso: {elliott?.progress ?? 50}%
-              </div>
-              <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-yellow-400"
-                  style={{ width: `${elliott?.progress ?? 50}%` }}
-                />
-              </div>
-            </div>
-          </div>
 
-          <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
-            <div className="text-white text-xl font-bold mb-4">Contagem de Ondas</div>
-            <div className="flex flex-wrap gap-3">
-              {(elliott?.wave_points ?? []).map((point, i) => (
-                <div
-                  key={i}
-                  className={`px-4 py-3 rounded-2xl border ${
-                    point.type === "green"
-                      ? "border-green-900/40 bg-green-950/25"
-                      : "border-yellow-900/40 bg-yellow-950/25"
-                  }`}
-                >
-                  <div
-                    className={`text-2xl font-bold ${
-                      point.type === "green" ? "text-green-400" : "text-yellow-400"
-                    }`}
-                  >
-                    {point.label}
-                  </div>
-                  <div className="text-zinc-400 text-sm mt-1">
-                    {point.price?.toFixed(2)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <div className="rounded-3xl border border-cyan-900/40 bg-cyan-950/20 p-6 text-center">
-              <div className="text-zinc-400">Próxima Onda</div>
-              <div className="text-cyan-400 text-4xl font-bold mt-2">
-                {elliott?.next_wave ?? "Onda B"}
+              <div className="text-zinc-400 mt-2">
+                Confiança:{" "}
+                {elliott.confidence !== undefined
+                  ? `${elliott.confidence}%`
+                  : "—"}
               </div>
-              <div className="text-zinc-500 mt-1">Esperada</div>
-            </div>
-
-            <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-6">
-              <div className="text-white text-xl font-bold mb-4">Alvos de Fibonacci</div>
-              <div className="text-zinc-400">(em desenvolvimento)</div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-red-900/40 bg-red-950/25 p-6 flex items-center justify-between">
-            <div>
-              <div className="text-red-400 text-lg font-bold">Nível de Invalidação</div>
-              <div className="text-zinc-400 text-sm">
-                Se rompido, a contagem é invalidada
-              </div>
-            </div>
-            <div className="text-red-400 text-2xl font-bold">
-              {elliott?.invalidation?.toFixed(5)}
-            </div>
-          </div>
+            </>
+          ) : (
+            <div className="text-zinc-400">Sem dados Elliott</div>
+          )}
         </div>
       )}
 
+      {/* GANN */}
       {subTab === "Gann" && (
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-yellow-900/40 bg-gradient-to-r from-yellow-950/30 via-green-950/20 to-cyan-950/20 p-6">
-            <div className="text-zinc-400">Ângulo Dominante</div>
-            <div className="text-white text-4xl font-bold mt-1">
-              {gann?.dominant_angle ?? "1x1"}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <div className="rounded-3xl border border-green-900/40 bg-green-950/20 p-5">
-              <div className="text-green-400 font-bold mb-4">Ângulos de Suporte</div>
-              {(gann?.support_angles ?? []).map((a, i) => (
-                <div
-                  key={i}
-                  className="items-center p-3 rounded-xl bg-green-950/30 border border-green-900/30 mb-2"
-                >
-                  <span className="text-white">{a.angle}</span>
-                  <span className="text-green-400 font-bold">{a.price?.toFixed(5)}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-3xl border border-red-900/40 bg-red-950/20 p-5">
-              <div className="text-red-400 font-bold mb-4">Ângulos de Resistência</div>
-              {(gann?.resistance_angles ?? []).map((a, i) => (
-                <div
-                  key={i}
-                  className="items-center p-3 rounded-xl bg-red-950/30 border border-red-900/30 mb-2"
-                >
-                  <span className="text-white">{a.angle}</span>
-                  <span className="text-red-400 font-bold">{a.price?.toFixed(5)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
-            <div className="text-white text-xl font-bold mb-4">Quadrado do Tempo</div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="rounded-2xl bg-cyan-950/20 p-4 text-center">
-                <div className="text-zinc-400">Ciclo Atual</div>
-                <div className="text-cyan-400 text-xl font-bold mt-1">
-                  {gann?.current_cycle_days} dias no ciclo atual
-                </div>
+        <div>
+          {gann ? (
+            <>
+              <div className="text-white text-xl">
+                Ângulo: {gann.dominant_angle ?? "—"}
               </div>
-              <div className="rounded-2xl bg-yellow-950/20 p-4 text-center">
-                <div className="text-zinc-400">Próxima Reversão</div>
-                <div className="text-yellow-400 text-xl font-bold mt-1">
-                  {gann?.next_reversal}
-                </div>
-              </div>
-              <div className="rounded-2xl bg-yellow-950/20 p-4 text-center">
-                <div className="text-zinc-400">Dias no Ciclo</div>
-                <div className="text-yellow-400 text-xl font-bold mt-1">
-                  {gann?.days_in_cycle}
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
-            <div className="text-white text-xl font-bold mb-4">Quadrado do Preço</div>
-            {(gann?.price_square_levels ?? []).map((p, i) => (
-              <div
-                key={i}
-                className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 mb-2"
-              >
-                <span className="text-white">{p.price?.toFixed(5)}</span>
-                <span className="text-zinc-400">{p.strength}</span>
+              <div className="text-zinc-400 mt-2">
+                Ciclo: {gann.days_in_cycle ?? "—"}
               </div>
-            ))}
-          </div>
+            </>
+          ) : (
+            <div className="text-zinc-400">Sem dados Gann</div>
+          )}
         </div>
       )}
 
+      {/* DOW */}
       {subTab === "Dow" && (
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
-            <div className="text-white text-xl font-bold mb-4">Tendências de Dow</div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="rounded-2xl border border-red-900/40 bg-red-950/25 p-5 text-center">
-                <div className="text-zinc-400">Primária</div>
-                <div className="text-red-400 text-2xl font-bold mt-2">{dow?.primary}</div>
+        <div>
+          {dow ? (
+            <>
+              <div className="text-white text-xl">
+                Tendência: {dow.primary ?? "—"}
               </div>
-              <div className="rounded-2xl border border-red-900/40 bg-red-950/25 p-5 text-center">
-                <div className="text-zinc-400">Secundária</div>
-                <div className="text-red-400 text-2xl font-bold mt-2">{dow?.secondary}</div>
-              </div>
-              <div className="rounded-2xl border border-green-900/40 bg-green-950/25 p-5 text-center">
-                <div className="text-zinc-400">Menor</div>
-                <div className="text-green-400 text-2xl font-bold mt-2">{dow?.minor}</div>
-              </div>
-            </div>
-          </div>
 
-          <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
-            <div className="text-white text-xl font-bold mb-4">Fase de Mercado</div>
-            <div className="rounded-2xl bg-blue-950/30 border border-blue-900/30 p-5">
-              <div className="flex items-center justify-between">
-                <div className="text-white text-2xl font-bold">{dow?.market_phase}</div>
-                <div className="text-white text-2xl font-bold">
-                  {dow?.market_phase_score}%
-                </div>
+              <div className="text-zinc-400 mt-2">
+                Fase: {dow.market_phase ?? "—"}
               </div>
-              <div className="mt-3 h-3 bg-zinc-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blue-400"
-                  style={{
-                    width: `${Math.max(
-                      0,
-                      Math.min(100, Math.abs(dow?.market_phase_score ?? 0))
-                    )}%`,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5">
-            <div className="text-white text-xl font-bold mb-4">Confirmação de Dow</div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-2xl border border-red-900/40 bg-red-950/25 p-5 text-center">
-                <div className="text-zinc-400">Preço x Volume</div>
-                <div className="text-red-400 text-xl font-bold mt-2">
-                  {dow?.price_volume_confirmation}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-green-900/40 bg-green-950/25 p-5 text-center">
-                <div className="text-zinc-400">Índices</div>
-                <div className="text-green-400 text-xl font-bold mt-2">
-                  {dow?.indices_confirmation}
-                </div>
-              </div>
-            </div>
-            <div className="text-zinc-400 text-sm mt-4">{dow?.volume_note}</div>
-          </div>
+            </>
+          ) : (
+            <div className="text-zinc-400">Sem dados Dow</div>
+          )}
         </div>
       )}
     </div>
