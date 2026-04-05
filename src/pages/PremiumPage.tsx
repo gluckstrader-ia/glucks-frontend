@@ -1,235 +1,203 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { clearAuth, getStoredUser } from "../lib/auth";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const PAGSEGURO_LINKS = {
+  mensal: "https://gluckstrader.sualojaonline.app/item/18992808/glucks-trader-ia-mensal",
+  trimestral: "https://gluckstrader.sualojaonline.app/item/18992822/glucks-trader-ia-trimestral",
+  semestral: "https://gluckstrader.sualojaonline.app/item/18992836/glucks-trader-ia-semestral",
+} as const;
 
-type PlanId = "mensal" | "trimestral" | "semestral";
+type PlanKey = keyof typeof PAGSEGURO_LINKS;
 
 export default function PremiumPage() {
   const navigate = useNavigate();
   const user = getStoredUser();
   const [searchParams] = useSearchParams();
 
-  const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null);
-  const [error, setError] = useState("");
-
-  const selectedPlan = useMemo<PlanId>(() => {
-    const plan = (searchParams.get("plan") || "mensal").toLowerCase();
-    return ["mensal", "trimestral", "semestral"].includes(plan)
-      ? (plan as PlanId)
-      : "mensal";
+  const highlightPlan = useMemo(() => {
+    const plan = (searchParams.get("plan") || "").toLowerCase();
+    if (plan === "mensal" || plan === "trimestral" || plan === "semestral") {
+      return plan as PlanKey;
+    }
+    return "mensal" as PlanKey;
   }, [searchParams]);
 
-  const plans: {
-    id: PlanId;
-    name: string;
-    price: string;
-    period: string;
-    description: string;
-    badge?: string;
-    features: string[];
-  }[] = [
+  function handleLogout() {
+    clearAuth();
+    navigate("/login");
+  }
+
+  function handlePlanRedirect(plan: PlanKey) {
+    const url = PAGSEGURO_LINKS[plan];
+
+    if (!url || url.includes("COLE_AQUI")) {
+      alert(`O link do plano ${plan} ainda não foi configurado.`);
+      return;
+    }
+
+    window.location.href = url;
+  }
+
+  const plans = [
     {
-      id: "mensal",
-      name: "Mensal",
-      price: "R$ 197,00",
-      period: "por mês",
-      description: "Ideal para começar com acesso completo à plataforma.",
+      id: "mensal" as PlanKey,
+      title: "Plano Mensal",
+      price: "R$ 197",
+      period: "/mês",
+      description: "Ideal para começar agora e testar toda a experiência da plataforma.",
       features: [
-        "Acesso completo ao dashboard",
-        "Análises em tempo real",
-        "Sinal final e confiança",
-        "Suporte ao assinante",
+        "Acesso à plataforma",
+        "Dashboard de análise",
+        "Leitura técnica com IA",
+        "Atualizações contínuas",
       ],
     },
     {
-      id: "trimestral",
-      name: "Trimestral",
-      price: "R$ 497,00",
-      period: "por 3 meses",
-      description: "Melhor custo-benefício para quem busca continuidade.",
-      badge: "Mais vantajoso",
+      id: "trimestral" as PlanKey,
+      title: "Plano Trimestral",
+      price: "R$ 497",
+      period: "/3 meses",
+      description: "Mais estabilidade e melhor custo-benefício para operar com consistência.",
       features: [
         "Tudo do plano mensal",
-        "Melhor custo por período",
-        "Acesso contínuo",
-        "Prioridade em novidades",
+        "Melhor custo-benefício",
+        "Mais tempo para evolução",
+        "Acesso contínuo ao ecossistema",
       ],
+      badge: "Mais vantajoso",
     },
     {
-      id: "semestral",
-      name: "Semestral",
-      price: "R$ 897,00",
-      period: "por 6 meses",
-      description: "Pensado para quem quer consistência e economia maior.",
+      id: "semestral" as PlanKey,
+      title: "Plano Semestral",
+      price: "R$ 897",
+      period: "/6 meses",
+      description: "Para quem quer acompanhamento por mais tempo e foco em performance.",
       features: [
         "Tudo do plano trimestral",
         "Maior economia",
-        "Longo prazo",
-        "Estrutura ideal para consistência",
+        "Visão de médio prazo",
+        "Plano mais completo",
       ],
     },
   ];
 
-  const selectedPlanMeta =
-    plans.find((plan) => plan.id === selectedPlan) || plans[0];
-
-  function handleLogout() {
-    clearAuth();
-    navigate("/");
-  }
-
-  function handleSelectPlan(planId: PlanId) {
-    navigate(`/premium?plan=${planId}`);
-  }
-
-  async function handleCheckout(planId: PlanId) {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setError("Faça login novamente para continuar com a assinatura.");
-      navigate("/login");
-      return;
-    }
-
-    setLoadingPlan(planId);
-    setError("");
-
-    try {
-      const response = await fetch(`${API_URL}/payments/create-checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ plan: planId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data?.detail || "Erro ao criar checkout");
-      }
-
-      if (!data?.checkout_url) {
-        throw new Error("Checkout não retornou URL de pagamento");
-      }
-
-      window.location.href = data.checkout_url;
-    } catch (err: any) {
-      setError(err?.message || "Erro ao iniciar pagamento");
-    } finally {
-      setLoadingPlan(null);
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-black text-zinc-100 p-6">
-      <div className="mx-auto max-w-6xl">
-        <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-8">
-          <div className="text-center">
-            <div className="text-4xl mb-4">🔒</div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white">
-              Assinatura necessária
-            </h1>
-            <p className="text-zinc-400 mt-3 text-lg">
-              Olá, {user?.name || "usuário"}.
-            </p>
-          </div>
-
-          {error ? (
-            <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-300">
-              {error}
+    <div className="min-h-screen bg-[#03070d] text-white">
+      <header className="sticky top-0 z-30 border-b border-zinc-900/80 bg-[#03070d]/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-6 lg:px-8">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-3"
+          >
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-black ring-1 ring-zinc-800">
+              <img
+                src="/logo.png"
+                alt="Gluck's Trader IA"
+                className="h-6 w-6 object-contain"
+              />
             </div>
-          ) : null}
-
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {plans.map((plan) => {
-              const isSelected = selectedPlan === plan.id;
-              const isHighlighted = plan.id === "trimestral";
-              const isLoading = loadingPlan === plan.id;
-
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative rounded-3xl border p-6 transition ${
-                    isSelected
-                      ? "border-emerald-500 bg-emerald-500/5"
-                      : isHighlighted
-                      ? "border-cyan-500/30 bg-cyan-500/5"
-                      : "border-zinc-800 bg-zinc-950/70"
-                  }`}
-                >
-                  {plan.badge && (
-                    <div className="absolute -top-3 left-6 rounded-full bg-emerald-500 px-4 py-1 text-xs font-bold text-black">
-                      {plan.badge}
-                    </div>
-                  )}
-
-                  <div className="text-white text-2xl font-bold">
-                    {plan.name}
-                  </div>
-
-                  <div className="mt-2 text-zinc-400">{plan.description}</div>
-
-                  <div className="mt-4 text-4xl font-black text-cyan-400">
-                    {plan.price}
-                  </div>
-
-                  <div className="mt-1 text-sm text-zinc-500">{plan.period}</div>
-
-                  <div className="mt-6 space-y-3">
-                    {plan.features.map((feature) => (
-                      <div key={feature} className="flex gap-3 text-zinc-300">
-                        <span className="text-emerald-400">✓</span>
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-8 space-y-3">
-                    <button
-                      onClick={() => handleSelectPlan(plan.id)}
-                      className={`w-full rounded-xl border px-4 py-3 font-semibold transition ${
-                        isSelected
-                          ? "border-emerald-500 bg-emerald-500/10 text-emerald-300"
-                          : "border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800"
-                      }`}
-                    >
-                      {isSelected ? "Selecionado" : "Selecionar plano"}
-                    </button>
-
-                    <button
-                      onClick={() => handleCheckout(plan.id)}
-                      disabled={isLoading}
-                      className="w-full rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed text-white py-3 font-semibold transition"
-                    >
-                      {isLoading ? "Redirecionando..." : "Assinar agora"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-10 text-center">
-            <div className="text-zinc-400">
-              Plano selecionado:{" "}
-              <span className="text-white font-bold">
-                {selectedPlanMeta.name}
-              </span>
+            <div className="bg-gradient-to-r from-green-400 via-emerald-400 to-green-600 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+              Gluck&apos;s Trader IA
             </div>
+          </button>
+
+          <div className="flex items-center gap-3">
+            {user && (
+              <div className="hidden rounded-full border border-zinc-800 bg-zinc-900/70 px-4 py-2 text-sm text-zinc-300 md:block">
+                {user.name || user.email}
+              </div>
+            )}
 
             <button
+              type="button"
               onClick={handleLogout}
-              className="mt-6 px-4 py-2 rounded-xl border border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800 transition"
+              className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-700 hover:bg-zinc-800"
             >
               Sair
             </button>
           </div>
         </div>
-      </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:px-8">
+        <section className="mx-auto max-w-3xl text-center">
+          <div className="inline-flex rounded-full border border-green-500/20 bg-green-500/10 px-4 py-1 text-sm font-medium text-green-300">
+            Escolha seu plano
+          </div>
+
+          <h1 className="mt-6 text-4xl font-bold tracking-tight md:text-6xl">
+            Desbloqueie o acesso à
+            <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+              {" "}
+              Gluck&apos;s Trader IA
+            </span>
+          </h1>
+
+          <p className="mt-5 text-lg text-zinc-400 md:text-xl">
+            Tenha acesso à plataforma, dashboard inteligente, leituras com IA e
+            recursos premium para análise de mercado.
+          </p>
+        </section>
+
+        <section className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {plans.map((plan) => {
+            const isHighlighted = highlightPlan === plan.id;
+
+            return (
+              <div
+                key={plan.id}
+                className={`relative rounded-[30px] border p-6 shadow-[0_16px_50px_rgba(0,0,0,0.28)] transition ${
+                  isHighlighted
+                    ? "border-green-500/40 bg-[linear-gradient(180deg,rgba(18,34,28,0.96),rgba(7,10,16,0.98))]"
+                    : "border-zinc-800 bg-[linear-gradient(180deg,rgba(17,24,39,0.92),rgba(7,10,16,0.96))]"
+                }`}
+              >
+                {plan.badge && (
+                  <div className="absolute right-5 top-5 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 text-xs font-semibold text-yellow-400">
+                    {plan.badge}
+                  </div>
+                )}
+
+                <h2 className="text-2xl font-bold">{plan.title}</h2>
+
+                <div className="mt-6 flex items-end gap-2">
+                  <span className="text-4xl font-bold text-white md:text-5xl">
+                    {plan.price}
+                  </span>
+                  <span className="pb-1 text-zinc-400">{plan.period}</span>
+                </div>
+
+                <p className="mt-4 min-h-[72px] text-zinc-400">
+                  {plan.description}
+                </p>
+
+                <div className="mt-6 space-y-3">
+                  {plan.features.map((feature) => (
+                    <div key={feature} className="flex items-center gap-3 text-zinc-200">
+                      <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-400" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handlePlanRedirect(plan.id)}
+                  className={`mt-8 w-full rounded-2xl px-5 py-4 text-base font-semibold transition ${
+                    isHighlighted
+                      ? "bg-green-500 text-black hover:bg-green-400"
+                      : "bg-zinc-100 text-black hover:bg-white"
+                  }`}
+                >
+                  Assinar agora
+                </button>
+              </div>
+            );
+          })}
+        </section>
+      </main>
     </div>
   );
 }
