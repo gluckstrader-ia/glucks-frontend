@@ -1,7 +1,6 @@
 import imagemIndicador from "../assets/imagem-indicador.jpg";
 
-const WHATSAPP_LINK =
-  "https://wa.me/5551994830003?text=Ol%C3%A1%21%20Quero%20comprar%20o%20Indicador%20Gluck%27s%20Trader%20IA%20de%201%20ano%20por%20R%24%20279%2C00.";
+const PAGSEGURO_LINK = "https://gluckstrader.sualojaonline.app/item/18990413/indicador-glucks-anual";
 
 export default function LandingPageIndicador() {
   const beneficios = [
@@ -23,9 +22,9 @@ export default function LandingPageIndicador() {
   ];
 
   const etapas = [
-    "Clique em comprar e fale conosco pelo WhatsApp.",
-    "Receba o passo a passo para pagamento e ativação do acesso anual.",
-    "Instale o indicador e comece a utilizar no Profit ou BlackArrow.",
+    "Clique no botão de compra e acesse diretamente a página segura de pagamento.",
+    "Finalize a aquisição do acesso anual ao indicador.",
+    "Receba as instruções de ativação e comece a utilizar no Profit ou BlackArrow.",
   ];
 
   const faq = [
@@ -40,7 +39,7 @@ export default function LandingPageIndicador() {
     {
       pergunta: "Como funciona a compra?",
       resposta:
-        "Ao clicar no botão de compra, o cliente é direcionado ao WhatsApp para receber atendimento, pagamento e instruções de ativação.",
+        "Ao clicar no botão de compra, o cliente é direcionado para o link direto de pagamento no PagSeguro para concluir a aquisição com segurança.",
     },
     {
       pergunta: "Recebo suporte para instalação?",
@@ -85,11 +84,11 @@ export default function LandingPageIndicador() {
             </a>
             <a
               className="rounded-full bg-emerald-400 px-5 py-2 text-sm font-semibold text-black transition hover:scale-[1.02]"
-              href={WHATSAPP_LINK}
+              href={PAGSEGURO_LINK}
               target="_blank"
               rel="noreferrer"
             >
-              Comprar pelo WhatsApp
+              Comprar agora
             </a>
           </nav>
         </div>
@@ -115,12 +114,12 @@ export default function LandingPageIndicador() {
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                 <a
-                  href={WHATSAPP_LINK}
+                  href={PAGSEGURO_LINK}
                   target="_blank"
                   rel="noreferrer"
                   className="rounded-2xl bg-emerald-400 px-6 py-4 text-center text-base font-semibold text-black transition hover:scale-[1.02]"
                 >
-                  Comprar pelo WhatsApp
+                  Comprar agora
                 </a>
                 <a
                   href="#beneficios"
@@ -195,10 +194,10 @@ export default function LandingPageIndicador() {
             <div>
               <p className="text-sm font-medium uppercase tracking-[0.24em] text-cyan-300/80">Como funciona</p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
-                Compre com atendimento direto pelo WhatsApp.
+                Compra direta e acesso simplificado.
               </h2>
               <p className="mt-5 max-w-xl text-lg leading-8 text-white/65">
-                A jornada foi simplificada para que o cliente fale com você, finalize a compra do acesso anual e receba a ativação sem complicação.
+                A jornada foi simplificada para que o cliente acesse diretamente a página de pagamento, conclua a compra do acesso anual e receba a ativação sem complicação.
               </p>
             </div>
 
@@ -253,12 +252,12 @@ export default function LandingPageIndicador() {
                 <li>• Suporte de ativação</li>
               </ul>
               <a
-                href={WHATSAPP_LINK}
+                href={PAGSEGURO_LINK}
                 target="_blank"
                 rel="noreferrer"
                 className="mt-8 block w-full rounded-2xl bg-emerald-400 px-5 py-4 text-center text-base font-semibold text-black transition hover:scale-[1.01]"
               >
-                Comprar agora pelo WhatsApp
+                Comprar agora
               </a>
             </div>
           </div>
@@ -269,20 +268,20 @@ export default function LandingPageIndicador() {
             <div>
               <p className="text-sm font-medium uppercase tracking-[0.24em] text-emerald-300/80">Chamada final</p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
-                Fale agora pelo WhatsApp e garanta seu acesso anual.
+                Garanta agora seu acesso anual.
               </h2>
               <p className="mt-4 max-w-2xl text-white/70">
-                Atendimento direto para compra, ativação e orientações iniciais do seu indicador.
+                Acesse a página de pagamento e conclua sua compra com segurança.
               </p>
             </div>
             <div className="flex items-center justify-center md:justify-end">
               <a
-                href={WHATSAPP_LINK}
+                href={PAGSEGURO_LINK}
                 target="_blank"
                 rel="noreferrer"
                 className="w-full rounded-2xl bg-emerald-400 px-6 py-4 text-center text-base font-semibold text-black md:w-auto"
               >
-                Ir para o WhatsApp
+                Comprar agora
               </a>
             </div>
           </div>
