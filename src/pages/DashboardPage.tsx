@@ -900,10 +900,7 @@ function SummaryTab({
 
   const summary = (analysisData as any)?.summary ?? {};
 
-  const signalLabel =
-    summary.signal_label ??
-    analysisData?.direction ??
-    (isB3Future ? "TEMPO REAL" : "NEUTRO");
+  const signalLabel = analysisData?.final_signal?.direction ?? "—";
 
   const confluence =
     summary.confluence ??
@@ -1515,21 +1512,103 @@ function TechnicalTab({
 }) {
   const tech = analysisData?.technical;
   const assetType = analysisData?.asset_type ?? "crypto";
-  const score = tech?.score ?? 50;
-  const buySignals = tech?.buy_signals ?? 0;
-  const sellSignals = tech?.sell_signals ?? 0;
-  const neutralSignals = tech?.neutral_signals ?? 0;
-  const trendBias = tech?.trend_bias ?? "NEUTRO";
-  const ema9 = tech?.ema9 ?? 0;
-  const ema21 = tech?.ema21 ?? 0;
-  const rsi = tech?.rsi ?? 0;
-  const supports = tech?.supports ?? [];
-  const resistances = tech?.resistances ?? [];
 
-  const total = buySignals + sellSignals + neutralSignals;
-  const buyPct = total > 0 ? Math.round((buySignals / total) * 100) : 0;
-  const sellPct = total > 0 ? Math.round((sellSignals / total) * 100) : 0;
-  const neutralPct = total > 0 ? Math.round((neutralSignals / total) * 100) : 0;
+  if (!analysisData) {
+    return (
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
+        Gere uma análise para visualizar a aba Técnica.
+      </div>
+    );
+  }
+
+  if (!tech) {
+    return (
+      <div className="rounded-3xl border border-yellow-900/40 bg-yellow-950/10 p-6 text-center text-zinc-300">
+        <div className="text-xl font-semibold text-yellow-400">
+          Dados técnicos indisponíveis
+        </div>
+        <div className="mt-2 text-sm text-zinc-400">
+          O backend não retornou o bloco <span className="text-white">technical</span> para este ativo/timeframe.
+        </div>
+      </div>
+    );
+  }
+
+  const score = typeof tech.score === "number" ? tech.score : null;
+  const buySignals =
+    typeof tech.buy_signals === "number" ? tech.buy_signals : null;
+  const sellSignals =
+    typeof tech.sell_signals === "number" ? tech.sell_signals : null;
+  const neutralSignals =
+    typeof tech.neutral_signals === "number" ? tech.neutral_signals : null;
+
+  const trendBias = tech.trend_bias ?? null;
+  const emaTrend = tech.ema_trend ?? null;
+
+  const ema9 = typeof tech.ema9 === "number" ? tech.ema9 : null;
+  const ema21 = typeof tech.ema21 === "number" ? tech.ema21 : null;
+  const rsi = typeof tech.rsi === "number" ? tech.rsi : null;
+
+  const supports = Array.isArray(tech.supports) ? tech.supports : [];
+  const resistances = Array.isArray(tech.resistances) ? tech.resistances : [];
+
+  const safeBuy = buySignals ?? 0;
+  const safeSell = sellSignals ?? 0;
+  const safeNeutral = neutralSignals ?? 0;
+  const total = safeBuy + safeSell + safeNeutral;
+
+  const buyPct = total > 0 ? Math.round((safeBuy / total) * 100) : 0;
+  const sellPct = total > 0 ? Math.round((safeSell / total) * 100) : 0;
+  const neutralPct = total > 0 ? Math.round((safeNeutral / total) * 100) : 0;
+
+  const normalizedBias = (trendBias || "").toUpperCase();
+  const normalizedEmaTrend = (emaTrend || "").toUpperCase();
+
+  const biasColor =
+    normalizedBias === "ALTA" || normalizedBias === "COMPRA"
+      ? "text-green-400"
+      : normalizedBias === "BAIXA" || normalizedBias === "VENDA"
+      ? "text-red-400"
+      : "text-yellow-400";
+
+  const biasLabel =
+    trendBias ??
+    (safeBuy > safeSell
+      ? "ALTA"
+      : safeSell > safeBuy
+      ? "BAIXA"
+      : "NEUTRO");
+
+  const emaRelation =
+    ema9 !== null && ema21 !== null
+      ? ema9 > ema21
+        ? "EMA9 acima da EMA21"
+        : ema9 < ema21
+        ? "EMA9 abaixo da EMA21"
+        : "EMA9 alinhada à EMA21"
+      : "Sem dados suficientes";
+
+  const rsiText =
+    rsi === null
+      ? "RSI indisponível"
+      : rsi >= 70
+      ? "Sobrecompra"
+      : rsi <= 30
+      ? "Sobrevenda"
+      : rsi > 55
+      ? "Pressão compradora"
+      : rsi < 45
+      ? "Pressão vendedora"
+      : "Mercado neutro";
+
+  const scoreColor =
+    score === null
+      ? "text-zinc-400"
+      : score >= 70
+      ? "text-green-400"
+      : score <= 40
+      ? "text-red-400"
+      : "text-yellow-400";
 
   return (
     <div className="space-y-6">
@@ -1539,113 +1618,206 @@ function TechnicalTab({
             ∿ Análise Técnica para <span className="text-white">{asset}</span>
           </div>
           <div className="text-zinc-400 mt-1">
-            {tf === "5m" ? "5 Minutos" : tf}
+            {tf === "1m"
+              ? "1 Minuto"
+              : tf === "5m"
+              ? "5 Minutos"
+              : tf === "15m"
+              ? "15 Minutos"
+              : tf === "30m"
+              ? "30 Minutos"
+              : tf === "1h"
+              ? "1 Hora"
+              : tf === "4h"
+              ? "4 Horas"
+              : tf === "1d"
+              ? "1 Dia"
+              : tf}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 text-center mb-6">
-          <div className="text-zinc-400 text-sm">Score Técnico</div>
-          <div className="text-cyan-400 text-6xl font-bold mt-2">{score}</div>
-          <div className="text-zinc-500 mt-2">Tendência {trendBias}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 text-center">
+            <div className="text-zinc-400 text-sm">Score Técnico</div>
+            <div className={`text-6xl font-bold mt-2 ${scoreColor}`}>
+              {score !== null ? score : "—"}
+            </div>
+            <div className="text-zinc-500 mt-2">
+              {score !== null
+                ? score >= 70
+                  ? "Leitura técnica forte"
+                  : score <= 40
+                  ? "Leitura técnica fraca"
+                  : "Leitura técnica moderada"
+                : "Sem score técnico"}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 text-center">
+            <div className="text-zinc-400 text-sm">Viés Técnico</div>
+            <div className={`text-4xl font-bold mt-3 ${biasColor}`}>
+              {biasLabel}
+            </div>
+            <div className="text-zinc-500 mt-2">
+              EMA Trend:{" "}
+              <span className="text-white">
+                {emaTrend ?? "indisponível"}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div className="rounded-2xl border border-green-900/70 bg-gradient-to-r from-green-950/70 to-emerald-950/20 p-5 text-center mt-2">
-          <div className="text-4xl text-green-400 font-bold">
-            {trendBias === "ALTA"
+        <div
+          className={`rounded-2xl border p-5 text-center mt-6 ${
+            normalizedBias === "ALTA" || normalizedBias === "COMPRA"
+              ? "border-green-900/70 bg-gradient-to-r from-green-950/70 to-emerald-950/20"
+              : normalizedBias === "BAIXA" || normalizedBias === "VENDA"
+              ? "border-red-900/70 bg-gradient-to-r from-red-950/60 to-rose-950/20"
+              : "border-yellow-900/60 bg-gradient-to-r from-yellow-950/40 to-zinc-950"
+          }`}
+        >
+          <div className={`text-4xl font-bold ${biasColor}`}>
+            {normalizedBias === "ALTA" || normalizedBias === "COMPRA"
               ? "↗ Viés de Alta ↗"
-              : trendBias === "BAIXA"
+              : normalizedBias === "BAIXA" || normalizedBias === "VENDA"
               ? "↘ Viés de Baixa ↘"
-              : "— Neutro —"}
+              : "→ Viés Neutro →"}
+          </div>
+
+          <div className="text-zinc-400 mt-2">
+            Leitura baseada no retorno real do backend
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
+            <div className="text-cyan-400 font-semibold">EMA 9</div>
+            <div className="text-white text-3xl font-bold mt-4">
+              {ema9 !== null ? formatPrice(ema9, assetType) : "—"}
+            </div>
+            <div className="text-zinc-500 text-sm mt-2">
+              Média curta
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
+            <div className="text-cyan-400 font-semibold">EMA 21</div>
+            <div className="text-white text-3xl font-bold mt-4">
+              {ema21 !== null ? formatPrice(ema21, assetType) : "—"}
+            </div>
+            <div className="text-zinc-500 text-sm mt-2">
+              Média intermediária
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
+            <div className="text-cyan-400 font-semibold">RSI</div>
+            <div
+              className={`text-3xl font-bold mt-4 ${
+                rsi === null
+                  ? "text-zinc-400"
+                  : rsi >= 70
+                  ? "text-red-400"
+                  : rsi <= 30
+                  ? "text-green-400"
+                  : "text-white"
+              }`}
+            >
+              {rsi !== null ? rsi.toFixed(2) : "—"}
+            </div>
+            <div className="text-zinc-500 text-sm mt-2">{rsiText}</div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 mt-6">
+          <div className="text-white text-lg font-semibold">
+            Relação entre Médias
           </div>
           <div className="text-zinc-400 mt-2">
-            Baseado em indicadores técnicos reais
+            {emaRelation}
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-cyan-400 font-semibold">Médias Móveis</div>
-                <div className="text-3xl font-bold text-green-400 mt-4">
-                  EMA9: {formatPrice(ema9, assetType)}
-                </div>
-                <div className="text-xl font-bold text-zinc-300 mt-2">
-                  EMA21: {formatPrice(ema21, assetType)}
-                </div>
-              </div>
-              <div className="text-green-400 text-3xl">↗</div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-cyan-400 font-semibold">Osciladores</div>
-                <div className="text-3xl font-bold text-green-400 mt-4">
-                  RSI: {rsi.toFixed(2)}
-                </div>
-                <div className="text-sm text-zinc-400 mt-2">
-                  {rsi > 55
-                    ? "Pressão compradora"
-                    : rsi < 45
-                    ? "Pressão vendedora"
-                    : "Mercado neutro"}
-                </div>
-              </div>
-              <div className="text-zinc-500 text-3xl">–</div>
-            </div>
+          <div className="text-zinc-500 text-sm mt-2">
+            Tendência de médias:{" "}
+            <span className="text-white">
+              {normalizedEmaTrend || "indisponível"}
+            </span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div className="rounded-2xl border border-red-900/70 bg-red-950/20 p-5 text-center">
             <div className="text-red-400 text-2xl">↘</div>
-            <div className="text-zinc-400 mt-2">Venda</div>
+            <div className="text-zinc-400 mt-2">Sinais de Venda</div>
             <div className="text-red-400 text-5xl font-bold mt-2">
-              {sellSignals}
+              {sellSignals !== null ? sellSignals : "—"}
             </div>
           </div>
 
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 text-center">
             <div className="text-zinc-500 text-2xl">–</div>
-            <div className="text-zinc-400 mt-2">Neutro</div>
+            <div className="text-zinc-400 mt-2">Sinais Neutros</div>
             <div className="text-white text-5xl font-bold mt-2">
-              {neutralSignals}
+              {neutralSignals !== null ? neutralSignals : "—"}
             </div>
           </div>
 
           <div className="rounded-2xl border border-green-900/70 bg-green-950/20 p-5 text-center">
             <div className="text-green-400 text-2xl">↗</div>
-            <div className="text-zinc-400 mt-2">Compra</div>
+            <div className="text-zinc-400 mt-2">Sinais de Compra</div>
             <div className="text-green-400 text-5xl font-bold mt-2">
-              {buySignals}
+              {buySignals !== null ? buySignals : "—"}
             </div>
           </div>
         </div>
 
-        <div className="mt-6 h-4 rounded-full overflow-hidden bg-zinc-800 flex">
-          <div className="bg-red-500 h-full" style={{ width: `${sellPct}%` }} />
-          <div className="bg-zinc-500 h-full" style={{ width: `${neutralPct}%` }} />
-          <div className="bg-green-500 h-full" style={{ width: `${buyPct}%` }} />
+        <div className="mt-6">
+          <div className="flex items-center justify-between text-sm text-zinc-400 mb-2">
+            <span>Distribuição dos sinais</span>
+            <span>
+              {total > 0 ? `${sellPct}% / ${neutralPct}% / ${buyPct}%` : "Sem distribuição disponível"}
+            </span>
+          </div>
+
+          <div className="h-4 rounded-full overflow-hidden bg-zinc-800 flex">
+            <div
+              className="bg-red-500 h-full transition-all"
+              style={{ width: `${sellPct}%` }}
+            />
+            <div
+              className="bg-zinc-500 h-full transition-all"
+              style={{ width: `${neutralPct}%` }}
+            />
+            <div
+              className="bg-green-500 h-full transition-all"
+              style={{ width: `${buyPct}%` }}
+            />
+          </div>
         </div>
       </div>
 
       <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6">
-        <div className="text-white text-3xl font-bold mb-6">Padrões & Níveis</div>
+        <div className="text-white text-3xl font-bold mb-6">
+          Padrões & Níveis Técnicos
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="rounded-2xl border border-green-900/50 bg-green-950/20 p-5">
-            <div className="text-green-400 text-2xl font-bold mb-4">Suportes</div>
+            <div className="text-green-400 text-2xl font-bold mb-4">
+              Suportes
+            </div>
+
             <div className="space-y-3">
               {supports.length > 0 ? (
                 supports.map((s, idx) => (
-                  <div key={idx} className="text-white text-2xl font-semibold">
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-green-900/30 bg-black/20 px-4 py-3 text-white text-2xl font-semibold"
+                  >
                     {formatPrice(s, assetType)}
                   </div>
                 ))
               ) : (
-                <div className="text-zinc-400">Sem dados</div>
+                <div className="text-zinc-400">Sem suportes retornados</div>
               )}
             </div>
           </div>
@@ -1654,15 +1826,19 @@ function TechnicalTab({
             <div className="text-red-400 text-2xl font-bold mb-4">
               Resistências
             </div>
+
             <div className="space-y-3">
               {resistances.length > 0 ? (
                 resistances.map((r, idx) => (
-                  <div key={idx} className="text-white text-2xl font-semibold">
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-red-900/30 bg-black/20 px-4 py-3 text-white text-2xl font-semibold"
+                  >
                     {formatPrice(r, assetType)}
                   </div>
                 ))
               ) : (
-                <div className="text-zinc-400">Sem dados</div>
+                <div className="text-zinc-400">Sem resistências retornadas</div>
               )}
             </div>
           </div>
