@@ -649,15 +649,12 @@ export default function CursoPage() {
                 </div>
 
                 <a
-                  href="#"
+                  href="https://gluckstrader.sualojaonline.app/item/18990464/mentoria-glucks-trader"
                   className="mt-7 block w-full rounded-2xl bg-gradient-to-r from-emerald-400 via-cyan-400 to-yellow-400 py-4 text-center text-sm font-black text-black transition hover:scale-[1.02]"
                 >
                   Comprar agora
                 </a>
 
-                <div className="mt-3 text-center text-xs text-zinc-500">
-                  Conecte este botão ao checkout ou ao WhatsApp
-                </div>
               </div>
             </div>
           </div>
