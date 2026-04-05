@@ -10,6 +10,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
 import AdminRoute from "./routes/AdminRoute";
 import IndicadorPage from "./pages/IndicadorPage";
+import RoboPage from "./pages/RoboPage";
 
 export default function App() {
   return (
@@ -34,6 +35,8 @@ export default function App() {
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
+
+        <Route path="/robo" element={<RoboPage />} />
       </Routes>
     </BrowserRouter>
   );
