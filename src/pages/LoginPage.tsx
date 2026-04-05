@@ -16,7 +16,11 @@ export default function LoginPage() {
   const [loadingAuth, setLoadingAuth] = useState(false);
   const [authError, setAuthError] = useState("");
 
-  async function handleLogin() {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (loadingAuth) return;
+
     try {
       setLoadingAuth(true);
       setAuthError("");
@@ -65,38 +69,41 @@ export default function LoginPage() {
             <BrainCircuit size={20} /> Gluck&apos;s Trader IA
           </h1>
 
-          <Input
-            placeholder="Email"
-            value={email}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setEmail(e.target.value)
-            }
-            className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
-          />
+          <form onSubmit={handleLogin} className="space-y-6">
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEmail(e.target.value)
+              }
+              className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
+            />
 
-          <Input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setPassword(e.target.value)
-            }
-            className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
-          />
+            <Input
+              type="password"
+              placeholder="Senha"
+              value={password}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setPassword(e.target.value)
+              }
+              className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
+            />
 
-          {authError && (
-            <div className="rounded-xl border border-red-900/40 bg-red-950/20 p-3 text-sm text-red-400">
-              {authError}
-            </div>
-          )}
+            {authError && (
+              <div className="rounded-xl border border-red-900/40 bg-red-950/20 p-3 text-sm text-red-400">
+                {authError}
+              </div>
+            )}
 
-          <Button
-            className="w-full bg-green-600 hover:bg-green-700 text-white"
-            onClick={handleLogin}
-            disabled={loadingAuth}
-          >
-            {loadingAuth ? "Entrando..." : "Entrar na Plataforma"}
-          </Button>
+            <Button
+              type="submit"
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              disabled={loadingAuth}
+            >
+              {loadingAuth ? "Entrando..." : "Entrar na Plataforma"}
+            </Button>
+          </form>
 
           <div className="text-center text-sm text-zinc-400">
             Ainda não tem conta?{" "}
