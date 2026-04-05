@@ -1850,259 +1850,253 @@ function TechnicalTab({
 
 function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
   const smc = analysisData?.smc;
-
   const assetType = analysisData?.asset_type ?? "crypto";
-  const bias = smc?.bias ?? "NEUTRO";
-  const structureLabel = smc?.structure_label ?? "Estrutura indefinida";
-  const lastBos = smc?.last_bos ?? 0;
 
-  const context = smc?.context;
-  const structure = smc?.structure;
-  const trigger = smc?.trigger;
+  if (!analysisData) {
+    return (
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
+        Gere uma análise para visualizar o SMC.
+      </div>
+    );
+  }
 
-  const divergence = smc?.divergence ?? "Sem divergência";
-  const orderBlocks = smc?.order_blocks ?? [];
-  const fvgs = smc?.fvgs ?? [];
-  const liquidity = smc?.liquidity ?? [];
-  const structureBreaks = smc?.structure_breaks ?? [];
-  const summary = smc?.summary ?? "Sem leitura institucional disponível.";
+  if (!smc) {
+    return (
+      <div className="rounded-3xl border border-yellow-900/40 bg-yellow-950/10 p-6 text-center text-zinc-300">
+        <div className="text-xl font-semibold text-yellow-400">
+          Dados SMC indisponíveis
+        </div>
+        <div className="mt-2 text-sm text-zinc-400">
+          O backend não retornou o bloco <span className="text-white">smc</span>.
+        </div>
+      </div>
+    );
+  }
+
+  const bias = smc.bias ?? null;
+  const structureLabel = smc.structure_label ?? null;
+  const lastBos =
+    typeof smc.last_bos === "number" ? smc.last_bos : null;
+
+  const context = smc.context;
+  const structure = smc.structure;
+  const trigger = smc.trigger;
+
+  const divergence = smc.divergence ?? null;
+
+  const orderBlocks = smc.order_blocks ?? [];
+  const fvgs = smc.fvgs ?? [];
+  const liquidity = smc.liquidity ?? [];
+  const structureBreaks = smc.structure_breaks ?? [];
+
+  const summary = smc.summary ?? null;
+
+  const normalizedBias = (bias || "").toUpperCase();
+
+  const biasColor =
+    normalizedBias === "BULLISH"
+      ? "text-green-400"
+      : normalizedBias === "BEARISH"
+      ? "text-red-400"
+      : "text-yellow-400";
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5 md:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-3 text-white text-2xl font-bold">
-            <div className="h-12 w-12 rounded-2xl bg-purple-900/40 border border-purple-700/40 flex items-center justify-center text-purple-300">
-              ⌘
+      {/* HEADER */}
+      <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <div className="text-white text-2xl font-bold">
+              Smart Money Concept (SMC)
             </div>
-            <div>
-              <div>Smart Money Concept (SMC)</div>
-              <div className="text-zinc-400 text-base font-medium">
-                Análise de fluxo institucional
-              </div>
+            <div className="text-zinc-400 mt-1">
+              Leitura institucional do mercado
             </div>
           </div>
 
-          <div
-            className={`rounded-full px-5 py-3 font-bold text-xl ${
-              bias === "BEARISH"
-                ? "bg-red-950/40 border border-red-900/50 text-red-400"
-                : bias === "BULLISH"
-                ? "bg-green-950/40 border border-green-900/50 text-green-400"
-                : "bg-zinc-900 border border-zinc-800 text-zinc-300"
-            }`}
-          >
-            {bias === "BEARISH"
-              ? "↘ VIÉS BAIXISTA"
-              : bias === "BULLISH"
-              ? "↗ VIÉS ALTISTA"
-              : "— NEUTRO"}
+          <div className={`text-2xl font-bold ${biasColor}`}>
+            {bias ?? "—"}
           </div>
         </div>
 
-        <div className="mt-5 pt-5 border-t border-zinc-800 flex flex-wrap gap-3">
-          <div className="rounded-xl bg-red-950/40 border border-red-900/40 px-4 py-2 text-red-400 text-sm">
-            {structureLabel}
-          </div>
-          <div className="rounded-xl bg-red-950/40 border border-red-900/40 px-4 py-2 text-red-400 text-sm">
-            Último BOS: {formatPrice(lastBos, assetType)}
-          </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          {structureLabel && (
+            <div className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300">
+              {structureLabel}
+            </div>
+          )}
+
+          {lastBos !== null && (
+            <div className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300">
+              BOS: {formatPrice(lastBos, assetType)}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5 md:p-6 space-y-5">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="text-white text-2xl font-bold">📊 Análise Multi-Período</div>
-          <div className="rounded-xl bg-red-950/40 border border-red-900/40 px-4 py-2 text-red-400 text-sm">
-            ⊗ Divergente
-          </div>
-        </div>
+      {/* MULTI TIMEFRAME */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { label: "Contexto", data: context },
+          { label: "Estrutura", data: structure },
+          { label: "Gatilho", data: trigger },
+        ].map((item, i) => (
+          <div
+            key={i}
+            className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5"
+          >
+            <div className="text-zinc-400 text-sm">{item.label}</div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-red-900/50 bg-red-950/25 p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-zinc-400 uppercase text-sm tracking-wide">Contexto</div>
-                <div className="text-white text-4xl font-bold mt-3">{context?.candles ?? 0}</div>
-                <div className="text-zinc-500 mt-1">velas</div>
-                <div className="text-red-400 text-xl font-bold mt-3">
-                  {context?.bias ?? "NEUTRO"}
-                </div>
-              </div>
-              <div className="text-red-400 text-2xl">↘</div>
+            <div className="text-white text-3xl font-bold mt-3">
+              {item.data?.candles ?? "—"}
+            </div>
+
+            <div className="text-zinc-500 mt-1">velas</div>
+
+            <div className="mt-3 text-lg font-semibold text-white">
+              {item.data?.bias ?? "—"}
             </div>
           </div>
+        ))}
+      </div>
 
-          <div className="rounded-2xl border border-green-900/50 bg-green-950/25 p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-zinc-400 uppercase text-sm tracking-wide">Estrutura</div>
-                <div className="text-white text-4xl font-bold mt-3">{structure?.candles ?? 0}</div>
-                <div className="text-zinc-500 mt-1">velas</div>
-                <div className="text-green-400 text-xl font-bold mt-3">
-                  {structure?.bias ?? "NEUTRO"}
-                </div>
-              </div>
-              <div className="text-green-400 text-2xl">↗</div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-zinc-400 uppercase text-sm tracking-wide">Gatilho</div>
-                <div className="text-white text-4xl font-bold mt-3">{trigger?.candles ?? 0}</div>
-                <div className="text-zinc-500 mt-1">velas</div>
-                <div className="text-zinc-400 text-xl font-bold mt-3">
-                  {trigger?.bias ?? "LATERAL"}
-                </div>
-              </div>
-              <div className="text-zinc-500 text-2xl">–</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-red-900/40 bg-red-950/25 px-4 py-4 text-red-300 text-sm md:text-base">
+      {/* DIVERGÊNCIA */}
+      {divergence && (
+        <div className="rounded-2xl border border-yellow-900/40 bg-yellow-950/20 p-4 text-yellow-300">
           ⚠ Divergência: {divergence}
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5 md:p-6">
-          <div className="text-white text-2xl font-bold mb-4">◈ Order Blocks</div>
-          <div className="space-y-3">
-            {orderBlocks.map((item, idx) => (
-              <div
-                key={idx}
-                className={`rounded-2xl border p-4 ${
-                  item.bullish
-                    ? "border-green-900/50 bg-gradient-to-r from-green-950/40 to-emerald-950/20"
-                    : "border-red-900/50 bg-gradient-to-r from-red-950/40 to-rose-950/20"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div
-                      className={`${
-                        item.bullish ? "text-green-400" : "text-red-400"
-                      } font-semibold text-lg`}
-                    >
-                      ● {item.title}
-                    </div>
-                    <div className="text-white text-2xl font-bold mt-2">{item.price}</div>
-                    <div className="text-zinc-400 text-sm mt-2">{item.desc}</div>
-                  </div>
-                  <div className="text-sm text-zinc-300">Força: {item.strength}</div>
-                </div>
-              </div>
-            ))}
+      {/* ORDER BLOCKS */}
+      {orderBlocks.length > 0 && (
+        <div className="space-y-3">
+          <div className="text-white text-xl font-bold">
+            Order Blocks
           </div>
-        </div>
 
-        <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5 md:p-6">
-          <div className="text-white text-2xl font-bold mb-4">💲 Fair Value Gaps (FVG)</div>
-          <div className="space-y-3">
-            {fvgs.map((item, idx) => (
-              <div
-                key={idx}
-                className={`rounded-2xl border p-4 ${
-                  item.bullish
-                    ? "border-green-900/50 bg-gradient-to-r from-green-950/35 to-emerald-950/15"
-                    : "border-red-900/50 bg-gradient-to-r from-red-950/35 to-rose-950/15"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div
-                      className={`${
-                        item.bullish ? "text-green-400" : "text-red-400"
-                      } font-semibold text-lg`}
-                    >
-                      ▮ {item.title}
-                    </div>
-                    <div className="text-zinc-400 text-sm mt-2">Zona:</div>
-                    <div className="text-white text-xl font-bold mt-1">{item.zone}</div>
-                  </div>
-                  <div
-                    className={`rounded-lg px-3 py-1 text-sm ${
-                      item.state === "Aberto"
-                        ? "bg-yellow-500/20 text-yellow-400 border border-yellow-600/30"
-                        : "bg-zinc-800 text-zinc-300 border border-zinc-700"
-                    }`}
-                  >
-                    {item.state}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5 md:p-6">
-          <div className="text-white text-2xl font-bold mb-4">💰 Zonas de Liquidez</div>
-          <div className="space-y-3">
-            {liquidity.map((item, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl border border-green-900/50 bg-gradient-to-r from-green-950/35 to-emerald-950/15 p-4 flex items-start justify-between gap-4"
-              >
+          {orderBlocks.map((item, idx) => (
+            <div
+              key={idx}
+              className={`rounded-2xl border p-4 ${
+                item.bullish
+                  ? "border-green-900/50 bg-green-950/20"
+                  : "border-red-900/50 bg-red-950/20"
+              }`}
+            >
+              <div className="flex justify-between">
                 <div>
-                  <div className="text-green-400 font-semibold text-lg">💰 Buy-Side Liquidity</div>
-                  <div className="text-white text-2xl font-bold mt-2">
-                    {formatPrice(item.price, assetType)}
+                  <div className="text-white font-bold">
+                    {item.title ?? "OB"}
                   </div>
-                  <div className="text-zinc-400 text-sm mt-2">{item.desc}</div>
+
+                  <div className="text-xl mt-1">
+                    {item.price ?? "—"}
+                  </div>
+
+                  <div className="text-zinc-400 text-sm mt-2">
+                    {item.desc}
+                  </div>
                 </div>
-                <div
-                  className={`rounded-lg px-3 py-1 text-sm ${
-                    item.tag === "ALTA"
-                      ? "bg-cyan-500/20 text-cyan-400 border border-cyan-600/30"
-                      : "bg-yellow-500/20 text-yellow-400 border border-yellow-600/30"
-                  }`}
-                >
-                  {item.tag}
+
+                <div className="text-sm text-zinc-400">
+                  {item.strength ?? ""}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
+      )}
 
-        <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5 md:p-6">
-          <div className="text-white text-2xl font-bold mb-4">↗ Quebras de Estrutura</div>
-          <div className="space-y-3">
-            {structureBreaks.map((item, idx) => (
-              <div
-                key={idx}
-                className={`rounded-2xl border p-4 ${
-                  item.bullish
-                    ? "border-green-900/50 bg-gradient-to-r from-green-950/35 to-emerald-950/15"
-                    : "border-red-900/50 bg-gradient-to-r from-red-950/35 to-rose-950/15"
-                }`}
-              >
-                <div
-                  className={`${
-                    item.bullish ? "text-green-400" : "text-red-400"
-                  } font-semibold text-lg`}
-                >
-                  {item.bullish ? "☒" : "☑"} {item.title}
-                </div>
-                <div className="text-white text-2xl font-bold mt-2">
-                  {item.price?.toFixed(2)}
-                </div>
-                <div className="text-zinc-400 text-sm mt-2 leading-relaxed">
-                  {item.desc}
-                </div>
+      {/* FVG */}
+      {fvgs.length > 0 && (
+        <div className="space-y-3">
+          <div className="text-white text-xl font-bold">
+            Fair Value Gaps
+          </div>
+
+          {fvgs.map((item, idx) => (
+            <div
+              key={idx}
+              className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4"
+            >
+              <div className="text-white font-semibold">
+                {item.title ?? "FVG"}
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      <div className="rounded-3xl border border-zinc-800 bg-gradient-to-r from-indigo-950/35 via-zinc-950 to-zinc-950 p-5 text-white text-lg leading-relaxed">
-        {summary}
-      </div>
+              <div className="text-zinc-400 mt-1">
+                Zona: {item.zone ?? "—"}
+              </div>
+
+              <div className="text-sm mt-2 text-yellow-400">
+                {item.state ?? ""}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* LIQUIDEZ */}
+      {liquidity.length > 0 && (
+        <div className="space-y-3">
+          <div className="text-white text-xl font-bold">
+            Liquidez
+          </div>
+
+          {liquidity.map((item, idx) => (
+            <div
+              key={idx}
+              className="rounded-2xl border border-cyan-900/40 bg-cyan-950/20 p-4"
+            >
+              <div className="text-white text-lg">
+                {formatPrice(item.price, assetType)}
+              </div>
+
+              <div className="text-zinc-400 text-sm mt-2">
+                {item.desc}
+              </div>
+
+              <div className="text-cyan-400 text-sm mt-2">
+                {item.tag ?? ""}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* QUEBRA DE ESTRUTURA */}
+      {structureBreaks.length > 0 && (
+        <div className="space-y-3">
+          <div className="text-white text-xl font-bold">
+            Quebras de Estrutura
+          </div>
+
+          {structureBreaks.map((item, idx) => (
+            <div
+              key={idx}
+              className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4"
+            >
+              <div className="text-white font-semibold">
+                {item.title}
+              </div>
+
+              <div className="text-xl mt-1">
+                {item.price?.toFixed(2) ?? "—"}
+              </div>
+
+              <div className="text-zinc-400 text-sm mt-2">
+                {item.desc}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* RESUMO FINAL */}
+      {summary && (
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5 text-white">
+          {summary}
+        </div>
+      )}
     </div>
   );
 }
