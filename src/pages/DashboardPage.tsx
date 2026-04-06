@@ -515,7 +515,7 @@ function getTradingViewSymbol(category: AssetCategoryLabel, asset: string) {
   if (category === "Ações") return `NASDAQ:${asset}`;
 
   if (category === "Índices") {
-    if (asset === "SPX") return "FOREXCOM:SPXUSD";
+    if (asset === "SPX") return "SP:SPX";
     if (asset === "IBOV") return "INDEX:IBOV";
     if (asset === "NDX") return "FOREXCOM:NAS100";
     if (asset === "NASDAQ") return "NASDAQ:IXIC";
