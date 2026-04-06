@@ -2508,12 +2508,13 @@ function HarmonicsTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
 function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
   const wegd = analysisData?.wegd;
+  const assetType = analysisData?.asset_type;
   const [subTab, setSubTab] = useState("Wyckoff");
   const subTabs = ["Wyckoff", "Elliott", "Gann", "Dow"];
 
   if (!analysisData) {
     return (
-      <div className="p-6 text-center text-zinc-400">
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
         Gere uma análise para visualizar o WEGD.
       </div>
     );
@@ -2521,8 +2522,13 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
   if (!wegd) {
     return (
-      <div className="p-6 text-center text-yellow-400">
-        Dados WEGD não disponíveis
+      <div className="rounded-3xl border border-yellow-900/40 bg-yellow-950/10 p-6 text-center text-zinc-300">
+        <div className="text-xl font-semibold text-yellow-400">
+          Dados WEGD indisponíveis
+        </div>
+        <div className="mt-2 text-sm text-zinc-400">
+          O backend não retornou o bloco <span className="text-white">wegd</span>.
+        </div>
       </div>
     );
   }
@@ -2531,139 +2537,638 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
   const confluence = wegd.confluence ?? null;
   const summary = wegd.summary ?? null;
 
-  const wyckoff = wegd.wyckoff;
-  const elliott = wegd.elliott;
-  const gann = wegd.gann;
-  const dow = wegd.dow;
+  const wyckoff = wegd.wyckoff ?? null;
+  const elliott = wegd.elliott ?? null;
+  const gann = wegd.gann ?? null;
+  const dow = wegd.dow ?? null;
+
+  const safeFormatPrice = (value?: number | null) => {
+    if (typeof value !== "number") return "—";
+    return formatPrice(value, assetType);
+  };
+
+  const normalize = (value?: string | null) => (value || "").toUpperCase();
+
+  const getBiasClass = (value?: string | null) => {
+    const v = normalize(value);
+
+    if (["COMPRA", "ALTA", "BULLISH"].includes(v)) {
+      return "bg-green-500/15 border-green-500/20 text-green-400";
+    }
+
+    if (["VENDA", "BAIXA", "BEARISH"].includes(v)) {
+      return "bg-red-500/15 border-red-500/20 text-red-400";
+    }
+
+    return "bg-zinc-900 border-zinc-800 text-zinc-300";
+  };
+
+  const getTrendTone = (value?: string | null) => {
+    const v = normalize(value);
+
+    if (["ALTA", "COMPRA", "BULLISH"].includes(v)) {
+      return {
+        card: "border-green-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(3,7,13,0.9))]",
+        text: "text-green-400",
+      };
+    }
+
+    if (["BAIXA", "VENDA", "BEARISH"].includes(v)) {
+      return {
+        card: "border-red-500/20 bg-[linear-gradient(135deg,rgba(239,68,68,0.14),rgba(3,7,13,0.9))]",
+        text: "text-red-400",
+      };
+    }
+
+    return {
+      card: "border-yellow-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(3,7,13,0.9))]",
+      text: "text-yellow-300",
+    };
+  };
+
+  const getSubTabIcon = (tab: string) => {
+    if (tab === "Wyckoff") return "〽";
+    if (tab === "Elliott") return "≋";
+    if (tab === "Gann") return "◎";
+    return "📊";
+  };
+
+  const progressBar = (value?: number | null, colorClass = "bg-cyan-400") => {
+    const safe = typeof value === "number" ? Math.max(0, Math.min(100, value)) : 0;
+
+    return (
+      <div className="mt-3 h-3 rounded-full overflow-hidden bg-zinc-800">
+        <div
+          className={`h-full ${colorClass}`}
+          style={{ width: `${safe}%` }}
+        />
+      </div>
+    );
+  };
 
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <div className="p-6 border border-zinc-800 rounded-3xl">
-        <div className="flex justify-between">
-          <div>
-            <div className="text-white text-2xl font-bold">
-              Análise WEGD
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-cyan-500/20 bg-[linear-gradient(135deg,rgba(8,145,178,0.22),rgba(49,46,129,0.14),rgba(3,7,13,0.96))] p-5 md:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,#5eead4,#fde047)] text-white font-bold text-2xl shadow-[0_0_25px_rgba(45,212,191,0.18)]">
+              W
             </div>
-            <div className="text-zinc-400">
-              Wyckoff • Elliott • Gann • Dow
+
+            <div>
+              <div className="text-white text-3xl font-bold">Análise WEGD</div>
+              <div className="text-zinc-400">Wyckoff • Elliott • Gann • Dow</div>
             </div>
           </div>
 
           <div className="text-right">
-            <div className="text-xl font-bold text-white">
+            <div
+              className={`inline-flex rounded-2xl border px-5 py-3 text-2xl font-bold ${getBiasClass(
+                bias
+              )}`}
+            >
               {bias ?? "—"}
             </div>
-            <div className="text-zinc-400">
+            <div className="mt-2 text-zinc-400">
               Confluência: {confluence ?? "—"}
             </div>
           </div>
         </div>
 
         {summary && (
-          <div className="text-zinc-300 mt-4">{summary}</div>
+          <div className="mt-5 text-zinc-300 text-lg">{summary}</div>
         )}
       </div>
 
-      {/* TABS */}
-      <div className="flex gap-2">
+      <div className="rounded-2xl border border-zinc-900 bg-zinc-950/80 p-2 flex flex-wrap gap-2">
         {subTabs.map((tab) => (
           <button
             key={tab}
+            type="button"
             onClick={() => setSubTab(tab)}
-            className={`px-4 py-2 rounded ${
-              subTab === tab ? "bg-white text-black" : "text-zinc-400"
+            className={`flex-1 min-w-[140px] px-4 py-3 rounded-xl text-sm border transition ${
+              subTab === tab
+                ? "bg-black text-white border-zinc-800 font-semibold"
+                : "bg-transparent text-zinc-400 border-transparent hover:text-white hover:bg-zinc-900"
             }`}
           >
+            <span className="mr-2">{getSubTabIcon(tab)}</span>
             {tab}
           </button>
         ))}
       </div>
 
-      {/* WYCKOFF */}
       {subTab === "Wyckoff" && (
         <div className="space-y-4">
           {wyckoff ? (
             <>
-              <div className="p-4 border rounded-xl">
-                <div className="text-white text-xl">
-                  Fase: {wyckoff.phase ?? "—"}
+              <div className="rounded-3xl border border-zinc-800 bg-slate-500/20 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-white text-4xl font-bold">
+                      {wyckoff.phase ?? "—"}
+                    </div>
+                    <div className="text-zinc-300 mt-1">
+                      Fase de transição ou indefinição
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-white text-5xl font-bold">
+                      {typeof wyckoff.progress === "number"
+                        ? `${wyckoff.progress}%`
+                        : "—"}
+                    </div>
+                    <div className="text-zinc-300">Progresso</div>
+                  </div>
                 </div>
 
-                <div className="text-zinc-400 mt-2">
+                {progressBar(wyckoff.progress, "bg-zinc-200")}
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                  <div className="text-white text-2xl font-bold mb-4">
+                    Ciclo de Mercado
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 items-center">
+                    <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
+                      <div className="text-zinc-400">Atual</div>
+                      <div className="text-white text-3xl font-bold mt-2">
+                        {wyckoff.phase ?? "—"}
+                      </div>
+                    </div>
+
+                    <div className="text-center text-zinc-400 text-4xl">→</div>
+
+                    <div className="rounded-2xl bg-cyan-950/30 p-5 text-center border border-cyan-900/30">
+                      <div className="text-zinc-400">Próximo</div>
+                      <div className="text-cyan-400 text-3xl font-bold mt-2">
+                        {wyckoff.next_phase ?? "—"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-zinc-400 mt-4 text-center">
+                    Confiança:{" "}
+                    {typeof wyckoff.confidence === "number"
+                      ? `${wyckoff.confidence}%`
+                      : "—"}
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                  <div className="text-white text-2xl font-bold mb-4">
+                    Composite Man
+                  </div>
+
+                  <div className="rounded-2xl bg-zinc-900/70 p-8 text-center">
+                    <div className="h-12 w-12 rounded-full border-4 border-slate-400 mx-auto mb-4" />
+                    <div className="text-slate-300 text-3xl font-bold">
+                      {wyckoff.composite_man ?? "—"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                <div className="text-white text-2xl font-bold mb-4">
+                  Eventos Wyckoff
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <div>
+                    <div className="text-green-400 font-semibold mb-3">✓ Confirmados</div>
+
+                    {(wyckoff.events_confirmed ?? []).length > 0 ? (
+                      (wyckoff.events_confirmed ?? []).map((event, idx) => (
+                        <div
+                          key={idx}
+                          className="rounded-2xl border border-green-900/40 bg-green-950/25 p-4 flex items-start justify-between gap-4 mb-3"
+                        >
+                          <div>
+                            <div className="text-green-400 text-2xl font-bold">
+                              {event.name ?? "Evento"}
+                            </div>
+                            <div className="text-zinc-400 mt-1">
+                              {event.desc ?? "—"}
+                            </div>
+                          </div>
+
+                          <div className="text-white font-semibold">
+                            {safeFormatPrice(event.price)}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-zinc-400">Nenhum evento confirmado.</div>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="text-yellow-400 font-semibold mb-3">⏳ Pendentes</div>
+
+                    {(wyckoff.events_pending ?? []).length > 0 ? (
+                      (wyckoff.events_pending ?? []).map((event, idx) => (
+                        <div
+                          key={idx}
+                          className="rounded-2xl border border-yellow-900/30 bg-yellow-950/15 p-4 mb-3"
+                        >
+                          <div className="text-zinc-200 font-semibold">
+                            {event.name ?? "Evento"}
+                          </div>
+                          <div className="text-zinc-400 mt-1">
+                            {event.desc ?? "—"}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-zinc-400">Todos eventos confirmados</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                <div className="text-white text-2xl font-bold mb-4">
+                  Análise de Volume
+                </div>
+
+                <div className="rounded-2xl bg-yellow-950/20 border border-yellow-900/30 p-5 flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-white text-2xl font-bold">
+                      {wyckoff.volume_state ?? "—"}
+                    </div>
+                    <div className="text-zinc-400 mt-2">
+                      Volume e esforço no contexto atual
+                    </div>
+                  </div>
+
+                  <div className="text-yellow-400 text-2xl font-bold">
+                    {wyckoff.volume_label ?? "—"}
+                  </div>
+                </div>
+              </div>
+
+              {summary && (
+                <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(49,46,129,0.35),rgba(3,7,13,0.95))] p-5 text-white text-lg leading-relaxed">
+                  {summary}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
+              Sem dados Wyckoff.
+            </div>
+          )}
+        </div>
+      )}
+
+      {subTab === "Elliott" && (
+        <div className="space-y-4">
+          {elliott ? (
+            <>
+              <div className="rounded-3xl border border-yellow-900/40 bg-[linear-gradient(135deg,rgba(120,53,15,0.32),rgba(3,7,13,0.96))] p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="text-yellow-400 text-4xl">≋</div>
+                    <div>
+                      <div className="text-zinc-400">Onda Atual</div>
+                      <div className="text-white text-4xl font-bold mt-1">
+                        {elliott.current_wave ?? "—"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="px-4 py-2 rounded-xl bg-yellow-500/20 text-yellow-400 font-bold inline-flex">
+                      {elliott.mode ?? "—"}
+                    </div>
+                    <div className="text-zinc-400 mt-2">
+                      Confiança:{" "}
+                      {typeof elliott.confidence === "number"
+                        ? `${elliott.confidence}%`
+                        : "—"}
+                    </div>
+                  </div>
+                </div>
+
+                {progressBar(elliott.progress, "bg-yellow-400")}
+
+                <div className="mt-3 text-zinc-400">
                   Progresso:{" "}
-                  {wyckoff.progress !== undefined
-                    ? `${wyckoff.progress}%`
+                  {typeof elliott.progress === "number"
+                    ? `${elliott.progress}%`
                     : "—"}
                 </div>
               </div>
 
-              <div className="p-4 border rounded-xl">
-                Composite Man: {wyckoff.composite_man ?? "—"}
+              <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                <div className="text-white text-xl font-bold mb-4">
+                  Contagem de Ondas
+                </div>
+
+                {(elliott.wave_points ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-3">
+                    {(elliott.wave_points ?? []).map((point, i) => {
+                      const green =
+                        (point.type || "").toLowerCase().includes("green");
+
+                      return (
+                        <div
+                          key={i}
+                          className={`px-4 py-3 rounded-2xl border min-w-[90px] text-center ${
+                            green
+                              ? "border-green-900/40 bg-green-950/25"
+                              : "border-yellow-900/40 bg-yellow-950/25"
+                          }`}
+                        >
+                          <div
+                            className={`text-2xl font-bold ${
+                              green ? "text-green-400" : "text-yellow-400"
+                            }`}
+                          >
+                            {point.label ?? "—"}
+                          </div>
+                          <div className="text-zinc-400 text-sm mt-1">
+                            {safeFormatPrice(point.price)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-zinc-400">Sem contagem de ondas retornada.</div>
+                )}
               </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="rounded-3xl border border-cyan-900/40 bg-cyan-950/20 p-6 text-center">
+                  <div className="text-zinc-400">Próxima Onda</div>
+                  <div className="text-cyan-400 text-4xl font-bold mt-2">
+                    {elliott.next_wave ?? "—"}
+                  </div>
+                  <div className="text-zinc-500 mt-1">Esperada</div>
+                </div>
+
+                <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-6">
+                  <div className="text-white text-xl font-bold mb-4">
+                    Alvos de Fibonacci
+                  </div>
+                  <div className="text-zinc-400">(aguardando backend específico)</div>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-red-900/40 bg-red-950/25 p-6 flex items-center justify-between">
+                <div>
+                  <div className="text-red-400 text-lg font-bold">
+                    Nível de Invalidação
+                  </div>
+                  <div className="text-zinc-400 text-sm">
+                    Se rompido, a contagem é invalidada
+                  </div>
+                </div>
+
+                <div className="text-red-400 text-2xl font-bold">
+                  {safeFormatPrice(elliott.invalidation)}
+                </div>
+              </div>
+
+              {summary && (
+                <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(88,28,135,0.28),rgba(3,7,13,0.95))] p-5 text-white text-lg leading-relaxed">
+                  {summary}
+                </div>
+              )}
             </>
           ) : (
-            <div className="text-zinc-400">Sem dados Wyckoff</div>
+            <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
+              Sem dados Elliott.
+            </div>
           )}
         </div>
       )}
 
-      {/* ELLIOTT */}
-      {subTab === "Elliott" && (
-        <div>
-          {elliott ? (
-            <>
-              <div className="text-white text-xl">
-                Onda: {elliott.current_wave ?? "—"}
-              </div>
-
-              <div className="text-zinc-400 mt-2">
-                Confiança:{" "}
-                {elliott.confidence !== undefined
-                  ? `${elliott.confidence}%`
-                  : "—"}
-              </div>
-            </>
-          ) : (
-            <div className="text-zinc-400">Sem dados Elliott</div>
-          )}
-        </div>
-      )}
-
-      {/* GANN */}
       {subTab === "Gann" && (
-        <div>
+        <div className="space-y-4">
           {gann ? (
             <>
-              <div className="text-white text-xl">
-                Ângulo: {gann.dominant_angle ?? "—"}
+              <div className="rounded-3xl border border-yellow-900/40 bg-[linear-gradient(135deg,rgba(120,53,15,0.26),rgba(6,78,115,0.22),rgba(3,7,13,0.96))] p-6">
+                <div className="text-zinc-400">Ângulo Dominante</div>
+                <div className="text-white text-4xl font-bold mt-1">
+                  {gann.dominant_angle ?? "—"}
+                </div>
               </div>
 
-              <div className="text-zinc-400 mt-2">
-                Ciclo: {gann.days_in_cycle ?? "—"}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                  <div className="text-green-400 font-bold text-2xl mb-4">
+                    Ângulos de Suporte
+                  </div>
+
+                  {(gann.support_angles ?? []).length > 0 ? (
+                    <div className="space-y-3">
+                      {(gann.support_angles ?? []).map((a, i) => (
+                        <div
+                          key={i}
+                          className="rounded-2xl border border-green-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(3,7,13,0.9))] px-4 py-4 flex items-center justify-between gap-4"
+                        >
+                          <span className="text-zinc-200 text-lg">{a.angle ?? "—"}</span>
+                          <span className="text-green-400 font-bold text-2xl">
+                            {safeFormatPrice(a.price)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-zinc-400">Sem suportes de Gann.</div>
+                  )}
+                </div>
+
+                <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                  <div className="text-red-400 font-bold text-2xl mb-4">
+                    Ângulos de Resistência
+                  </div>
+
+                  {(gann.resistance_angles ?? []).length > 0 ? (
+                    <div className="space-y-3">
+                      {(gann.resistance_angles ?? []).map((a, i) => (
+                        <div
+                          key={i}
+                          className="rounded-2xl border border-red-500/20 bg-[linear-gradient(135deg,rgba(239,68,68,0.12),rgba(3,7,13,0.9))] px-4 py-4 flex items-center justify-between gap-4"
+                        >
+                          <span className="text-zinc-200 text-lg">{a.angle ?? "—"}</span>
+                          <span className="text-red-400 font-bold text-2xl">
+                            {safeFormatPrice(a.price)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-zinc-400">Sem resistências de Gann.</div>
+                  )}
+                </div>
               </div>
+
+              <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                <div className="text-white text-2xl font-bold mb-4">
+                  Quadrado do Tempo
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="rounded-2xl bg-cyan-950/20 p-4 text-center">
+                    <div className="text-zinc-400">Ciclo Atual</div>
+                    <div className="text-cyan-400 text-xl font-bold mt-1">
+                      {gann.current_cycle_days ?? "—"} dias no ciclo atual
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-yellow-950/20 p-4 text-center">
+                    <div className="text-zinc-400">Próxima Reversão</div>
+                    <div className="text-yellow-400 text-xl font-bold mt-1">
+                      {gann.next_reversal ?? "—"}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-yellow-950/20 p-4 text-center">
+                    <div className="text-zinc-400">Dias no Ciclo</div>
+                    <div className="text-yellow-400 text-xl font-bold mt-1">
+                      {gann.days_in_cycle ?? "—"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                <div className="text-white text-2xl font-bold mb-4">
+                  Quadrado do Preço
+                </div>
+
+                {(gann.price_square_levels ?? []).length > 0 ? (
+                  <div className="space-y-3">
+                    {(gann.price_square_levels ?? []).map((p, i) => (
+                      <div
+                        key={i}
+                        className="rounded-2xl bg-zinc-900/60 border border-zinc-800 px-4 py-4 flex items-center justify-between gap-4"
+                      >
+                        <span className="text-white text-2xl font-semibold">
+                          {safeFormatPrice(p.price)}
+                        </span>
+                        <span className="text-zinc-400 uppercase">
+                          {p.strength ?? "—"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-zinc-400">Sem níveis do quadrado do preço.</div>
+                )}
+              </div>
+
+              {summary && (
+                <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(120,53,15,0.25),rgba(3,7,13,0.95))] p-5 text-white text-lg leading-relaxed">
+                  {summary}
+                </div>
+              )}
             </>
           ) : (
-            <div className="text-zinc-400">Sem dados Gann</div>
+            <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
+              Sem dados Gann.
+            </div>
           )}
         </div>
       )}
 
-      {/* DOW */}
       {subTab === "Dow" && (
-        <div>
+        <div className="space-y-4">
           {dow ? (
             <>
-              <div className="text-white text-xl">
-                Tendência: {dow.primary ?? "—"}
+              <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                <div className="text-white text-2xl font-bold mb-4">
+                  Tendências de Dow
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { label: "Primária", value: dow.primary },
+                    { label: "Secundária", value: dow.secondary },
+                    { label: "Menor", value: dow.minor },
+                  ].map((item, idx) => {
+                    const tone = getTrendTone(item.value);
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`rounded-2xl border p-5 text-center ${tone.card}`}
+                      >
+                        <div className="text-zinc-400">{item.label}</div>
+                        <div className={`text-3xl font-bold mt-2 ${tone.text}`}>
+                          {item.value ?? "—"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div className="text-zinc-400 mt-2">
-                Fase: {dow.market_phase ?? "—"}
+              <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                <div className="text-white text-2xl font-bold mb-4">
+                  Fase de Mercado
+                </div>
+
+                <div className="rounded-2xl bg-orange-950/20 border border-orange-900/30 p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="text-white text-4xl font-bold">
+                      {dow.market_phase ?? "—"}
+                    </div>
+
+                    <div className="text-white text-4xl font-bold">
+                      {typeof dow.market_phase_score === "number"
+                        ? `${dow.market_phase_score}%`
+                        : "—"}
+                    </div>
+                  </div>
+
+                  {progressBar(dow.market_phase_score, "bg-orange-500")}
+                </div>
               </div>
+
+              <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5">
+                <div className="text-white text-2xl font-bold mb-4">
+                  Confirmação de Dow
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="rounded-2xl border border-red-900/40 bg-red-950/25 p-5 text-center">
+                    <div className="text-zinc-400">Preço x Volume</div>
+                    <div className="text-red-400 text-2xl font-bold mt-2">
+                      {dow.price_volume_confirmation ?? "—"}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-red-900/40 bg-red-950/25 p-5 text-center">
+                    <div className="text-zinc-400">Índices</div>
+                    <div className="text-red-400 text-2xl font-bold mt-2">
+                      {dow.indices_confirmation ?? "—"}
+                    </div>
+                  </div>
+                </div>
+
+                {dow.volume_note && (
+                  <div className="text-zinc-400 text-sm mt-4">{dow.volume_note}</div>
+                )}
+              </div>
+
+              {summary && (
+                <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(6,78,115,0.28),rgba(3,7,13,0.95))] p-5 text-white text-lg leading-relaxed">
+                  {summary}
+                </div>
+              )}
             </>
           ) : (
-            <div className="text-zinc-400">Sem dados Dow</div>
+            <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
+              Sem dados Dow.
+            </div>
           )}
         </div>
       )}
