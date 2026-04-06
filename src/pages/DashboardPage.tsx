@@ -307,7 +307,7 @@ const AI_LOADING_STEPS = [
 
 const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
   Índices: [
-    { label: "S&P 500", value: "SPX", apiType: "index", tvSymbol: "FOREXCOM:SPXUSD" },
+    { label: "S&P 500", value: "SPX", apiType: "index", tvSymbol: "SP:SPX" },
     { label: "Ibovespa", value: "IBOV", apiType: "index", tvSymbol: "INDEX:IBOV" },
     { label: "NASDAQ 100", value: "NDX", apiType: "index", tvSymbol: "FOREXCOM:NAS100" },
     { label: "NASDAQ Composite", value: "NASDAQ", apiType: "index", tvSymbol: "NASDAQ:IXIC" },
@@ -515,7 +515,7 @@ function getTradingViewSymbol(category: AssetCategoryLabel, asset: string) {
   if (category === "Ações") return `NASDAQ:${asset}`;
 
   if (category === "Índices") {
-    if (asset === "SPX") return "FOREXCOM:SPXUSD";
+    if (asset === "SPX") return "SP:SPX";
     if (asset === "IBOV") return "INDEX:IBOV";
     if (asset === "NDX") return "FOREXCOM:NAS100";
     if (asset === "NASDAQ") return "NASDAQ:IXIC";
