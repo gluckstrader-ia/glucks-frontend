@@ -2246,138 +2246,261 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
 function HarmonicsTab({ analysisData }: { analysisData: AnalysisData | null }) {
   const harmonics = analysisData?.harmonics;
-  const patterns = harmonics?.patterns ?? [];
-  const fibLevels = harmonics?.fib_levels ?? [];
+  const assetType = analysisData?.asset_type;
+
+  if (!analysisData) {
+    return (
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
+        Gere uma análise para visualizar os padrões harmônicos.
+      </div>
+    );
+  }
+
+  if (!harmonics) {
+    return (
+      <div className="rounded-3xl border border-yellow-900/40 bg-yellow-950/10 p-6 text-center text-zinc-300">
+        <div className="text-xl font-semibold text-yellow-400">
+          Dados harmônicos indisponíveis
+        </div>
+        <div className="mt-2 text-sm text-zinc-400">
+          O backend não retornou o bloco <span className="text-white">harmonics</span>.
+        </div>
+      </div>
+    );
+  }
+
+  const patterns = Array.isArray(harmonics.patterns) ? harmonics.patterns : [];
+  const fibLevels = Array.isArray(harmonics.fib_levels) ? harmonics.fib_levels : [];
+
+  const safeFormatPrice = (value?: number | null) => {
+    if (typeof value !== "number") return "—";
+    return formatPrice(value, assetType);
+  };
+
+  const getPatternTone = (bullish?: boolean) => {
+    if (bullish === true) {
+      return {
+        border: "border-green-500/30",
+        bg: "bg-[linear-gradient(135deg,rgba(5,46,22,0.55),rgba(12,18,30,0.96))]",
+        title: "text-green-400",
+        sub: "text-green-300",
+        bar: "bg-green-400",
+        card: "border-green-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(3,7,13,0.88))]",
+      };
+    }
+
+    return {
+      border: "border-red-500/30",
+      bg: "bg-[linear-gradient(135deg,rgba(69,10,10,0.45),rgba(12,18,30,0.96))]",
+      title: "text-red-400",
+      sub: "text-red-300",
+      bar: "bg-red-400",
+      card: "border-red-500/20 bg-[linear-gradient(135deg,rgba(239,68,68,0.14),rgba(3,7,13,0.88))]",
+    };
+  };
+
+  const getRatioClass = (ok?: boolean) =>
+    ok
+      ? "border-green-500/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(3,7,13,0.9))]"
+      : "border-red-500/25 bg-[linear-gradient(135deg,rgba(239,68,68,0.12),rgba(3,7,13,0.9))]";
+
+  const getFibTypeClass = (type?: string) => {
+    const t = (type || "").toLowerCase();
+    if (t.includes("support") || t.includes("suporte")) {
+      return "border-green-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(3,7,13,0.9))] text-green-400";
+    }
+    return "border-red-500/20 bg-[linear-gradient(135deg,rgba(239,68,68,0.12),rgba(3,7,13,0.9))] text-red-400";
+  };
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5 md:p-6">
-        <div className="text-white text-2xl font-bold flex items-center gap-3">
+      <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5 md:p-6">
+        <div className="flex items-center gap-3 text-white text-2xl font-bold">
           <span className="text-pink-400">⬡</span>
           <span>Padrões Harmônicos</span>
         </div>
       </div>
 
-      <div className="space-y-4">
-        {patterns.map((pattern, idx) => (
-          <div
-            key={idx}
-            className={`rounded-3xl border p-5 md:p-6 bg-gradient-to-r from-zinc-950 to-zinc-900/70 ${
-              pattern.bullish ? "border-green-900/60" : "border-red-900/60"
-            }`}
-          >
-            <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
-              <div className="flex items-start gap-4">
-                <div className="text-4xl leading-none">{pattern.icon}</div>
-                <div>
-                  <div className="text-white text-3xl font-bold">{pattern.name}</div>
-                  <div className={`${pattern.bullish ? "text-green-400" : "text-red-400"} mt-1`}>
-                    {pattern.direction}
-                  </div>
-                </div>
-              </div>
+      {patterns.length > 0 ? (
+        <div className="space-y-5">
+          {patterns.map((pattern, idx) => {
+            const tone = getPatternTone(pattern.bullish);
+            const confidence =
+              typeof pattern.confidence === "number" ? pattern.confidence : 0;
+            const ratios = Array.isArray(pattern.ratios) ? pattern.ratios : [];
+            const prz = Array.isArray(pattern.prz) ? pattern.prz : [];
+            const targets = Array.isArray(pattern.targets) ? pattern.targets : [];
 
-              <div className="text-right">
-                <div className="text-zinc-400 text-xl">Confiança</div>
-                <div
-                  className={`${
-                    pattern.bullish ? "text-yellow-400" : "text-green-400"
-                  } text-4xl font-bold mt-1`}
-                >
-                  {pattern.confidence}%
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-3 text-zinc-400">Formação</div>
-            <div className="h-3 rounded-full bg-zinc-800 overflow-hidden mb-5">
+            return (
               <div
-                className={`${pattern.bullish ? "bg-green-400" : "bg-red-400"} h-full`}
-                style={{ width: `${pattern.confidence ?? 0}%` }}
-              />
-            </div>
-
-            <div className="text-yellow-400 text-sm mb-4">△ Ratios de Fibonacci (Prova)</div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(pattern.ratios ?? []).map((ratio, ratioIdx) => (
-                <div
-                  key={ratioIdx}
-                  className={`rounded-2xl border p-4 ${
-                    ratio.ok
-                      ? "border-green-900/50 bg-gradient-to-r from-green-950/35 to-emerald-950/15"
-                      : "border-red-900/50 bg-gradient-to-r from-red-950/35 to-rose-950/15"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
+                key={idx}
+                className={`rounded-3xl border p-5 md:p-6 ${tone.border} ${tone.bg}`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl leading-none">{pattern.icon ?? "⬡"}</div>
                     <div>
-                      <div className="text-white text-2xl font-bold">{ratio.key}</div>
-                      <div className="text-zinc-400 text-sm mt-2">esp: {ratio.expected}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-white text-2xl font-bold">{ratio.value}</div>
-                      <div
-                        className={`mt-2 text-sm ${
-                          ratio.ok ? "text-green-400" : "text-red-400"
-                        }`}
-                      >
-                        {ratio.ok ? "◉" : "⊗"}
+                      <div className="text-white text-3xl font-bold">
+                        {pattern.name ?? "Padrão"}
+                      </div>
+                      <div className={`mt-1 text-base ${tone.title}`}>
+                        {pattern.direction ?? "—"}
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <div className="rounded-2xl border border-cyan-900/40 bg-cyan-950/20 p-5 text-center">
-                <div className="text-zinc-400 text-lg">PRZ</div>
-                <div className="text-white text-2xl font-bold mt-2 whitespace-pre-line">
-                  {(pattern.prz ?? []).map((v) => v.toFixed(2)).join("\n")}
+                  <div className="text-right">
+                    <div className="text-zinc-400 text-lg">Confiança</div>
+                    <div className="mt-1 text-4xl font-bold text-emerald-400">
+                      {typeof pattern.confidence === "number"
+                        ? `${pattern.confidence}%`
+                        : "—"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <div className="flex items-center justify-between text-sm text-zinc-400">
+                    <span>Formação</span>
+                    <span className="text-white">
+                      {typeof pattern.confidence === "number"
+                        ? `${pattern.confidence}%`
+                        : "—"}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 h-3 rounded-full overflow-hidden bg-zinc-800">
+                    <div
+                      className={`h-full ${tone.bar}`}
+                      style={{ width: `${Math.max(0, Math.min(100, confidence))}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-5 text-yellow-400 text-sm font-medium">
+                  △ Ratios de Fibonacci (Prova)
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {ratios.length > 0 ? (
+                    ratios.map((ratio, ratioIdx) => (
+                      <div
+                        key={ratioIdx}
+                        className={`rounded-2xl border p-4 ${getRatioClass(ratio.ok)}`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="text-white text-2xl font-bold">
+                              {ratio.key ?? "—"}
+                            </div>
+                            <div className="mt-2 text-xs text-zinc-500">
+                              esp: {ratio.expected ?? "—"}
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="text-white text-2xl font-bold">
+                              {ratio.value ?? "—"}
+                            </div>
+                            <div
+                              className={`mt-2 text-sm ${
+                                ratio.ok ? "text-green-400" : "text-red-400"
+                              }`}
+                            >
+                              {ratio.ok ? "◉" : "⊗"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-zinc-400">Sem ratios retornados.</div>
+                  )}
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="rounded-2xl border border-cyan-500/20 bg-[linear-gradient(135deg,rgba(6,78,115,0.18),rgba(3,7,13,0.9))] p-5 text-center">
+                    <div className="text-zinc-400 text-lg">PRZ</div>
+                    <div className="mt-2 text-white text-2xl font-bold whitespace-pre-line">
+                      {prz.length > 0
+                        ? prz.map((v) => safeFormatPrice(v)).join("\n")
+                        : "—"}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-green-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(3,7,13,0.9))] p-5 text-center">
+                    <div className="text-zinc-400 text-lg">Alvos</div>
+                    <div className="mt-2 text-green-400 text-2xl font-bold whitespace-pre-line">
+                      {targets.length > 0
+                        ? targets.map((v) => safeFormatPrice(v)).join("\n")
+                        : "—"}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-red-500/20 bg-[linear-gradient(135deg,rgba(127,29,29,0.25),rgba(3,7,13,0.9))] p-5 text-center">
+                    <div className="text-zinc-400 text-lg">Stop</div>
+                    <div className="mt-2 text-red-400 text-2xl font-bold">
+                      {safeFormatPrice(pattern.stop)}
+                    </div>
+                  </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
+          Nenhum padrão harmônico detectado para este ativo/timeframe.
+        </div>
+      )}
 
-              <div className="rounded-2xl border border-green-900/40 bg-green-950/20 p-5 text-center">
-                <div className="text-zinc-400 text-lg">Alvos</div>
-                <div className="text-green-400 text-2xl font-bold mt-2 whitespace-pre-line">
-                  {(pattern.targets ?? []).map((v) => v.toFixed(2)).join("\n")}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-red-900/40 bg-red-950/20 p-5 text-center">
-                <div className="text-zinc-400 text-lg">Stop</div>
-                <div className="text-red-400 text-2xl font-bold mt-2">
-                  {pattern.stop?.toFixed(2)}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-5 md:p-6">
-        <div className="text-white text-2xl font-bold flex items-center gap-3 mb-4">
+      <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5 md:p-6">
+        <div className="flex items-center gap-3 mb-4 text-white text-2xl font-bold">
           <span className="text-yellow-400">△</span>
           <span>Níveis de Fibonacci</span>
         </div>
 
-        <div className="space-y-3">
-          {fibLevels.map((item, idx) => (
-            <div
-              key={idx}
-              className="rounded-2xl border border-red-900/40 bg-gradient-to-r from-red-950/30 to-zinc-950 p-4 grid grid-cols-3 items-center gap-4"
-            >
-              <div className="text-zinc-200 text-xl font-semibold flex items-center gap-3">
-                <span className="h-3 w-3 rounded-full bg-red-400 inline-block" />
-                <span>{item.level}</span>
+        {fibLevels.length > 0 ? (
+          <div className="space-y-3">
+            {fibLevels.map((item, idx) => (
+              <div
+                key={idx}
+                className={`rounded-2xl border px-4 py-4 grid grid-cols-3 items-center gap-4 ${getFibTypeClass(
+                  item.type
+                )}`}
+              >
+                <div className="text-white text-xl font-semibold flex items-center gap-3">
+                  <span
+                    className={`h-3 w-3 rounded-full inline-block ${
+                      (item.type || "").toLowerCase().includes("support") ||
+                      (item.type || "").toLowerCase().includes("suporte")
+                        ? "bg-green-400"
+                        : "bg-red-400"
+                    }`}
+                  />
+                  <span>{item.level ?? "—"}</span>
+                </div>
+
+                <div className="text-white text-2xl font-bold text-center">
+                  {safeFormatPrice(item.price)}
+                </div>
+
+                <div
+                  className={`text-lg text-right ${
+                    (item.type || "").toLowerCase().includes("support") ||
+                    (item.type || "").toLowerCase().includes("suporte")
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  {(item.type || "").toUpperCase() || "—"}
+                </div>
               </div>
-              <div className="text-white text-2xl font-bold text-center">
-                {item.price?.toFixed(2)}
-              </div>
-              <div className="text-red-400 text-lg text-right">{item.type}</div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-zinc-400">Sem níveis de Fibonacci retornados.</div>
+        )}
       </div>
     </div>
   );
