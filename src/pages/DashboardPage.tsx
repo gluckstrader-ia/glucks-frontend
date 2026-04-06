@@ -3178,169 +3178,357 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
 function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null }) {
   const p = analysisData?.probabilistic;
+  const assetType = analysisData?.asset_type;
 
-  const winRateGeneral = p?.win_rate_general ?? 0;
-  const winRateLong = p?.win_rate_long ?? 0;
-  const winRateShort = p?.win_rate_short ?? 0;
+  if (!analysisData) {
+    return (
+      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/60 p-6 text-center text-zinc-400">
+        Gere uma análise para visualizar a aba probabilística.
+      </div>
+    );
+  }
 
-  const historical = p?.historical;
-  const monteCarlo = p?.monte_carlo;
-  const scenarios = p?.scenarios;
-  const seasonality = p?.seasonality ?? [];
-  const riskMetrics = p?.risk_metrics;
+  if (!p) {
+    return (
+      <div className="rounded-3xl border border-yellow-900/40 bg-yellow-950/10 p-6 text-center text-zinc-300">
+        <div className="text-xl font-semibold text-yellow-400">
+          Dados probabilísticos indisponíveis
+        </div>
+        <div className="mt-2 text-sm text-zinc-400">
+          O backend não retornou o bloco <span className="text-white">probabilistic</span>.
+        </div>
+      </div>
+    );
+  }
+
+  const winRateGeneral =
+    typeof p.win_rate_general === "number" ? p.win_rate_general : null;
+  const winRateLong =
+    typeof p.win_rate_long === "number" ? p.win_rate_long : null;
+  const winRateShort =
+    typeof p.win_rate_short === "number" ? p.win_rate_short : null;
+
+  const historical = p.historical ?? null;
+  const monteCarlo = p.monte_carlo ?? null;
+  const scenarios = p.scenarios ?? null;
+  const seasonality = Array.isArray(p.seasonality) ? p.seasonality : [];
+  const riskMetrics = p.risk_metrics ?? null;
+
+  const safePct = (value?: number | null, digits = 2) =>
+    typeof value === "number" ? `${value.toFixed(digits)}%` : "—";
+
+  const safeNum = (value?: number | null, digits = 2) =>
+    typeof value === "number" ? value.toFixed(digits) : "—";
+
+  const safeFormatPrice = (value?: number | null) => {
+    if (typeof value !== "number") return "—";
+    return formatPrice(value, assetType);
+  };
+
+  const clampPct = (value?: number | null) => {
+    if (typeof value !== "number") return 0;
+    return Math.max(0, Math.min(100, value));
+  };
+
+  const bullishPct = clampPct(scenarios?.bullish);
+  const neutralPct = clampPct(scenarios?.neutral);
+  const bearishPct = clampPct(scenarios?.bearish);
+
+  const monteLow = typeof monteCarlo?.low === "number" ? monteCarlo.low : null;
+  const monteMid = typeof monteCarlo?.mid === "number" ? monteCarlo.mid : null;
+  const monteHigh = typeof monteCarlo?.high === "number" ? monteCarlo.high : null;
+  const confidenceLevel =
+    typeof monteCarlo?.confidence_level === "number"
+      ? monteCarlo.confidence_level
+      : null;
+
+  const seasonalityWinText = (value?: number | null) => {
+    if (typeof value !== "number") return "—";
+    if (value >= 2) return "100% win";
+    if (value >= 1) return "80% win";
+    if (value >= 0.5) return "67% win";
+    if (value >= 0) return "50% win";
+    return "40% win";
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800 p-6 text-center">
-          <div className="text-4xl text-white font-bold">{winRateGeneral}%</div>
-          <div className="text-zinc-400 mt-2">Win Rate Geral</div>
+        <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(135deg,rgba(10,16,28,0.96),rgba(3,7,13,0.98))] p-6 text-center">
+          <div className="text-cyan-400 text-3xl">📊</div>
+          <div className="mt-4 text-5xl font-bold text-white">
+            {winRateGeneral !== null ? `${winRateGeneral.toFixed(0)}%` : "—"}
+          </div>
+          <div className="mt-2 text-zinc-400">Win Rate Geral</div>
         </div>
-        <div className="rounded-2xl bg-green-950/30 border border-green-900/40 p-6 text-center">
-          <div className="text-4xl text-green-400 font-bold">{winRateLong}%</div>
-          <div className="text-zinc-400 mt-2">Win Rate Long</div>
+
+        <div className="rounded-3xl border border-green-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(3,7,13,0.98))] p-6 text-center">
+          <div className="text-green-400 text-3xl">↗</div>
+          <div className="mt-4 text-5xl font-bold text-green-400">
+            {winRateLong !== null ? `${winRateLong.toFixed(0)}%` : "—"}
+          </div>
+          <div className="mt-2 text-zinc-400">Win Rate Long</div>
         </div>
-        <div className="rounded-2xl bg-red-950/30 border border-red-900/40 p-6 text-center">
-          <div className="text-4xl text-red-400 font-bold">{winRateShort}%</div>
-          <div className="text-zinc-400 mt-2">Win Rate Short</div>
+
+        <div className="rounded-3xl border border-red-500/20 bg-[linear-gradient(135deg,rgba(239,68,68,0.16),rgba(3,7,13,0.98))] p-6 text-center">
+          <div className="text-red-400 text-3xl">↘</div>
+          <div className="mt-4 text-5xl font-bold text-red-400">
+            {winRateShort !== null ? `${winRateShort.toFixed(0)}%` : "—"}
+          </div>
+          <div className="mt-2 text-zinc-400">Win Rate Short</div>
         </div>
       </div>
 
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5">
-        <div className="text-white text-xl font-bold mb-4">
-          Estatísticas Históricas ({historical?.periods ?? 0} períodos)
+      <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.96),rgba(3,7,13,0.98))] p-5 md:p-6">
+        <div className="flex items-center gap-3 text-white text-2xl font-bold mb-5">
+          <span className="text-cyan-400">🗓</span>
+          <span>
+            Estatísticas Históricas
+            <span className="text-zinc-400 font-medium text-lg">
+              {" "}
+              ({historical?.periods ?? "—"} períodos)
+            </span>
+          </span>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-white text-xl font-bold">
-              {historical?.return_pct?.toFixed(2)}%
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
+            <div className="text-white text-4xl font-bold">
+              {safePct(historical?.return_pct)}
             </div>
-            <div className="text-zinc-400">Retorno</div>
+            <div className="text-zinc-400 mt-2">Retorno</div>
           </div>
-          <div className="text-center">
-            <div className="text-white text-xl font-bold">
-              {historical?.volatility_pct?.toFixed(2)}%
+
+          <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
+            <div className="text-white text-4xl font-bold">
+              {safePct(historical?.volatility_pct)}
             </div>
-            <div className="text-zinc-400">Volatilidade</div>
+            <div className="text-zinc-400 mt-2">Volatilidade</div>
           </div>
-          <div className="text-center">
-            <div className="text-white text-xl font-bold">
-              {historical?.sharpe?.toFixed(2)}
+
+          <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
+            <div className="text-white text-4xl font-bold">
+              {safeNum(historical?.sharpe)}
             </div>
-            <div className="text-zinc-400">Sharpe Ratio</div>
+            <div className="text-zinc-400 mt-2">Sharpe Ratio</div>
           </div>
-          <div className="text-center">
-            <div className="text-red-400 text-xl font-bold">
-              {historical?.max_drawdown_pct?.toFixed(2)}%
+
+          <div className="rounded-2xl border border-red-500/20 bg-red-950/20 p-5 text-center">
+            <div className="text-red-400 text-4xl font-bold">
+              {safePct(historical?.max_drawdown_pct, 0)}
             </div>
-            <div className="text-zinc-400">Max Drawdown</div>
+            <div className="text-zinc-400 mt-2">Max Drawdown</div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5">
-        <div className="text-white text-xl font-bold mb-4">Simulação Monte Carlo</div>
-        <div className="h-6 rounded-full bg-gradient-to-r from-red-500 via-cyan-400 to-green-500 relative">
-          <div className="absolute left-[20%] top-[-10px] text-red-400 text-xs">
-            {monteCarlo?.low?.toFixed(2)}
+      <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.96),rgba(3,7,13,0.98))] p-5 md:p-6">
+        <div className="flex items-center gap-3 text-white text-2xl font-bold mb-5">
+          <span className="text-purple-400">%</span>
+          <span>
+            Simulação Monte Carlo
+            <span className="text-zinc-400 font-medium text-lg">
+              {" "}
+              ({confidenceLevel !== null ? `${confidenceLevel * 80}` : "—"} simulações)
+            </span>
+          </span>
+        </div>
+
+        <div className="relative mt-8 rounded-full h-8 bg-gradient-to-r from-red-500/70 via-cyan-400/70 to-green-500/70">
+          <div className="absolute left-[27%] top-[-24px] flex flex-col items-center">
+            <div className="h-14 w-[2px] bg-red-400" />
+            <div className="mt-1 text-red-400 text-sm font-semibold">
+              {safeFormatPrice(monteLow)}
+            </div>
           </div>
-          <div className="absolute left-[50%] top-[-10px] text-cyan-400 text-xs">
-            {monteCarlo?.mid?.toFixed(2)}
+
+          <div className="absolute left-[50%] top-[-24px] flex flex-col items-center">
+            <div className="h-14 w-[2px] bg-cyan-400" />
+            <div className="mt-1 text-cyan-400 text-sm font-semibold">
+              {safeFormatPrice(monteMid)}
+            </div>
           </div>
-          <div className="absolute left-[80%] top-[-10px] text-green-400 text-xs">
-            {monteCarlo?.high?.toFixed(2)}
+
+          <div className="absolute left-[73%] top-[-24px] flex flex-col items-center">
+            <div className="h-14 w-[2px] bg-green-400" />
+            <div className="mt-1 text-green-400 text-sm font-semibold">
+              {safeFormatPrice(monteHigh)}
+            </div>
           </div>
         </div>
-        <div className="text-center text-zinc-400 mt-4">
+
+        <div className="mt-14 text-center text-zinc-400 text-xl">
           Nível de confiança:{" "}
-          <span className="text-cyan-400">{monteCarlo?.confidence_level}%</span>
+          <span className="text-cyan-400 font-bold">
+            {confidenceLevel !== null ? `${confidenceLevel}%` : "—"}
+          </span>
         </div>
       </div>
 
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5">
-        <div className="text-white text-xl font-bold mb-4">Cenários Probabilísticos</div>
-
-        <div className="mb-4">
-          <div className="text-sm text-zinc-400 flex items-center justify-between">
-            <span>Alta (Bullish)</span>
-            <span>{scenarios?.bullish}%</span>
-          </div>
-          <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-green-500"
-              style={{ width: `${scenarios?.bullish ?? 0}%` }}
-            />
-          </div>
+      <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.96),rgba(3,7,13,0.98))] p-5 md:p-6">
+        <div className="text-white text-2xl font-bold mb-5">
+          Cenários Probabilísticos
         </div>
 
-        <div className="mb-4">
-          <div className="text-sm text-zinc-400 flex items-center justify-between">
-            <span>Neutro</span>
-            <span>{scenarios?.neutral}%</span>
-          </div>
-          <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-cyan-400"
-              style={{ width: `${scenarios?.neutral ?? 0}%` }}
-            />
-          </div>
-        </div>
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center justify-between text-xl mb-2">
+              <span className="text-white font-semibold">Alta (Bullish)</span>
+              <span className="text-white font-bold">
+                {typeof scenarios?.bullish === "number"
+                  ? `${scenarios.bullish.toFixed(0)}%`
+                  : "—"}
+              </span>
+            </div>
 
-        <div>
-          <div className="text-sm text-zinc-400 flex items-center justify-between">
-            <span>Baixa (Bearish)</span>
-            <span>{scenarios?.bearish}%</span>
+            <div className="h-8 rounded-full overflow-hidden bg-zinc-800 relative">
+              <div
+                className="h-full bg-green-500"
+                style={{ width: `${bullishPct}%` }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center text-sm text-white font-semibold">
+                Alvo: {safeFormatPrice(monteHigh)}
+              </div>
+            </div>
+
+            <div className="text-zinc-400 mt-2">
+              Cenário otimista baseado em volatilidade e tendência recente.
+            </div>
           </div>
-          <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-red-500"
-              style={{ width: `${scenarios?.bearish ?? 0}%` }}
-            />
+
+          <div>
+            <div className="flex items-center justify-between text-xl mb-2">
+              <span className="text-white font-semibold">Neutro (Base)</span>
+              <span className="text-white font-bold">
+                {typeof scenarios?.neutral === "number"
+                  ? `${scenarios.neutral.toFixed(0)}%`
+                  : "—"}
+              </span>
+            </div>
+
+            <div className="h-8 rounded-full overflow-hidden bg-zinc-800 relative">
+              <div
+                className="h-full bg-cyan-400"
+                style={{ width: `${neutralPct}%` }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center text-sm text-white font-semibold">
+                Alvo: {safeFormatPrice(monteMid)}
+              </div>
+            </div>
+
+            <div className="text-zinc-400 mt-2">
+              Cenário base/mediano da distribuição.
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between text-xl mb-2">
+              <span className="text-white font-semibold">Baixa (Bearish)</span>
+              <span className="text-white font-bold">
+                {typeof scenarios?.bearish === "number"
+                  ? `${scenarios.bearish.toFixed(0)}%`
+                  : "—"}
+              </span>
+            </div>
+
+            <div className="h-8 rounded-full overflow-hidden bg-zinc-800 relative">
+              <div
+                className="h-full bg-red-500"
+                style={{ width: `${bearishPct}%` }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center text-sm text-white font-semibold">
+                Alvo: {safeFormatPrice(monteLow)}
+              </div>
+            </div>
+
+            <div className="text-zinc-400 mt-2">
+              Cenário pessimista baseado em drawdown e pressão vendedora.
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5">
-        <div className="text-white text-xl font-bold mb-4">Sazonalidade</div>
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-          {seasonality.map((item, i) => (
-            <div
-              key={i}
-              className="rounded-xl p-3 bg-zinc-900/70 border border-zinc-800 text-center"
-            >
-              <div className="text-white">{item.month}</div>
-              <div className="text-green-400 text-sm mt-1">+{item.value}%</div>
-            </div>
-          ))}
+      <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.96),rgba(3,7,13,0.98))] p-5 md:p-6">
+        <div className="flex items-center gap-3 text-white text-2xl font-bold mb-5">
+          <span className="text-orange-400">🕒</span>
+          <span>Sazonalidade</span>
+          <span className="text-zinc-400 font-medium text-lg">
+            ({seasonality.length > 0 ? "10 anos, mediana Open→Close" : "sem base histórica"})
+          </span>
         </div>
+
+        {seasonality.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
+            {seasonality.map((item, i) => {
+              const positive = typeof item.value === "number" && item.value >= 0;
+
+              return (
+                <div
+                  key={i}
+                  className={`rounded-2xl border p-4 text-center ${
+                    positive
+                      ? "border-green-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(3,7,13,0.9))]"
+                      : "border-red-500/20 bg-[linear-gradient(135deg,rgba(239,68,68,0.12),rgba(3,7,13,0.9))]"
+                  }`}
+                >
+                  <div className="text-white text-xl font-bold">
+                    {item.month ?? "—"}
+                  </div>
+
+                  <div
+                    className={`mt-2 text-2xl font-bold ${
+                      positive ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    {typeof item.value === "number"
+                      ? `${item.value >= 0 ? "+" : ""}${item.value.toFixed(2)}%`
+                      : "—"}
+                  </div>
+
+                  <div className="text-zinc-400 mt-2">
+                    {seasonalityWinText(item.value)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-zinc-400">Sem sazonalidade retornada.</div>
+        )}
       </div>
 
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5">
-        <div className="text-white text-xl font-bold mb-4">Métricas de Risco</div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          <div>
-            <div className="text-red-400 text-xl font-bold">
-              {riskMetrics?.var_95?.toFixed(2)}%
+      <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.96),rgba(3,7,13,0.98))] p-5 md:p-6">
+        <div className="text-white text-2xl font-bold mb-5">
+          Métricas de Risco
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="rounded-2xl border border-red-500/20 bg-red-950/20 p-5 text-center">
+            <div className="text-red-400 text-4xl font-bold">
+              {safePct(riskMetrics?.var_95)}
             </div>
-            <div className="text-zinc-400">VaR 95%</div>
+            <div className="text-zinc-400 mt-2">VaR 95%</div>
           </div>
-          <div>
-            <div className="text-red-400 text-xl font-bold">
-              {riskMetrics?.expected_shortfall?.toFixed(2)}%
+
+          <div className="rounded-2xl border border-red-500/20 bg-red-950/20 p-5 text-center">
+            <div className="text-red-400 text-4xl font-bold">
+              {safePct(riskMetrics?.expected_shortfall)}
             </div>
-            <div className="text-zinc-400">Expected Shortfall</div>
+            <div className="text-zinc-400 mt-2">Expected Shortfall</div>
           </div>
-          <div>
-            <div className="text-white text-xl font-bold">
-              {riskMetrics?.beta?.toFixed(2)}
+
+          <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
+            <div className="text-white text-4xl font-bold">
+              {safeNum(riskMetrics?.beta, 0)}
             </div>
-            <div className="text-zinc-400">Beta</div>
+            <div className="text-zinc-400 mt-2">Beta</div>
           </div>
-          <div>
-            <div className="text-white text-xl font-bold">
-              {riskMetrics?.correlation?.toFixed(2)}
+
+          <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
+            <div className="text-white text-4xl font-bold">
+              {safeNum(riskMetrics?.correlation, 0)}
             </div>
-            <div className="text-zinc-400">Correlação</div>
+            <div className="text-zinc-400 mt-2">Correlação</div>
           </div>
         </div>
       </div>
