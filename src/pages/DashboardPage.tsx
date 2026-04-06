@@ -307,7 +307,7 @@ const AI_LOADING_STEPS = [
 
 const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
   Índices: [
-    { label: "S&P 500", value: "SPX", apiType: "index", tvSymbol: "SP:SPX" },
+    { label: "S&P 500", value: "SPX", apiType: "index", tvSymbol: "FOREXCOM:SPXUSD" },
     { label: "Ibovespa", value: "IBOV", apiType: "index", tvSymbol: "INDEX:IBOV" },
     { label: "NASDAQ 100", value: "NDX", apiType: "index", tvSymbol: "FOREXCOM:NAS100" },
     { label: "NASDAQ Composite", value: "NASDAQ", apiType: "index", tvSymbol: "NASDAQ:IXIC" },
