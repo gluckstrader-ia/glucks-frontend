@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -296,6 +296,8 @@ type AssetOption = {
 };
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const API_URL_FUTUROS_BR =
+  import.meta.env.VITE_API_URL_FUTUROS_BR || API_URL;
 
 const AI_LOADING_STEPS = [
   "Lendo estrutura do mercado...",
@@ -1016,51 +1018,6 @@ function SummaryTab({
             </div>
           </div>
 
-          {isB3Future && (
-            <div className="grid grid-cols-2 gap-3 mt-3">
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3">
-                <div className="text-zinc-400 text-xs">Abertura</div>
-                <div className="text-white text-xl font-bold mt-1">
-                  {formatPrice(b3Data?.open_price ?? 0, assetType)}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3">
-                <div className="text-zinc-400 text-xs">Fechamento</div>
-                <div className="text-white text-xl font-bold mt-1">
-                  {formatPrice(b3Data?.close_price ?? 0, assetType)}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-green-900/60 bg-green-950/20 p-3">
-                <div className="text-green-400 text-xs">Máxima</div>
-                <div className="text-green-400 text-xl font-bold mt-1">
-                  {formatPrice(b3Data?.high_price ?? 0, assetType)}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-red-900/60 bg-red-950/20 p-3">
-                <div className="text-red-400 text-xs">Mínima</div>
-                <div className="text-red-400 text-xl font-bold mt-1">
-                  {formatPrice(b3Data?.low_price ?? 0, assetType)}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3">
-                <div className="text-zinc-400 text-xs">Bid</div>
-                <div className="text-green-400 text-xl font-bold mt-1">
-                  {formatPrice(b3Data?.bid ?? 0, assetType)}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3">
-                <div className="text-zinc-400 text-xs">Ask</div>
-                <div className="text-red-400 text-xl font-bold mt-1">
-                  {formatPrice(b3Data?.ask ?? 0, assetType)}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -3997,9 +3954,15 @@ export default function DashboardPage() {
   const [newsTab, setNewsTab] = useState<"news" | "events">("news");
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [apiError, setApiError] = useState("");
+  const analysisInFlightRef = useRef(false);
 
   const selectedAsset = (customAsset.trim() || asset).toUpperCase();
-  const { data: b3Data, isB3Future } = useB3MarketData(selectedAsset);
+  const shouldUseB3Feed =
+    assetCategory === "Futuros BR" && ["WIN", "WDO"].includes(selectedAsset);
+
+  const { data: b3Data, isB3Future } = useB3MarketData(
+    shouldUseB3Feed ? selectedAsset : ""
+  );
 
   const tradingViewIntervalMap: Record<string, string> = {
     "1m": "1",
@@ -4055,6 +4018,11 @@ const resolvedAssetType =
     ? "future_us"
     : "crypto");
 
+  const isLocalFutureBr =
+    assetCategory === "Futuros BR" && ["WIN", "WDO"].includes(resolvedAsset);
+
+  const ANALYZE_API_URL = isLocalFutureBr ? API_URL_FUTUROS_BR : API_URL;
+
   const tvSymbol = getTradingViewSymbol(assetCategory, resolvedAsset);
 
   function handleLogout() {
@@ -4062,13 +4030,21 @@ const resolvedAssetType =
     navigate("/login");
   }
 
-  async function handleAnalyze() {
+  async function handleAnalyze(showLoader = true) {
+    if (!token) return;
+    if (analysisInFlightRef.current) return;
+
+    analysisInFlightRef.current = true;
+
     try {
       setApiError("");
-      setProgress(10);
-      setLoading(true);
 
-      const response = await fetch(`${API_URL}/analyze`, {
+      if (showLoader) {
+        setProgress(10);
+        setLoading(true);
+      }
+
+      const response = await fetch(`${ANALYZE_API_URL}/analyze`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -4081,7 +4057,9 @@ const resolvedAssetType =
         }),
       });
 
-      setProgress(60);
+      if (showLoader) {
+        setProgress(60);
+      }
 
       if (!response.ok) {
         let errorMessage = "Erro ao analisar mercado";
@@ -4105,17 +4083,26 @@ const resolvedAssetType =
 
       const data = await response.json();
 
-      setProgress(90);
+      if (showLoader) {
+        setProgress(90);
+      }
       setAnalysisData(data);
-      setMainTab("Resumo");
-      setProgress(100);
+
+      if (showLoader) {
+        setMainTab("Resumo");
+        setProgress(100);
+      }
     } catch (error: any) {
       setApiError(error.message || "Erro desconhecido");
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-        setProgress(0);
-      }, 300);
+      analysisInFlightRef.current = false;
+
+      if (showLoader) {
+        setTimeout(() => {
+          setLoading(false);
+          setProgress(0);
+        }, 300);
+      }
     }
   }
 
@@ -4137,6 +4124,7 @@ const resolvedAssetType =
 
     return () => clearInterval(interval);
   }, [loading]);
+
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex">
@@ -4262,7 +4250,7 @@ const resolvedAssetType =
               <div className="flex items-end">
                 <Button
                   className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={handleAnalyze}
+                  onClick={() => handleAnalyze(true)}
                 >
                   Gerar Análise
                 </Button>
@@ -4279,6 +4267,11 @@ const resolvedAssetType =
               <span className="text-white font-semibold ml-2">
                 {resolvedAssetType}
               </span>
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+              Análise manual: clique em <span className="font-semibold">Gerar Análise</span> para atualizar os dados.
+              {assetCategory === "Futuros BR" && shouldUseB3Feed ? " Feed B3/Nelogica conectado para WIN/WDO." : ""}
             </div>
           </div>
 
