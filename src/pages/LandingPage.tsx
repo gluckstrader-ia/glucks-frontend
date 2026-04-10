@@ -143,7 +143,7 @@ export default function LandingPage() {
               Entrar
             </a>
             <a
-              href="/cadastro?plan=trimestral"
+              href="/cadastro-trial"
               className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-emerald-400"
             >
               Teste Grátis

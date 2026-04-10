@@ -12,6 +12,7 @@ import AdminRoute from "./routes/AdminRoute";
 import IndicadorPage from "./pages/IndicadorPage";
 import RoboPage from "./pages/RoboPage";
 import CursoPage from "./pages/CursoPage";
+import RegisterTrialPage from "./pages/RegisterTrialPage";
 
 export default function App() {
   return (
@@ -40,6 +41,9 @@ export default function App() {
         <Route path="/robo" element={<RoboPage />} />
 
         <Route path="/curso" element={<CursoPage />} />
+
+        <Route path="/cadastro-trial" element={<RegisterTrialPage />} />
+
       </Routes>
     </BrowserRouter>
   );
