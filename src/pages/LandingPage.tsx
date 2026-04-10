@@ -9,7 +9,6 @@ import {
   Gem,
   LineChart,
   Lock,
-  MessageCircleMore,
   Radar,
   ShieldCheck,
   Sparkles,
@@ -164,26 +163,6 @@ function GlowCard({
     >
       {children}
     </div>
-  );
-}
-
-function FloatingChatButton() {
-  return (
-    <button
-      type="button"
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-full border border-emerald-400/30 bg-zinc-950/95 px-4 py-3 text-left shadow-[0_10px_40px_rgba(16,185,129,0.18)] transition hover:scale-[1.02] hover:border-emerald-300/50"
-    >
-      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500 text-black shadow-lg shadow-emerald-500/30">
-        <MessageCircleMore className="h-5 w-5" />
-      </div>
-
-      <div className="hidden sm:block">
-        <div className="text-sm font-semibold text-white">Chat online</div>
-        <div className="text-xs text-zinc-400">
-          Tire dúvidas sobre planos e acesso
-        </div>
-      </div>
-    </button>
   );
 }
 
@@ -891,8 +870,6 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
-
-      <FloatingChatButton />
     </div>
   );
 }
