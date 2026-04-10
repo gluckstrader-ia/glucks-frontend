@@ -385,8 +385,7 @@ export default function RegisterTrialPage() {
                   Experiência premium
                 </p>
                 <p className="mt-3 text-sm leading-7 text-zinc-200">
-                  Uma página de cadastro limpa, cinematográfica e com foco total
-                  em conversão, separada do fluxo de planos.
+                  Acesso completo a plataforma!
                 </p>
               </div>
             </div>
