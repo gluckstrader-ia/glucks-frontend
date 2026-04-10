@@ -1,124 +1,256 @@
+import React from "react";
+import {
+  ArrowRight,
+  BarChart3,
+  BrainCircuit,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  Gem,
+  LineChart,
+  Lock,
+  MessageCircleMore,
+  Radar,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  TrendingUp,
+  UserCheck,
+  Zap,
+} from "lucide-react";
 
-import WhatsAppButton from "../components/WhatsAppButton";
-import { Link } from "react-router-dom";
+const plans = [
+  {
+    name: "Mensal",
+    price: "R$ 197",
+    period: "/mês",
+    highlight: false,
+    cta: "Assinar mensal",
+    features: [
+      "Acesso completo ao dashboard",
+      "Análises em tempo real",
+      "Smart Money + WEGD + Probabilística",
+      "Suporte ao assinante",
+    ],
+  },
+  {
+    name: "Trimestral",
+    price: "R$ 497",
+    period: "/3 meses",
+    highlight: true,
+    badge: "Mais vantajoso",
+    cta: "Assinar trimestral",
+    features: [
+      "Tudo do plano mensal",
+      "Melhor custo-benefício",
+      "Acesso contínuo sem interrupções",
+      "Prioridade em novidades",
+    ],
+  },
+  {
+    name: "Semestral",
+    price: "R$ 897",
+    period: "/6 meses",
+    highlight: false,
+    cta: "Assinar semestral",
+    features: [
+      "Tudo do plano trimestral",
+      "Maior economia no período",
+      "Acompanhamento de longo prazo",
+      "Estrutura ideal para consistência",
+    ],
+  },
+];
+
+const benefits = [
+  {
+    icon: <BrainCircuit className="h-6 w-6" />,
+    title: "Leitura objetiva em segundos",
+    text: "Veja direção, contexto, entrada, stop, alvos e confiança sem perder tempo interpretando dezenas de telas.",
+  },
+  {
+    icon: <Radar className="h-6 w-6" />,
+    title: "Confluência entre múltiplos módulos",
+    text: "Técnica, Smart Money, Harmônicos, WEGD, Probabilística e Timing trabalhando juntos na mesma leitura.",
+  },
+  {
+    icon: <ShieldCheck className="h-6 w-6" />,
+    title: "Mais clareza na tomada de decisão",
+    text: "Você não depende de achismo. A plataforma organiza o cenário para ajudar a filtrar operações ruins.",
+  },
+  {
+    icon: <LineChart className="h-6 w-6" />,
+    title: "Experiência premium e intuitiva",
+    text: "Visual moderno, blocos objetivos e navegação pensada para quem precisa agir rápido durante o mercado.",
+  },
+];
+
+const steps = [
+  {
+    title: "Escolha o ativo",
+    text: "Selecione mercado, ativo e timeframe para iniciar a leitura.",
+  },
+  {
+    title: "A IA cruza os módulos",
+    text: "A plataforma combina fluxo, técnica, probabilidade, timing e contexto operacional.",
+  },
+  {
+    title: "Receba o setup final",
+    text: "Visualize direção, confiança, entrada, stop, alvo e leitura consolidada.",
+  },
+];
+
+const testimonials = [
+  {
+    name: "Carlos M.",
+    role: "Trader intraday",
+    text: "Antes eu entrava cedo demais. Com a confluência da plataforma, parei de forçar operação e minha leitura ficou muito mais limpa.",
+  },
+  {
+    name: "Fernanda S.",
+    role: "Operadora de mini índice",
+    text: "O que mais gostei foi ver tudo organizado em uma tela só. Direção, stop, alvo e confiança. Ficou muito mais profissional.",
+  },
+  {
+    name: "Rafael T.",
+    role: "Swing trader",
+    text: "A Gluck’s Trader IA me ajudou a filtrar entradas ruins. Hoje opero menos, mas com muito mais contexto e segurança.",
+  },
+];
+
+const faqs = [
+  {
+    q: "Preciso ter experiência para usar a plataforma?",
+    a: "Não. A Gluck’s Trader IA foi pensada para simplificar a leitura do mercado, ajudando tanto quem está começando quanto quem já opera.",
+  },
+  {
+    q: "Quais ativos posso analisar?",
+    a: "Você pode analisar índices, ações, forex, cripto, B3 e futuros brasileiros, conforme os ativos liberados no dashboard.",
+  },
+  {
+    q: "O acesso é liberado automaticamente?",
+    a: "A estrutura foi planejada para uma liberação rápida após a confirmação do pagamento, com suporte manual quando necessário.",
+  },
+  {
+    q: "A plataforma entrega entrada e stop?",
+    a: "Sim. O objetivo é apresentar uma leitura prática do cenário com direção, confiança, entrada, stop, alvo e sinal final.",
+  },
+];
+
+const modules = [
+  "Análise Técnica",
+  "Smart Money Concept",
+  "Padrões Harmônicos",
+  "WEGD",
+  "Probabilística",
+  "Timing",
+  "Sinal Final",
+  "Gestão visual de contexto",
+];
+
+function GlowCard({
+  children,
+  className = "",
+  id,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+}) {
+  return (
+    <div
+      id={id}
+      className={`rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-sm ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function FloatingChatButton() {
+  return (
+    <button
+      type="button"
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-full border border-emerald-400/30 bg-zinc-950/95 px-4 py-3 text-left shadow-[0_10px_40px_rgba(16,185,129,0.18)] transition hover:scale-[1.02] hover:border-emerald-300/50"
+    >
+      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500 text-black shadow-lg shadow-emerald-500/30">
+        <MessageCircleMore className="h-5 w-5" />
+      </div>
+
+      <div className="hidden sm:block">
+        <div className="text-sm font-semibold text-white">Chat online</div>
+        <div className="text-xs text-zinc-400">
+          Tire dúvidas sobre planos e acesso
+        </div>
+      </div>
+    </button>
+  );
+}
 
 export default function LandingPage() {
-  const plans = [
-    {
-      name: "Mensal",
-      price: "R$ 197",
-      period: "/mês",
-      highlight: false,
-      cta: "Assinar mensal",
-      features: [
-        "Acesso completo ao dashboard",
-        "Análises em tempo real",
-        "Smart Money + WEGD + Probabilística",
-        "Suporte ao assinante",
-      ],
-    },
-    {
-      name: "Trimestral",
-      price: "R$ 497",
-      period: "/3 meses",
-      highlight: true,
-      badge: "Mais vantajoso",
-      cta: "Assinar trimestral",
-      features: [
-        "Tudo do plano mensal",
-        "Melhor custo-benefício",
-        "Acesso contínuo sem interrupções",
-        "Prioridade em novidades",
-      ],
-    },
-    {
-      name: "Semestral",
-      price: "R$ 897",
-      period: "/6 meses",
-      highlight: false,
-      cta: "Assinar semestral",
-      features: [
-        "Tudo do plano trimestral",
-        "Maior economia no período",
-        "Acompanhamento de longo prazo",
-        "Estrutura ideal para consistência",
-      ],
-    },
-  ];
-
-  const faqs = [
-    {
-      q: "Preciso ter experiência para usar a plataforma?",
-      a: "Não. A Gluck’s Trader IA foi pensada para simplificar a leitura do mercado, ajudando tanto quem está começando quanto quem já opera.",
-    },
-    {
-      q: "Quais ativos posso analisar?",
-      a: "Você pode analisar índices, ações, forex, cripto, B3 e futuros brasileiros, conforme os ativos liberados no dashboard.",
-    },
-    {
-      q: "O acesso é liberado automaticamente?",
-      a: "Sim. A estrutura foi pensada para liberação automática após confirmação do pagamento, com possibilidade de liberação manual quando necessário.",
-    },
-  ];
-
-  const benefits = [
-    "Leitura objetiva do mercado em segundos",
-    "Confluência entre múltiplos módulos de análise",
-    "Confiança percentual para apoiar a tomada de decisão",
-    "Visual profissional, intuitivo e responsivo",
-  ];
-
-  const steps = [
-    {
-      title: "Escolha o ativo",
-      text: "Selecione o mercado, o ativo e o timeframe que deseja analisar.",
-    },
-    {
-      title: "Acione a IA",
-      text: "A plataforma cruza contexto, fluxo, técnica, probabilidade e timing.",
-    },
-    {
-      title: "Receba o setup",
-      text: "Veja direção, confiança, entrada, stop, alvo e sinal final da análise.",
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.16),transparent_24%),radial-gradient(circle_at_80%_10%,rgba(34,211,238,0.08),transparent_18%),radial-gradient(circle_at_30%_90%,rgba(250,204,21,0.05),transparent_22%)]" />
+
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/75 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="Gluck's Trader IA"
-              className="w-15 h-12 rounded-xl object-cover shadow-md"
-            />
-          <div className="leading-tight">
-            <h1 className="text-white font-bold text-lg">Gluck&apos;s Trader IA</h1>
-            <p className="text-zinc-400 text-sm">Inteligência para análise de mercado</p>
+            <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-black p-2 shadow-[0_0_35px_rgba(16,185,129,0.18)]">
+              <img
+                src="/logo.png"
+                alt="Gluck's Trader IA"
+                className="h-10 w-12 rounded-lg object-cover"
+              />
+            </div>
+
+            <div className="leading-tight">
+              <h1 className="text-lg font-bold text-white">
+                Gluck&apos;s Trader IA
+              </h1>
+              <p className="text-sm text-zinc-400">
+                Inteligência para leitura de mercado
+              </p>
+            </div>
           </div>
-        </div>
 
           <nav className="hidden items-center gap-6 md:flex">
-            <a href="#beneficios" className="text-sm text-zinc-300 transition hover:text-white">
+            <a
+              href="#beneficios"
+              className="text-sm text-zinc-300 transition hover:text-white"
+            >
               Benefícios
             </a>
-            <a href="#como-funciona" className="text-sm text-zinc-300 transition hover:text-white">
-              Como funciona
+            <a
+              href="#modulos"
+              className="text-sm text-zinc-300 transition hover:text-white"
+            >
+              Módulos
             </a>
-            <a href="#planos" className="text-sm text-zinc-300 transition hover:text-white">
+            <a
+              href="#depoimentos"
+              className="text-sm text-zinc-300 transition hover:text-white"
+            >
+              Resultados
+            </a>
+            <a
+              href="#planos"
+              className="text-sm text-zinc-300 transition hover:text-white"
+            >
               Planos
             </a>
-            <a href="#faq" className="text-sm text-zinc-300 transition hover:text-white">
+            <a
+              href="#faq"
+              className="text-sm text-zinc-300 transition hover:text-white"
+            >
               FAQ
             </a>
 
-            <Link
-              to="/indicador"
-              className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/30 hover:text-white hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+            <a
+              href="/indicador"
+              className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/25 hover:text-white"
             >
               Indicador
-            </Link>
+            </a>
 
             <a
               href="/robo"
@@ -142,6 +274,7 @@ export default function LandingPage() {
             >
               Entrar
             </a>
+
             <a
               href="/cadastro-trial"
               className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-emerald-400"
@@ -153,29 +286,32 @@ export default function LandingPage() {
       </header>
 
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.18),transparent_35%),radial-gradient(circle_at_80%_20%,rgba(34,197,94,0.12),transparent_20%)]" />
-        <div className="relative mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-2 lg:items-center lg:py-28">
+        <div className="relative mx-auto grid max-w-7xl gap-14 px-6 py-20 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:py-28">
           <div>
-            <div className="mb-6 inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300">
+              <Sparkles className="h-4 w-4" />
               Plataforma premium de análise com IA
             </div>
 
-            <h1 className="max-w-3xl text-4xl font-black leading-tight text-white md:text-6xl">
-              Tome decisões com mais clareza usando a Gluck&apos;s Trader IA.
+            <h1 className="max-w-4xl text-4xl font-black leading-tight text-white md:text-6xl">
+              Tome decisões com mais clareza, contexto e confiança no mercado.
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-300 md:text-xl">
-              Analise o mercado com confluência técnica, Smart Money, leitura
-              WEGD, probabilidade, timing e sinal final em uma única plataforma.
+              Analise o mercado com confluência técnica, Smart Money, WEGD,
+              probabilidade, timing e sinal final em uma experiência única,
+              rápida e profissional.
             </p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <a
                 href="/cadastro?plan=trimestral"
-                className="rounded-2xl bg-emerald-500 px-6 py-4 text-center text-base font-bold text-black transition hover:bg-emerald-400"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-bold text-black transition hover:bg-emerald-400"
               >
                 Quero acessar agora
+                <ArrowRight className="h-5 w-5" />
               </a>
+
               <a
                 href="#planos"
                 className="rounded-2xl border border-white/10 px-6 py-4 text-center text-base font-semibold text-white transition hover:border-white/20 hover:bg-white/5"
@@ -185,28 +321,34 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-2xl font-black text-emerald-400">IA</div>
-                <div className="mt-1 text-sm text-zinc-400">
-                  Análise integrada em segundos
-                </div>
-              </div>
+              {[
+                ["IA", "Análise integrada em segundos"],
+                ["Multi", "Forex, cripto, ações, B3 e índices"],
+                ["Setup", "Entrada, stop, alvo e confiança"],
+              ].map(([title, text]) => (
+                <GlowCard key={title} className="p-4">
+                  <div className="text-2xl font-black text-emerald-400">
+                    {title}
+                  </div>
+                  <div className="mt-1 text-sm text-zinc-400">{text}</div>
+                </GlowCard>
+              ))}
+            </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-2xl font-black text-emerald-400">Multi</div>
-                <div className="mt-1 text-sm text-zinc-400">
-                  Forex, cripto, ações, B3 e índices
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              {[
+                ["+3.000", "traders impactados"],
+                ["+70%", "leitura média de confiança operacional"],
+                ["24h / 7 Dias", "estrutura digital para acesso"],
+              ].map(([value, label]) => (
+                <div
+                  key={label}
+                  className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4"
+                >
+                  <div className="text-2xl font-black text-white">{value}</div>
+                  <div className="mt-1 text-sm text-zinc-400">{label}</div>
                 </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-2xl font-black text-emerald-400">
-                  Setup
-                </div>
-                <div className="mt-1 text-sm text-zinc-400">
-                  Entrada, stop, alvo e confiança
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
@@ -275,9 +417,64 @@ export default function LandingPage() {
                     <div className="h-full w-[85%] rounded-full bg-gradient-to-r from-emerald-500 via-green-400 to-cyan-400" />
                   </div>
                 </div>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  {[
+                    ["Smart Money", "Compra"],
+                    ["WEGD", "Neutro"],
+                    ["Probabilística", "Alta"],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                    >
+                      <div className="text-xs uppercase tracking-wide text-zinc-500">
+                        {label}
+                      </div>
+                      <div className="mt-2 text-lg font-bold text-white">
+                        {value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 pb-4">
+        <div className="grid gap-4 md:grid-cols-4">
+          {[
+            [
+              <UserCheck className="h-5 w-5" />,
+              "Mais clareza",
+              "Organize a leitura do mercado com muito menos ruído.",
+            ],
+            [
+              <Zap className="h-5 w-5" />,
+              "Mais agilidade",
+              "Tenha uma leitura pronta em segundos para agir rápido.",
+            ],
+            [
+              <TrendingUp className="h-5 w-5" />,
+              "Mais contexto",
+              "Veja diferentes módulos confirmando ou invalidando o cenário.",
+            ],
+            [
+              <Lock className="h-5 w-5" />,
+              "Mais consistência",
+              "Crie um processo de entrada mais profissional e menos impulsivo.",
+            ],
+          ].map(([icon, title, text]) => (
+            <GlowCard key={title as string} className="p-6">
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400">
+                {icon}
+              </div>
+              <h3 className="text-lg font-bold text-white">{title}</h3>
+              <p className="mt-3 text-sm leading-7 text-zinc-400">{text}</p>
+            </GlowCard>
+          ))}
         </div>
       </section>
 
@@ -293,16 +490,77 @@ export default function LandingPage() {
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {benefits.map((item) => (
-            <div
-              key={item}
-              className="rounded-[28px] border border-white/10 bg-zinc-950 p-6"
-            >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-xl text-emerald-400">
-                ✓
+            <GlowCard key={item.title} className="p-6">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400">
+                {item.icon}
               </div>
-              <p className="text-base leading-7 text-zinc-300">{item}</p>
-            </div>
+              <h3 className="text-lg font-bold text-white">{item.title}</h3>
+              <p className="mt-3 text-base leading-7 text-zinc-300">
+                {item.text}
+              </p>
+            </GlowCard>
           ))}
+        </div>
+      </section>
+
+      <section className="border-y border-white/10 bg-zinc-950/60">
+        <div className="mx-auto max-w-7xl px-6 py-20">
+          <div className="mb-10 max-w-3xl">
+            <div className="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-400">
+              Antes e depois
+            </div>
+            <h2 className="mt-4 text-3xl font-black md:text-5xl">
+              Saia do achismo e entre em uma leitura mais profissional.
+            </h2>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <GlowCard className="p-8">
+              <div className="mb-6 inline-flex rounded-full border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-300">
+                Antes
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  "Opera no impulso e sem checklist claro",
+                  "Entra cedo demais ou tarde demais",
+                  "Fica dependente de opinião externa",
+                  "Tem dificuldade para organizar stop, alvo e contexto",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="flex items-start gap-3 text-zinc-300"
+                  >
+                    <ChevronRight className="mt-1 h-5 w-5 text-red-400" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </GlowCard>
+
+            <GlowCard className="border-emerald-500/20 bg-emerald-500/[0.05] p-8">
+              <div className="mb-6 inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300">
+                Depois
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  "Opera com módulos validando o cenário",
+                  "Recebe direção, confiança e setup organizado",
+                  "Enxerga melhor o contexto antes de clicar",
+                  "Adota uma rotina mais profissional de decisão",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="flex items-start gap-3 text-zinc-100"
+                  >
+                    <CheckCircle2 className="mt-1 h-5 w-5 text-emerald-400" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </GlowCard>
+          </div>
         </div>
       </section>
 
@@ -322,24 +580,52 @@ export default function LandingPage() {
 
           <div className="grid gap-6 md:grid-cols-3">
             {steps.map((step, index) => (
-              <div
-                key={step.title}
-                className="rounded-[28px] border border-white/10 bg-black/50 p-6"
-              >
+              <GlowCard key={step.title} className="p-6">
                 <div className="text-5xl font-black text-emerald-400/80">
                   0{index + 1}
                 </div>
                 <h3 className="mt-6 text-2xl font-bold">{step.title}</h3>
                 <p className="mt-4 leading-7 text-zinc-400">{step.text}</p>
-              </div>
+              </GlowCard>
             ))}
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-20">
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="rounded-[32px] border border-white/10 bg-zinc-950 p-8">
+        <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+          <GlowCard className="p-8">
+            <div className="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-400">
+              Autoridade
+            </div>
+            <h2 className="mt-4 text-3xl font-black md:text-4xl">
+              Desenvolvida para quem busca leitura mais séria do mercado.
+            </h2>
+            <p className="mt-6 text-lg leading-8 text-zinc-300">
+              A Gluck&apos;s Trader IA foi desenhada para entregar uma leitura
+              mais robusta do cenário operacional, unindo recursos visuais,
+              contexto técnico e múltiplas camadas de validação.
+            </p>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {[
+                ["+5 anos", "de experiência de mercado"],
+                ["Fibonacci", "e Ondas de Elliott como base estratégica"],
+                ["WEGD", "como diferencial de leitura"],
+                ["Premium", "visual e experiência profissional"],
+              ].map(([title, text]) => (
+                <div
+                  key={title}
+                  className="rounded-2xl border border-white/10 bg-black/30 p-4"
+                >
+                  <div className="text-lg font-bold text-white">{title}</div>
+                  <div className="mt-1 text-sm text-zinc-400">{text}</div>
+                </div>
+              ))}
+            </div>
+          </GlowCard>
+
+          <GlowCard className="p-8" id="modulos">
             <div className="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-400">
               Diferencial
             </div>
@@ -347,30 +633,112 @@ export default function LandingPage() {
               Mais do que um gráfico: uma leitura completa do contexto.
             </h2>
             <p className="mt-6 text-lg leading-8 text-zinc-300">
-              A Gluck&apos;s Trader IA une módulos complementares para entregar
-              uma leitura mais robusta do mercado: técnica, Smart Money, padrões,
-              timing, probabilidade e sinal final.
+              A plataforma une módulos complementares para entregar uma leitura
+              mais consistente do mercado em uma única experiência.
+            </p>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {modules.map((item) => (
+                <div
+                  key={item}
+                  className="rounded-[24px] border border-white/10 bg-black/30 p-5"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400">
+                      <BarChart3 className="h-5 w-5" />
+                    </div>
+                    <div className="text-lg font-bold text-white">{item}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </GlowCard>
+        </div>
+      </section>
+
+      <section
+        id="depoimentos"
+        className="border-y border-white/10 bg-zinc-950/70"
+      >
+        <div className="mx-auto max-w-7xl px-6 py-20">
+          <div className="mx-auto mb-12 max-w-3xl text-center">
+            <div className="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-400">
+              Resultados percebidos
+            </div>
+            <h2 className="mt-4 text-3xl font-black md:text-5xl">
+              O que a experiência da plataforma entrega na prática.
+            </h2>
+            <p className="mt-4 text-lg text-zinc-400">
+              Bloco em formato social proof para aumentar confiança e conversão.
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              "Análise Técnica",
-              "Smart Money Concept",
-              "Padrões Harmônicos",
-              "WEGD",
-              "Probabilística",
-              "Sinal Final",
-            ].map((item) => (
+          <div className="grid gap-6 lg:grid-cols-3">
+            {testimonials.map((item) => (
               <div
-                key={item}
-                className="rounded-[28px] border border-white/10 bg-zinc-950 p-6"
+                key={item.name}
+                className="rounded-[30px] border border-white/10 bg-black/40 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.35)]"
               >
-                <div className="text-sm text-zinc-500">Módulo</div>
-                <div className="mt-3 text-xl font-bold text-white">{item}</div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-white">{item.name}</div>
+                    <div className="text-sm text-zinc-500">{item.role}</div>
+                  </div>
+
+                  <div className="flex gap-1 text-amber-300">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-current" />
+                    ))}
+                  </div>
+                </div>
+
+                <p className="mt-5 text-base leading-8 text-zinc-300">
+                  “{item.text}”
+                </p>
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 py-20">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <GlowCard className="p-8 lg:col-span-2">
+            <div className="flex items-center gap-3 text-emerald-300">
+              <Clock3 className="h-5 w-5" />
+              <span className="text-sm font-semibold uppercase tracking-[0.25em]">
+                Urgência inteligente
+              </span>
+            </div>
+
+            <h2 className="mt-4 text-3xl font-black md:text-4xl">
+              Acesso ideal para quem quer entrar agora na experiência premium.
+            </h2>
+
+            <p className="mt-4 max-w-3xl text-lg leading-8 text-zinc-300">
+              Use este momento para estruturar sua rotina com uma plataforma
+              mais completa, visual e organizada. Quanto antes você entra, mais
+              cedo começa a operar com mais contexto e disciplina.
+            </p>
+          </GlowCard>
+
+          <GlowCard className="border-emerald-500/20 bg-emerald-500/[0.05] p-8">
+            <div className="flex items-center gap-3 text-emerald-300">
+              <Gem className="h-5 w-5" />
+              <span className="text-sm font-semibold uppercase tracking-[0.25em]">
+                Garantia
+              </span>
+            </div>
+
+            <h3 className="mt-4 text-2xl font-black text-white">
+              Experiência com segurança
+            </h3>
+
+            <p className="mt-4 text-base leading-7 text-zinc-300">
+              Estruture sua entrada com mais confiança e uma apresentação
+              premium que reduz objeções e melhora a percepção de valor.
+            </p>
+          </GlowCard>
         </div>
       </section>
 
@@ -478,9 +846,11 @@ export default function LandingPage() {
             <div className="text-sm font-semibold uppercase tracking-[0.25em] text-emerald-400">
               Último passo
             </div>
+
             <h2 className="mt-4 text-3xl font-black md:text-5xl">
               Entre agora na Gluck&apos;s Trader IA.
             </h2>
+
             <p className="mt-5 text-lg leading-8 text-zinc-300">
               Organize sua operação com uma experiência premium, rápida e
               desenhada para transformar leitura de mercado em decisão objetiva.
@@ -493,6 +863,7 @@ export default function LandingPage() {
               >
                 Criar minha conta
               </a>
+
               <a
                 href="/login"
                 className="rounded-2xl border border-white/10 px-6 py-4 text-base font-semibold text-white transition hover:border-white/20 hover:bg-white/5"
@@ -521,7 +892,7 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      <WhatsAppButton />   
+      <FloatingChatButton />
     </div>
   );
 }
