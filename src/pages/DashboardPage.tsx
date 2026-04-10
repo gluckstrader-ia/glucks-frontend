@@ -7,6 +7,7 @@ import { BrainCircuit, BarChart3 } from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
 import { useB3MarketData } from "../hooks/useB3MarketData";
 
+
 type AnalysisModules = {
   technical?: number;
   smc?: number;

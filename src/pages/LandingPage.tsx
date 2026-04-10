@@ -146,7 +146,7 @@ export default function LandingPage() {
               href="/cadastro?plan=trimestral"
               className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-emerald-400"
             >
-              Começar agora
+              Teste Grátis
             </a>
           </div>
         </div>
