@@ -10,7 +10,14 @@ import {
   CreditCard,
   X,
   ExternalLink,
+  RefreshCw,
 } from "lucide-react";
+import {
+  fetchAllAnalyses,
+  fetchRecentAnalyses,
+  type RecentAnalysis,
+  type AnalysisStatus,
+} from "../lib/analysisHistory";
 
 type HomePremiumScreenProps = {
   userName?: string;
@@ -20,21 +27,6 @@ type HomePremiumScreenProps = {
   onLogout: () => void;
 };
 
-type AnalysisStatus = "GAIN_TOTAL" | "GAIN_PARCIAL" | "LOSS" | "EM_ANDAMENTO";
-
-type RecentAnalysis = {
-  id: string;
-  asset: string;
-  market: string;
-  timeframe: string;
-  signal: string;
-  strength: number;
-  status: AnalysisStatus;
-  resultLabel: string;
-  resultDetail: string;
-  createdAt: string;
-};
-
 type PartnerLogo = {
   id: string;
   name: string;
@@ -42,141 +34,18 @@ type PartnerLogo = {
   href: string;
 };
 
-const recentAnalyses: RecentAnalysis[] = [
-  {
-    id: "1",
-    asset: "IBOV",
-    market: "Índices",
-    timeframe: "5m",
-    signal: "COMPRA_FORTE",
-    strength: 89,
-    status: "GAIN_TOTAL",
-    resultLabel: "Gain Total",
-    resultDetail: "3 alvos atingidos",
-    createdAt: "Hoje • 09:12",
-  },
-  {
-    id: "2",
-    asset: "EURUSD",
-    market: "Forex",
-    timeframe: "15m",
-    signal: "VENDA",
-    strength: 82,
-    status: "GAIN_PARCIAL",
-    resultLabel: "Gain Parcial",
-    resultDetail: "TP1 atingido",
-    createdAt: "Hoje • 08:47",
-  },
-  {
-    id: "3",
-    asset: "BTCUSDT",
-    market: "Crypto",
-    timeframe: "15m",
-    signal: "COMPRA",
-    strength: 78,
-    status: "EM_ANDAMENTO",
-    resultLabel: "Em andamento",
-    resultDetail: "Aguardando fechamento",
-    createdAt: "Hoje • 08:30",
-  },
-  {
-    id: "4",
-    asset: "WIN",
-    market: "Futuros BR",
-    timeframe: "5m",
-    signal: "VENDA_FORTE",
-    strength: 86,
-    status: "LOSS",
-    resultLabel: "Loss",
-    resultDetail: "Stop atingido",
-    createdAt: "Hoje • 08:05",
-  },
-  {
-    id: "5",
-    asset: "PETR4",
-    market: "Ações",
-    timeframe: "15m",
-    signal: "COMPRA",
-    strength: 74,
-    status: "GAIN_PARCIAL",
-    resultLabel: "Gain Parcial",
-    resultDetail: "TP1 atingido",
-    createdAt: "Ontem • 17:42",
-  },
-  {
-    id: "6",
-    asset: "WDO",
-    market: "Futuros BR",
-    timeframe: "5m",
-    signal: "VENDA",
-    strength: 80,
-    status: "GAIN_TOTAL",
-    resultLabel: "Gain Total",
-    resultDetail: "3 alvos atingidos",
-    createdAt: "Ontem • 16:55",
-  },
-  {
-    id: "7",
-    asset: "XAUUSD",
-    market: "Forex",
-    timeframe: "15m",
-    signal: "COMPRA",
-    strength: 77,
-    status: "EM_ANDAMENTO",
-    resultLabel: "Em andamento",
-    resultDetail: "Aguardando fechamento",
-    createdAt: "Ontem • 15:08",
-  },
-  {
-    id: "8",
-    asset: "MGLU3",
-    market: "Ações",
-    timeframe: "30m",
-    signal: "VENDA",
-    strength: 69,
-    status: "LOSS",
-    resultLabel: "Loss",
-    resultDetail: "Stop atingido",
-    createdAt: "Ontem • 14:11",
-  },
-  {
-    id: "9",
-    asset: "SPX",
-    market: "Índices",
-    timeframe: "5m",
-    signal: "COMPRA",
-    strength: 84,
-    status: "GAIN_TOTAL",
-    resultLabel: "Gain Total",
-    resultDetail: "3 alvos atingidos",
-    createdAt: "Ontem • 11:26",
-  },
-  {
-    id: "10",
-    asset: "ETHUSDT",
-    market: "Crypto",
-    timeframe: "15m",
-    signal: "VENDA",
-    strength: 73,
-    status: "GAIN_PARCIAL",
-    resultLabel: "Gain Parcial",
-    resultDetail: "TP1 atingido",
-    createdAt: "Ontem • 10:03",
-  },
-];
-
 const partnerLogos: PartnerLogo[] = [
   {
     id: "xm",
     name: "XM",
     imageSrc: "/partners/xm-logo.png",
-    href: "https://SEU-LINK-DE-PARCEIRO-XM-AQUI",
+    href: "https://affs.click/0hkWv",
   },
   {
     id: "5p",
     name: "5P Investimentos",
     imageSrc: "/partners/5pi-logo.png",
-    href: "https://SEU-LINK-DE-PARCEIRO-5PI-AQUI",
+    href: "https://www.5pi.com.br/parceiros/glucks-trader",
   },
 ];
 
@@ -195,6 +64,11 @@ export default function HomePremiumScreen({
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [recentModalOpen, setRecentModalOpen] = useState(false);
+  const [recentAnalyses, setRecentAnalyses] = useState<RecentAnalysis[]>([]);
+  const [allAnalyses, setAllAnalyses] = useState<RecentAnalysis[]>([]);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+  const [isLoadingAll, setIsLoadingAll] = useState(false);
+  const [recentError, setRecentError] = useState<string | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   const userInitials = useMemo(() => {
@@ -228,6 +102,41 @@ export default function HomePremiumScreen({
       document.removeEventListener("keydown", handleEscape);
     };
   }, []);
+
+  useEffect(() => {
+    void loadRecentAnalyses();
+  }, []);
+
+  async function loadRecentAnalyses() {
+    try {
+      setIsLoadingRecent(true);
+      setRecentError(null);
+      const data = await fetchRecentAnalyses();
+      setRecentAnalyses(data);
+    } catch (error) {
+      console.error("Erro ao carregar análises recentes:", error);
+      setRecentError("Não foi possível carregar as análises recentes.");
+      setRecentAnalyses([]);
+    } finally {
+      setIsLoadingRecent(false);
+    }
+  }
+
+  async function handleOpenAllAnalyses() {
+    try {
+      setRecentModalOpen(true);
+      if (allAnalyses.length > 0) return;
+
+      setIsLoadingAll(true);
+      const data = await fetchAllAnalyses();
+      setAllAnalyses(data);
+    } catch (error) {
+      console.error("Erro ao carregar todas as análises:", error);
+      setAllAnalyses([]);
+    } finally {
+      setIsLoadingAll(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#03070d] text-white">
@@ -392,8 +301,11 @@ export default function HomePremiumScreen({
           <motion.section variants={cardMotion}>
             <RecentAnalysesCard
               analyses={recentAnalyses}
+              isLoading={isLoadingRecent}
+              error={recentError}
+              onRetry={loadRecentAnalyses}
               onOpenDashboard={onOpenDashboard}
-              onOpenAll={() => setRecentModalOpen(true)}
+              onOpenAll={handleOpenAllAnalyses}
             />
           </motion.section>
         </motion.div>
@@ -402,7 +314,8 @@ export default function HomePremiumScreen({
       <RecentAnalysesModal
         open={recentModalOpen}
         onClose={() => setRecentModalOpen(false)}
-        analyses={recentAnalyses}
+        analyses={allAnalyses}
+        isLoading={isLoadingAll}
         onOpenDashboard={onOpenDashboard}
       />
     </div>
@@ -509,94 +422,128 @@ function PartnersSection({ partners }: { partners: PartnerLogo[] }) {
 
 function RecentAnalysesCard({
   analyses,
+  isLoading,
+  error,
+  onRetry,
   onOpenDashboard,
   onOpenAll,
 }: {
   analyses: RecentAnalysis[];
+  isLoading: boolean;
+  error: string | null;
+  onRetry: () => Promise<void> | void;
   onOpenDashboard: () => void;
   onOpenAll: () => void;
 }) {
-  const visibleAnalyses = analyses.slice(0, 10);
-
   return (
     <div className="rounded-[30px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-4 md:p-5">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div className="text-2xl font-bold md:text-3xl">Análises Recentes</div>
 
-        <button
-          type="button"
-          onClick={onOpenAll}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-white transition hover:text-green-300 md:text-base"
-        >
-          Ver todas
-          <ArrowRight className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => void onRetry()}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-300 transition hover:text-green-300 md:text-base"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Atualizar
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenAll}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-white transition hover:text-green-300 md:text-base"
+          >
+            Ver todas
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {visibleAnalyses.map((analysis) => (
-          <button
-            key={analysis.id}
-            type="button"
-            onClick={onOpenDashboard}
-            className="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border border-zinc-800 bg-[#0b1118] px-4 py-3 text-left transition duration-300 hover:border-green-500/40 hover:bg-[#0e1622]"
-          >
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, index) => (
             <div
-              className={`absolute left-0 top-0 h-full w-[4px] rounded-l-2xl ${
-                analysis.status === "GAIN_TOTAL"
-                  ? "bg-green-500"
-                  : analysis.status === "GAIN_PARCIAL"
-                  ? "bg-emerald-500"
-                  : analysis.status === "LOSS"
-                  ? "bg-red-500"
-                  : "bg-yellow-400"
-              }`}
+              key={index}
+              className="h-[74px] animate-pulse rounded-2xl border border-zinc-800 bg-[#0b1118]"
             />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+          <div className="text-sm font-medium text-red-300">{error}</div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {analyses.map((analysis) => (
+            <button
+              key={analysis.id}
+              type="button"
+              onClick={onOpenDashboard}
+              className="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border border-zinc-800 bg-[#0b1118] px-4 py-3 text-left transition duration-300 hover:border-green-500/40 hover:bg-[#0e1622]"
+            >
+              <div
+                className={`absolute left-0 top-0 h-full w-[4px] rounded-l-2xl ${
+                  analysis.status === "GAIN_TOTAL"
+                    ? "bg-green-500"
+                    : analysis.status === "GAIN_PARCIAL"
+                    ? "bg-emerald-500"
+                    : analysis.status === "LOSS"
+                    ? "bg-red-500"
+                    : "bg-yellow-400"
+                }`}
+              />
 
-            <div className="flex min-w-0 items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-sm font-bold text-white">
-                {analysis.asset.slice(0, 3)}
+              <div className="flex min-w-0 items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-sm font-bold text-white">
+                  {analysis.asset.slice(0, 3)}
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <div className="text-lg font-bold text-white">{analysis.asset}</div>
+                    <div className="text-xs text-zinc-500">
+                      {analysis.market} • {analysis.timeframe}
+                    </div>
+                  </div>
+
+                  <div className="mt-1 text-xs text-zinc-500">
+                    {formatCreatedAt(analysis.createdAt)}
+                  </div>
+                </div>
               </div>
 
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <div className="text-lg font-bold text-white">{analysis.asset}</div>
-                  <div className="text-xs text-zinc-500">
-                    {analysis.market} • {analysis.timeframe}
+              <div className="flex shrink-0 items-center gap-4 md:gap-6">
+                <div className="text-right">
+                  <div
+                    className={`text-sm font-bold tracking-wide ${
+                      analysis.signal.includes("VENDA")
+                        ? "text-red-400"
+                        : analysis.signal.includes("COMPRA")
+                        ? "text-green-400"
+                        : "text-yellow-300"
+                    }`}
+                  >
+                    {analysis.signal.replace(/_/g, " ")}
+                  </div>
+
+                  <div className="mt-1 text-xs text-zinc-400">
+                    {analysis.strength}% confiança
                   </div>
                 </div>
 
-                <div className="mt-1 text-xs text-zinc-500">{analysis.createdAt}</div>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-4 md:gap-6">
-              <div className="text-right">
-                <div
-                  className={`text-sm font-bold tracking-wide ${
-                    analysis.signal.includes("VENDA")
-                      ? "text-red-400"
-                      : "text-green-400"
-                  }`}
-                >
-                  {analysis.signal.replace(/_/g, " ")}
-                </div>
-
-                <div className="mt-1 text-xs text-zinc-400">
-                  {analysis.strength}% confiança
+                <div className="flex min-w-[110px] flex-col items-end gap-1">
+                  <StatusBadge status={analysis.status} label={analysis.resultLabel} />
+                  <div className="text-right text-xs text-zinc-400">
+                    {analysis.resultDetail}
+                  </div>
                 </div>
               </div>
-
-              <div className="flex min-w-[110px] flex-col items-end gap-1">
-                <StatusBadge status={analysis.status} label={analysis.resultLabel} />
-                <div className="text-right text-xs text-zinc-400">
-                  {analysis.resultDetail}
-                </div>
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -605,11 +552,13 @@ function RecentAnalysesModal({
   open,
   onClose,
   analyses,
+  isLoading,
   onOpenDashboard,
 }: {
   open: boolean;
   onClose: () => void;
   analyses: RecentAnalysis[];
+  isLoading: boolean;
   onOpenDashboard: () => void;
 }) {
   return (
@@ -646,73 +595,88 @@ function RecentAnalysesModal({
             </div>
 
             <div className="max-h-[calc(85vh-88px)] overflow-y-auto p-4 md:p-6">
-              <div className="space-y-3">
-                {analyses.map((analysis) => (
-                  <button
-                    key={analysis.id}
-                    type="button"
-                    onClick={() => {
-                      onClose();
-                      onOpenDashboard();
-                    }}
-                    className="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border border-zinc-800 bg-[#0b1118] px-4 py-3 text-left transition duration-300 hover:border-green-500/40 hover:bg-[#0e1622]"
-                  >
+              {isLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 8 }).map((_, index) => (
                     <div
-                      className={`absolute left-0 top-0 h-full w-[4px] rounded-l-2xl ${
-                        analysis.status === "GAIN_TOTAL"
-                          ? "bg-green-500"
-                          : analysis.status === "GAIN_PARCIAL"
-                          ? "bg-emerald-500"
-                          : analysis.status === "LOSS"
-                          ? "bg-red-500"
-                          : "bg-yellow-400"
-                      }`}
+                      key={index}
+                      className="h-[74px] animate-pulse rounded-2xl border border-zinc-800 bg-[#0f1621]"
                     />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {analyses.map((analysis) => (
+                    <button
+                      key={analysis.id}
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenDashboard();
+                      }}
+                      className="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border border-zinc-800 bg-[#0b1118] px-4 py-3 text-left transition duration-300 hover:border-green-500/40 hover:bg-[#0e1622]"
+                    >
+                      <div
+                        className={`absolute left-0 top-0 h-full w-[4px] rounded-l-2xl ${
+                          analysis.status === "GAIN_TOTAL"
+                            ? "bg-green-500"
+                            : analysis.status === "GAIN_PARCIAL"
+                            ? "bg-emerald-500"
+                            : analysis.status === "LOSS"
+                            ? "bg-red-500"
+                            : "bg-yellow-400"
+                        }`}
+                      />
 
-                    <div className="flex min-w-0 items-center gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-sm font-bold text-white">
-                        {analysis.asset.slice(0, 3)}
+                      <div className="flex min-w-0 items-center gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-sm font-bold text-white">
+                          {analysis.asset.slice(0, 3)}
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <div className="text-lg font-bold text-white">{analysis.asset}</div>
+                            <div className="text-xs text-zinc-500">
+                              {analysis.market} • {analysis.timeframe}
+                            </div>
+                          </div>
+
+                          <div className="mt-1 text-xs text-zinc-500">
+                            {formatCreatedAt(analysis.createdAt)}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                          <div className="text-lg font-bold text-white">{analysis.asset}</div>
-                          <div className="text-xs text-zinc-500">
-                            {analysis.market} • {analysis.timeframe}
+                      <div className="flex shrink-0 items-center gap-4 md:gap-6">
+                        <div className="text-right">
+                          <div
+                            className={`text-sm font-bold tracking-wide ${
+                              analysis.signal.includes("VENDA")
+                                ? "text-red-400"
+                                : analysis.signal.includes("COMPRA")
+                                ? "text-green-400"
+                                : "text-yellow-300"
+                            }`}
+                          >
+                            {analysis.signal.replace(/_/g, " ")}
+                          </div>
+
+                          <div className="mt-1 text-xs text-zinc-400">
+                            {analysis.strength}% confiança
                           </div>
                         </div>
 
-                        <div className="mt-1 text-xs text-zinc-500">{analysis.createdAt}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-4 md:gap-6">
-                      <div className="text-right">
-                        <div
-                          className={`text-sm font-bold tracking-wide ${
-                            analysis.signal.includes("VENDA")
-                              ? "text-red-400"
-                              : "text-green-400"
-                          }`}
-                        >
-                          {analysis.signal.replace(/_/g, " ")}
-                        </div>
-
-                        <div className="mt-1 text-xs text-zinc-400">
-                          {analysis.strength}% confiança
+                        <div className="flex min-w-[110px] flex-col items-end gap-1">
+                          <StatusBadge status={analysis.status} label={analysis.resultLabel} />
+                          <div className="text-right text-xs text-zinc-400">
+                            {analysis.resultDetail}
+                          </div>
                         </div>
                       </div>
-
-                      <div className="flex min-w-[110px] flex-col items-end gap-1">
-                        <StatusBadge status={analysis.status} label={analysis.resultLabel} />
-                        <div className="text-right text-xs text-zinc-400">
-                          {analysis.resultDetail}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         </motion.div>
@@ -744,4 +708,19 @@ function StatusBadge({
       {label}
     </span>
   );
+}
+
+function formatCreatedAt(value: string | null): string {
+  if (!value) return "Sem data";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(date);
 }
