@@ -872,6 +872,7 @@ function SummaryTab({
   compact = false,
   b3Data,
   isB3Future = false,
+  liveConfidence,
 }: {
   asset: string;
   tf: string;
@@ -879,6 +880,7 @@ function SummaryTab({
   compact?: boolean;
   b3Data?: B3MarketData | null;
   isB3Future?: boolean;
+  liveConfidence?: number | null;
 }) {
   const normalizedAsset =
     analysisData?.asset || asset.trim().toUpperCase() || "IBOV";
@@ -940,14 +942,16 @@ function SummaryTab({
   const tp3Confidence =
     currentScenarioTargets.find((t) => t.label === "TP3")?.probability ?? null;
 
-  const confidence =
-    analysisData?.confidence ??
-    summary.confidence ??
-    (typeof confluence === "string" && confluence.includes("/10")
-      ? Math.round((Number(confluence.split("/")[0]) || 0) * 10)
-      : isB3Future
-      ? 50
-      : 0);
+  const baseConfidence =
+  analysisData?.confidence ??
+  summary.confidence ??
+  (typeof confluence === "string" && confluence.includes("/10")
+    ? Math.round((Number(confluence.split("/")[0]) || 0) * 10)
+    : isB3Future
+    ? 50
+    : 0);
+
+  const displayedConfidence = liveConfidence ?? baseConfidence;
 
   const directionColor =
     direction === "COMPRA"
@@ -1026,14 +1030,14 @@ function SummaryTab({
             <div className="text-cyan-400 text-xs">Confiança</div>
             <div
               className={`text-2xl font-bold mt-2 ${
-                confidence >= 70
+                displayedConfidence >= 70
                   ? "text-green-400"
-                  : confidence >= 50
+                  : displayedConfidence >= 50
                   ? "text-yellow-400"
                   : "text-red-400"
               }`}
             >
-              {confidence}%
+              {displayedConfidence}%
             </div>
           </div>
 
@@ -3939,6 +3943,76 @@ function AiThinkingOverlay({
   );
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function normalizeDirection(value?: string | null): "COMPRA" | "VENDA" | "NEUTRO" {
+  const v = (value || "").toUpperCase();
+
+  if (["COMPRA", "BUY", "LONG", "ALTA", "BULLISH"].includes(v)) {
+    return "COMPRA";
+  }
+
+  if (["VENDA", "SELL", "SHORT", "BAIXA", "BEARISH"].includes(v)) {
+    return "VENDA";
+  }
+
+  return "NEUTRO";
+}
+
+function computeDynamicConfidence(params: {
+  side: "COMPRA" | "VENDA" | "NEUTRO";
+  entry: number;
+  stop: number;
+  take: number;
+  currentPrice: number;
+  baseConfidence: number;
+}) {
+  const { side, entry, stop, take, currentPrice, baseConfidence } = params;
+
+  if (side === "NEUTRO") {
+    return clamp(Number(baseConfidence.toFixed(1)), 5, 95);
+  }
+
+  const risk = Math.abs(entry - stop);
+  const reward = Math.abs(take - entry);
+
+  if (risk <= 0 || reward <= 0) {
+    return clamp(Number(baseConfidence.toFixed(1)), 5, 95);
+  }
+
+  let progress = 0;
+
+  if (side === "COMPRA") {
+    if (currentPrice <= stop) {
+      progress = -1;
+    } else if (currentPrice >= take) {
+      progress = 1;
+    } else if (currentPrice >= entry) {
+      progress = (currentPrice - entry) / reward;
+    } else {
+      progress = -((entry - currentPrice) / risk);
+    }
+  }
+
+  if (side === "VENDA") {
+    if (currentPrice >= stop) {
+      progress = -1;
+    } else if (currentPrice <= take) {
+      progress = 1;
+    } else if (currentPrice <= entry) {
+      progress = (entry - currentPrice) / reward;
+    } else {
+      progress = -((currentPrice - entry) / risk);
+    }
+  }
+
+  const adjusted = baseConfidence + progress * 18;
+
+  return clamp(Number(adjusted.toFixed(1)), 5, 95);
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const token = getStoredToken();
@@ -3955,6 +4029,8 @@ export default function DashboardPage() {
   const [newsTab, setNewsTab] = useState<"news" | "events">("news");
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [apiError, setApiError] = useState("");
+  const [liveConfidence, setLiveConfidence] = useState<number | null>(null);
+  //const [livePrice, setLivePrice] = useState<number | null>(null);
   const analysisInFlightRef = useRef(false);
 
   const selectedAsset = (customAsset.trim() || asset).toUpperCase();
@@ -4087,7 +4163,18 @@ const resolvedAssetType =
       if (showLoader) {
         setProgress(90);
       }
+
       setAnalysisData(data);
+
+      const initialConfidence =
+        Number(
+          data?.final_signal?.confidence ??
+          data?.confidence ??
+          0
+        ) || 0;
+
+      setLiveConfidence(initialConfidence > 0 ? initialConfidence : null);
+      //setLivePrice(null);
 
       if (showLoader) {
         setMainTab("Resumo");
@@ -4126,6 +4213,95 @@ const resolvedAssetType =
     return () => clearInterval(interval);
   }, [loading]);
 
+  useEffect(() => {
+    if (
+      !token ||
+      !analysisData ||
+      assetCategory !== "Futuros BR" ||
+      !["WIN", "WDO"].includes(resolvedAsset)
+    ) {
+      return;
+    }
+
+    const side = normalizeDirection(
+      analysisData?.final_signal?.direction ?? analysisData?.direction
+    );
+
+    const entry = Number(
+      analysisData?.final_signal?.entry ??
+      analysisData?.entry ??
+      0
+    );
+
+    const stop = Number(
+      analysisData?.final_signal?.stop ??
+      analysisData?.stop ??
+      0
+    );
+
+    const take = Number(
+      analysisData?.final_signal?.target ??
+      analysisData?.target ??
+      0
+    );
+
+    const baseConfidence = Number(
+      analysisData?.final_signal?.confidence ??
+      analysisData?.confidence ??
+      0
+    );
+
+    if (!entry || !stop || !take || !baseConfidence) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchLiveConfidence() {
+      try {
+        const response = await fetch(
+          `${API_URL}/market/live?symbol=${encodeURIComponent(resolvedAsset)}&asset_type=future_br`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) return;
+
+        const live = await response.json();
+        if (cancelled) return;
+
+        const currentPrice = Number(live?.last_price ?? 0);
+        if (!currentPrice) return;
+
+      //setLivePrice(currentPrice);
+
+        const nextConfidence = computeDynamicConfidence({
+          side,
+          entry,
+          stop,
+          take,
+          currentPrice,
+          baseConfidence,
+        });
+
+        setLiveConfidence(nextConfidence);
+      } catch (error) {
+        console.error("Erro ao atualizar confiança dinâmica:", error);
+      }
+    }
+
+    fetchLiveConfidence();
+
+    const intervalId = window.setInterval(fetchLiveConfidence, 5000);
+
+  return () => {
+    cancelled = true;
+    window.clearInterval(intervalId);
+  };
+}, [token, analysisData, assetCategory, resolvedAsset]);
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex">
@@ -4136,7 +4312,6 @@ const resolvedAssetType =
           timeframe={tf}
         />
       )}
-
       <aside className="w-64 bg-zinc-950 border-r border-zinc-800 p-6 hidden lg:block">
         <h1 className="text-xl font-bold flex items-center gap-2 text-white mb-10">
           <BrainCircuit size={18} /> Gluck&apos;s Trader IA
@@ -4315,6 +4490,7 @@ const resolvedAssetType =
                 compact
                 b3Data={b3Data}
                 isB3Future={isB3Future}
+                liveConfidence={liveConfidence}
               />
             </div>
           </div>
