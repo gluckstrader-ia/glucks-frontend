@@ -1,20 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
-  CandlestickChart,
-  Copy,
-  Flame,
-  History,
-  LineChart,
-  Lock,
-  Settings,
   TrendingUp,
   User,
-  Wallet,
+  Settings,
   LogOut,
   CreditCard,
+  X,
+  ExternalLink,
 } from "lucide-react";
 
 type HomePremiumScreenProps = {
@@ -25,6 +20,8 @@ type HomePremiumScreenProps = {
   onLogout: () => void;
 };
 
+type AnalysisStatus = "GAIN_TOTAL" | "GAIN_PARCIAL" | "LOSS" | "EM_ANDAMENTO";
+
 type RecentAnalysis = {
   id: string;
   asset: string;
@@ -32,21 +29,155 @@ type RecentAnalysis = {
   timeframe: string;
   signal: string;
   strength: number;
+  status: AnalysisStatus;
+  resultLabel: string;
+  resultDetail: string;
+  createdAt: string;
+};
+
+type PartnerLogo = {
+  id: string;
+  name: string;
+  imageSrc: string;
+  href: string;
 };
 
 const recentAnalyses: RecentAnalysis[] = [
-  { id: "1", asset: "IBOV", market: "Índices", timeframe: "5m", signal: "COMPRA_FORTE", strength: 70 },
-  { id: "2", asset: "EURUSD", market: "Forex", timeframe: "5m", signal: "VENDA", strength: 84 },
-  { id: "3", asset: "BTCUSDT", market: "Crypto", timeframe: "15m", signal: "COMPRA", strength: 78 },
-  { id: "4", asset: "WIN", market: "Futuros BR", timeframe: "5m", signal: "VENDA_FORTE", strength: 81 },
-  { id: "5", asset: "PETR4", market: "Ações", timeframe: "15m", signal: "COMPRA_FRACA", strength: 58 },
+  {
+    id: "1",
+    asset: "IBOV",
+    market: "Índices",
+    timeframe: "5m",
+    signal: "COMPRA_FORTE",
+    strength: 89,
+    status: "GAIN_TOTAL",
+    resultLabel: "Gain Total",
+    resultDetail: "3 alvos atingidos",
+    createdAt: "Hoje • 09:12",
+  },
+  {
+    id: "2",
+    asset: "EURUSD",
+    market: "Forex",
+    timeframe: "15m",
+    signal: "VENDA",
+    strength: 82,
+    status: "GAIN_PARCIAL",
+    resultLabel: "Gain Parcial",
+    resultDetail: "TP1 atingido",
+    createdAt: "Hoje • 08:47",
+  },
+  {
+    id: "3",
+    asset: "BTCUSDT",
+    market: "Crypto",
+    timeframe: "15m",
+    signal: "COMPRA",
+    strength: 78,
+    status: "EM_ANDAMENTO",
+    resultLabel: "Em andamento",
+    resultDetail: "Aguardando fechamento",
+    createdAt: "Hoje • 08:30",
+  },
+  {
+    id: "4",
+    asset: "WIN",
+    market: "Futuros BR",
+    timeframe: "5m",
+    signal: "VENDA_FORTE",
+    strength: 86,
+    status: "LOSS",
+    resultLabel: "Loss",
+    resultDetail: "Stop atingido",
+    createdAt: "Hoje • 08:05",
+  },
+  {
+    id: "5",
+    asset: "PETR4",
+    market: "Ações",
+    timeframe: "15m",
+    signal: "COMPRA",
+    strength: 74,
+    status: "GAIN_PARCIAL",
+    resultLabel: "Gain Parcial",
+    resultDetail: "TP1 atingido",
+    createdAt: "Ontem • 17:42",
+  },
+  {
+    id: "6",
+    asset: "WDO",
+    market: "Futuros BR",
+    timeframe: "5m",
+    signal: "VENDA",
+    strength: 80,
+    status: "GAIN_TOTAL",
+    resultLabel: "Gain Total",
+    resultDetail: "3 alvos atingidos",
+    createdAt: "Ontem • 16:55",
+  },
+  {
+    id: "7",
+    asset: "XAUUSD",
+    market: "Forex",
+    timeframe: "15m",
+    signal: "COMPRA",
+    strength: 77,
+    status: "EM_ANDAMENTO",
+    resultLabel: "Em andamento",
+    resultDetail: "Aguardando fechamento",
+    createdAt: "Ontem • 15:08",
+  },
+  {
+    id: "8",
+    asset: "MGLU3",
+    market: "Ações",
+    timeframe: "30m",
+    signal: "VENDA",
+    strength: 69,
+    status: "LOSS",
+    resultLabel: "Loss",
+    resultDetail: "Stop atingido",
+    createdAt: "Ontem • 14:11",
+  },
+  {
+    id: "9",
+    asset: "SPX",
+    market: "Índices",
+    timeframe: "5m",
+    signal: "COMPRA",
+    strength: 84,
+    status: "GAIN_TOTAL",
+    resultLabel: "Gain Total",
+    resultDetail: "3 alvos atingidos",
+    createdAt: "Ontem • 11:26",
+  },
+  {
+    id: "10",
+    asset: "ETHUSDT",
+    market: "Crypto",
+    timeframe: "15m",
+    signal: "VENDA",
+    strength: 73,
+    status: "GAIN_PARCIAL",
+    resultLabel: "Gain Parcial",
+    resultDetail: "TP1 atingido",
+    createdAt: "Ontem • 10:03",
+  },
 ];
 
-const quickModules = [
-  { title: "Copy Trading", subtitle: "Robôs automáticos", icon: Copy, locked: true },
-  { title: "Corretoras", subtitle: "Conecte contas", icon: Wallet, locked: true },
-  { title: "Histórico", subtitle: "Análises anteriores", icon: History, locked: true },
-  { title: "Trades", subtitle: "Histórico de operações", icon: LineChart, locked: true },
+const partnerLogos: PartnerLogo[] = [
+  {
+    id: "xm",
+    name: "XM",
+    imageSrc: "/partners/xm-logo.png",
+    href: "https://SEU-LINK-DE-PARCEIRO-XM-AQUI",
+  },
+  {
+    id: "5p",
+    name: "5P",
+    imageSrc: "/partners/5pi-logo.png",
+    href: "https://SEU-LINK-DE-PARCEIRO-5PI-AQUI",
+  },
 ];
 
 const cardMotion = {
@@ -63,6 +194,7 @@ export default function HomePremiumScreen({
 }: HomePremiumScreenProps) {
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [recentModalOpen, setRecentModalOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   const userInitials = useMemo(() => {
@@ -84,6 +216,7 @@ export default function HomePremiumScreen({
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setUserMenuOpen(false);
+        setRecentModalOpen(false);
       }
     }
 
@@ -252,43 +385,26 @@ export default function HomePremiumScreen({
             />
           </motion.section>
 
-          <motion.section variants={cardMotion} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {quickModules.map((module) => {
-              const Icon = module.icon;
-
-              return (
-                <button
-                  key={module.title}
-                  type="button"
-                  className="group rounded-[26px] border border-zinc-800 bg-gradient-to-b from-[#0a0f17] to-[#080c13] p-5 text-left transition hover:-translate-y-1 hover:border-zinc-700"
-                >
-                  <div className="mb-5 flex items-start justify-between">
-                    <div className="rounded-2xl bg-zinc-900 p-3 text-zinc-500 transition group-hover:text-white">
-                      <Icon className="h-5 w-5" />
-                    </div>
-
-                    {module.locked && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-1 text-xs text-zinc-400">
-                        <Lock className="h-3 w-3" />
-                        Em breve
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="text-lg font-semibold text-zinc-300 transition group-hover:text-white">
-                    {module.title}
-                  </div>
-                  <div className="mt-1 text-sm text-zinc-500">{module.subtitle}</div>
-                </button>
-              );
-            })}
+          <motion.section variants={cardMotion}>
+            <PartnersSection partners={partnerLogos} />
           </motion.section>
 
           <motion.section variants={cardMotion}>
-            <RecentAnalysesCard onOpenDashboard={onOpenDashboard} />
+            <RecentAnalysesCard
+              analyses={recentAnalyses}
+              onOpenDashboard={onOpenDashboard}
+              onOpenAll={() => setRecentModalOpen(true)}
+            />
           </motion.section>
         </motion.div>
       </div>
+
+      <RecentAnalysesModal
+        open={recentModalOpen}
+        onClose={() => setRecentModalOpen(false)}
+        analyses={recentAnalyses}
+        onOpenDashboard={onOpenDashboard}
+      />
     </div>
   );
 }
@@ -369,102 +485,230 @@ function HeroActionCard({
   );
 }
 
-function RecentAnalysesCard({ onOpenDashboard }: { onOpenDashboard: () => void }) {
+function PartnersSection({ partners }: { partners: PartnerLogo[] }) {
   return (
-    <div className="space-y-5">
-      <div className="rounded-[30px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="text-3xl font-bold">Análises Recentes</div>
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 text-base font-semibold text-white transition hover:text-cyan-300"
-          >
-            Ver todas
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          {recentAnalyses.map((analysis) => (
-            <button
-              key={analysis.id}
-              type="button"
-              onClick={onOpenDashboard}
-              className="flex w-full items-center justify-between gap-4 rounded-[22px] border border-zinc-800 bg-[linear-gradient(90deg,rgba(24,27,32,0.92),rgba(10,14,20,0.98))] p-4 text-left transition hover:border-zinc-700"
-            >
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800 text-xl font-bold">
-                  {analysis.asset.slice(0, 3)}
-                </div>
-
-                <div>
-                  <div className="text-2xl font-bold">{analysis.asset}</div>
-                  <div className="mt-1 text-base text-zinc-400">
-                    {analysis.market} • {analysis.timeframe}
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <div
-                  className={`text-2xl font-bold ${
-                    analysis.signal.includes("VENDA") ? "text-red-400" : "text-amber-300"
-                  }`}
-                >
-                  {analysis.signal}
-                </div>
-                <div className="mt-1 text-base text-zinc-400">{analysis.strength}% força</div>
-              </div>
-            </button>
-          ))}
+    <div className="rounded-[30px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-6 md:p-8">
+      <div className="mb-6 text-center">
+        <div className="text-2xl font-bold md:text-3xl">Conectado aos nossos parceiros de mercado</div>
+        <div className="mt-2 text-sm text-zinc-400 md:text-base">
+          Acesse benefícios exclusivos através das nossas conexões estratégicas.
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <MiniInsightCard
-          title="Radar Institucional"
-          subtitle="Fluxo, liquidez e pressão por ativo"
-          icon={<CandlestickChart className="h-5 w-5" />}
-          accent="cyan"
-        />
-        <MiniInsightCard
-          title="Heatmap Operacional"
-          subtitle="Melhores horários para operar"
-          icon={<Flame className="h-5 w-5" />}
-          accent="amber"
-        />
+      <div className="mx-auto grid max-w-3xl grid-cols-1 gap-5 md:grid-cols-2">
+        {partners.map((partner) => (
+          <a
+            key={partner.id}
+            href={partner.href}
+            target="_blank"
+            rel="noreferrer"
+            className="group relative overflow-hidden rounded-[26px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(16,21,31,0.96),rgba(8,12,20,0.96))] p-6 transition duration-300 hover:-translate-y-1 hover:border-green-500/40 hover:shadow-[0_0_30px_rgba(34,197,94,0.10)]"
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,197,94,0.12),transparent_55%)] opacity-0 transition duration-300 group-hover:opacity-100" />
+
+            <div className="relative flex min-h-[120px] flex-col items-center justify-center gap-4">
+              <img
+                src={partner.imageSrc}
+                alt={partner.name}
+                className="h-14 w-auto object-contain md:h-16"
+              />
+
+              <div className="inline-flex items-center gap-2 rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-sm font-medium text-green-300">
+                Acessar parceiro
+                <ExternalLink className="h-4 w-4" />
+              </div>
+            </div>
+          </a>
+        ))}
       </div>
     </div>
   );
 }
 
-function MiniInsightCard({
-  title,
-  subtitle,
-  icon,
-  accent,
+function RecentAnalysesCard({
+  analyses,
+  onOpenDashboard,
+  onOpenAll,
 }: {
-  title: string;
-  subtitle: string;
-  icon: React.ReactNode;
-  accent: "cyan" | "amber" | "green";
+  analyses: RecentAnalysis[];
+  onOpenDashboard: () => void;
+  onOpenAll: () => void;
 }) {
-  const style =
-    accent === "cyan"
-      ? "border-cyan-500/25 bg-cyan-500/10 text-cyan-300"
-      : accent === "amber"
-      ? "border-amber-500/25 bg-amber-500/10 text-amber-300"
-      : "border-green-500/25 bg-green-500/10 text-green-300";
+  const visibleAnalyses = analyses.slice(0, 10);
 
   return (
-    <div className="rounded-[24px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-5">
-      <div className="flex items-start gap-4">
-        <div className={`rounded-2xl border p-3 ${style}`}>{icon}</div>
-        <div>
-          <div className="text-xl font-bold">{title}</div>
-          <div className="mt-2 text-sm text-zinc-400">{subtitle}</div>
-        </div>
+    <div className="rounded-[30px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-5">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="text-2xl font-bold md:text-3xl">Análises Recentes</div>
+
+        <button
+          type="button"
+          onClick={onOpenAll}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-white transition hover:text-green-300 md:text-base"
+        >
+          Ver todas
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {visibleAnalyses.map((analysis) => (
+          <button
+            key={analysis.id}
+            type="button"
+            onClick={onOpenDashboard}
+            className="flex w-full flex-col gap-4 rounded-[22px] border border-zinc-800 bg-[linear-gradient(90deg,rgba(24,27,32,0.92),rgba(10,14,20,0.98))] p-4 text-left transition hover:border-zinc-700 md:flex-row md:items-center md:justify-between"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800 text-lg font-bold">
+                {analysis.asset.slice(0, 3)}
+              </div>
+
+              <div>
+                <div className="text-xl font-bold md:text-2xl">{analysis.asset}</div>
+                <div className="mt-1 text-sm text-zinc-400 md:text-base">
+                  {analysis.market} • {analysis.timeframe}
+                </div>
+                <div className="mt-1 text-xs text-zinc-500 md:text-sm">{analysis.createdAt}</div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-start gap-2 md:items-end">
+              <div
+                className={`text-lg font-bold md:text-xl ${
+                  analysis.signal.includes("VENDA") ? "text-red-400" : "text-amber-300"
+                }`}
+              >
+                {analysis.signal}
+              </div>
+
+              <div className="text-sm text-zinc-400 md:text-base">{analysis.strength}% confiança</div>
+
+              <StatusBadge status={analysis.status} label={analysis.resultLabel} />
+
+              <div className="text-xs text-zinc-400 md:text-sm">{analysis.resultDetail}</div>
+            </div>
+          </button>
+        ))}
       </div>
     </div>
+  );
+}
+
+function RecentAnalysesModal({
+  open,
+  onClose,
+  analyses,
+  onOpenDashboard,
+}: {
+  open: boolean;
+  onClose: () => void;
+  analyses: RecentAnalysis[];
+  onOpenDashboard: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="max-h-[85vh] w-full max-w-4xl overflow-hidden rounded-[28px] border border-zinc-800 bg-[#0b1118] shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4 md:px-6">
+              <div>
+                <div className="text-xl font-bold md:text-2xl">Todas as análises recentes</div>
+                <div className="mt-1 text-sm text-zinc-400">
+                  Últimas análises gerais da plataforma
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-xl border border-zinc-800 p-2 text-zinc-400 transition hover:bg-zinc-900 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[calc(85vh-88px)] overflow-y-auto p-4 md:p-6">
+              <div className="space-y-3">
+                {analyses.map((analysis) => (
+                  <button
+                    key={analysis.id}
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenDashboard();
+                    }}
+                    className="flex w-full flex-col gap-4 rounded-[22px] border border-zinc-800 bg-[linear-gradient(90deg,rgba(24,27,32,0.92),rgba(10,14,20,0.98))] p-4 text-left transition hover:border-zinc-700 md:flex-row md:items-center md:justify-between"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800 text-lg font-bold">
+                        {analysis.asset.slice(0, 3)}
+                      </div>
+
+                      <div>
+                        <div className="text-xl font-bold">{analysis.asset}</div>
+                        <div className="mt-1 text-sm text-zinc-400">
+                          {analysis.market} • {analysis.timeframe}
+                        </div>
+                        <div className="mt-1 text-xs text-zinc-500">{analysis.createdAt}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-start gap-2 md:items-end">
+                      <div
+                        className={`text-lg font-bold ${
+                          analysis.signal.includes("VENDA") ? "text-red-400" : "text-amber-300"
+                        }`}
+                      >
+                        {analysis.signal}
+                      </div>
+                      <div className="text-sm text-zinc-400">{analysis.strength}% confiança</div>
+                      <StatusBadge status={analysis.status} label={analysis.resultLabel} />
+                      <div className="text-xs text-zinc-400">{analysis.resultDetail}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function StatusBadge({
+  status,
+  label,
+}: {
+  status: AnalysisStatus;
+  label: string;
+}) {
+  const style =
+    status === "GAIN_TOTAL"
+      ? "border-green-500/30 bg-green-500/15 text-green-300"
+      : status === "GAIN_PARCIAL"
+      ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-300"
+      : status === "LOSS"
+      ? "border-red-500/30 bg-red-500/15 text-red-300"
+      : "border-amber-500/30 bg-amber-500/15 text-amber-300";
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold md:text-sm ${style}`}
+    >
+      {label}
+    </span>
   );
 }
