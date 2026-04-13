@@ -170,13 +170,13 @@ const partnerLogos: PartnerLogo[] = [
     id: "xm",
     name: "XM",
     imageSrc: "/partners/xm-logo.png",
-    href: "https://affs.click/0hkWv",
+    href: "https://SEU-LINK-DE-PARCEIRO-XM-AQUI",
   },
   {
     id: "5p",
-    name: "5P",
+    name: "5P Investimentos",
     imageSrc: "/partners/5pi-logo.png",
-    href: "https://www.5pi.com.br/parceiros/glucks-trader",
+    href: "https://SEU-LINK-DE-PARCEIRO-5PI-AQUI",
   },
 ];
 
@@ -415,16 +415,12 @@ function HeroActionCard({
   icon,
   accent,
   onClick,
-  tag,
-  tag2,
 }: {
   title: string;
   subtitle: string;
   icon: React.ReactNode;
   accent: "cyan" | "amber";
   onClick: () => void;
-  tag?: string;
-  tag2?: string;
 }) {
   const theme =
     accent === "cyan"
@@ -459,21 +455,7 @@ function HeroActionCard({
 
           <div>
             <div className={`text-4xl font-bold tracking-tight ${theme.title}`}>{title}</div>
-
-            {tag && (
-              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm font-medium text-green-300">
-                <TrendingUp className="h-4 w-4" />
-                {tag}
-              </div>
-            )}
-
             <div className="mt-3 max-w-xl text-lg text-zinc-300">{subtitle}</div>
-
-            {tag2 && (
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm font-medium text-green-300">
-                {tag2}
-              </div>
-            )}
           </div>
         </div>
 
@@ -537,7 +519,7 @@ function RecentAnalysesCard({
   const visibleAnalyses = analyses.slice(0, 10);
 
   return (
-    <div className="rounded-[30px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-5">
+    <div className="rounded-[30px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-4 md:p-5">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div className="text-2xl font-bold md:text-3xl">Análises Recentes</div>
 
@@ -557,36 +539,60 @@ function RecentAnalysesCard({
             key={analysis.id}
             type="button"
             onClick={onOpenDashboard}
-            className="flex w-full flex-col gap-4 rounded-[22px] border border-zinc-800 bg-[linear-gradient(90deg,rgba(24,27,32,0.92),rgba(10,14,20,0.98))] p-4 text-left transition hover:border-zinc-700 md:flex-row md:items-center md:justify-between"
+            className="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border border-zinc-800 bg-[#0b1118] px-4 py-3 text-left transition duration-300 hover:border-green-500/40 hover:bg-[#0e1622]"
           >
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800 text-lg font-bold">
+            <div
+              className={`absolute left-0 top-0 h-full w-[4px] rounded-l-2xl ${
+                analysis.status === "GAIN_TOTAL"
+                  ? "bg-green-500"
+                  : analysis.status === "GAIN_PARCIAL"
+                  ? "bg-emerald-500"
+                  : analysis.status === "LOSS"
+                  ? "bg-red-500"
+                  : "bg-yellow-400"
+              }`}
+            />
+
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-sm font-bold text-white">
                 {analysis.asset.slice(0, 3)}
               </div>
 
-              <div>
-                <div className="text-xl font-bold md:text-2xl">{analysis.asset}</div>
-                <div className="mt-1 text-sm text-zinc-400 md:text-base">
-                  {analysis.market} • {analysis.timeframe}
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <div className="text-lg font-bold text-white">{analysis.asset}</div>
+                  <div className="text-xs text-zinc-500">
+                    {analysis.market} • {analysis.timeframe}
+                  </div>
                 </div>
-                <div className="mt-1 text-xs text-zinc-500 md:text-sm">{analysis.createdAt}</div>
+
+                <div className="mt-1 text-xs text-zinc-500">{analysis.createdAt}</div>
               </div>
             </div>
 
-            <div className="flex flex-col items-start gap-2 md:items-end">
-              <div
-                className={`text-lg font-bold md:text-xl ${
-                  analysis.signal.includes("VENDA") ? "text-red-400" : "text-amber-300"
-                }`}
-              >
-                {analysis.signal}
+            <div className="flex shrink-0 items-center gap-4 md:gap-6">
+              <div className="text-right">
+                <div
+                  className={`text-sm font-bold tracking-wide ${
+                    analysis.signal.includes("VENDA")
+                      ? "text-red-400"
+                      : "text-green-400"
+                  }`}
+                >
+                  {analysis.signal.replace(/_/g, " ")}
+                </div>
+
+                <div className="mt-1 text-xs text-zinc-400">
+                  {analysis.strength}% confiança
+                </div>
               </div>
 
-              <div className="text-sm text-zinc-400 md:text-base">{analysis.strength}% confiança</div>
-
-              <StatusBadge status={analysis.status} label={analysis.resultLabel} />
-
-              <div className="text-xs text-zinc-400 md:text-sm">{analysis.resultDetail}</div>
+              <div className="flex min-w-[110px] flex-col items-end gap-1">
+                <StatusBadge status={analysis.status} label={analysis.resultLabel} />
+                <div className="text-right text-xs text-zinc-400">
+                  {analysis.resultDetail}
+                </div>
+              </div>
             </div>
           </button>
         ))}
@@ -649,33 +655,60 @@ function RecentAnalysesModal({
                       onClose();
                       onOpenDashboard();
                     }}
-                    className="flex w-full flex-col gap-4 rounded-[22px] border border-zinc-800 bg-[linear-gradient(90deg,rgba(24,27,32,0.92),rgba(10,14,20,0.98))] p-4 text-left transition hover:border-zinc-700 md:flex-row md:items-center md:justify-between"
+                    className="group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border border-zinc-800 bg-[#0b1118] px-4 py-3 text-left transition duration-300 hover:border-green-500/40 hover:bg-[#0e1622]"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800 text-lg font-bold">
+                    <div
+                      className={`absolute left-0 top-0 h-full w-[4px] rounded-l-2xl ${
+                        analysis.status === "GAIN_TOTAL"
+                          ? "bg-green-500"
+                          : analysis.status === "GAIN_PARCIAL"
+                          ? "bg-emerald-500"
+                          : analysis.status === "LOSS"
+                          ? "bg-red-500"
+                          : "bg-yellow-400"
+                      }`}
+                    />
+
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-sm font-bold text-white">
                         {analysis.asset.slice(0, 3)}
                       </div>
 
-                      <div>
-                        <div className="text-xl font-bold">{analysis.asset}</div>
-                        <div className="mt-1 text-sm text-zinc-400">
-                          {analysis.market} • {analysis.timeframe}
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <div className="text-lg font-bold text-white">{analysis.asset}</div>
+                          <div className="text-xs text-zinc-500">
+                            {analysis.market} • {analysis.timeframe}
+                          </div>
                         </div>
+
                         <div className="mt-1 text-xs text-zinc-500">{analysis.createdAt}</div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-start gap-2 md:items-end">
-                      <div
-                        className={`text-lg font-bold ${
-                          analysis.signal.includes("VENDA") ? "text-red-400" : "text-amber-300"
-                        }`}
-                      >
-                        {analysis.signal}
+                    <div className="flex shrink-0 items-center gap-4 md:gap-6">
+                      <div className="text-right">
+                        <div
+                          className={`text-sm font-bold tracking-wide ${
+                            analysis.signal.includes("VENDA")
+                              ? "text-red-400"
+                              : "text-green-400"
+                          }`}
+                        >
+                          {analysis.signal.replace(/_/g, " ")}
+                        </div>
+
+                        <div className="mt-1 text-xs text-zinc-400">
+                          {analysis.strength}% confiança
+                        </div>
                       </div>
-                      <div className="text-sm text-zinc-400">{analysis.strength}% confiança</div>
-                      <StatusBadge status={analysis.status} label={analysis.resultLabel} />
-                      <div className="text-xs text-zinc-400">{analysis.resultDetail}</div>
+
+                      <div className="flex min-w-[110px] flex-col items-end gap-1">
+                        <StatusBadge status={analysis.status} label={analysis.resultLabel} />
+                        <div className="text-right text-xs text-zinc-400">
+                          {analysis.resultDetail}
+                        </div>
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -702,11 +735,11 @@ function StatusBadge({
       ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-300"
       : status === "LOSS"
       ? "border-red-500/30 bg-red-500/15 text-red-300"
-      : "border-amber-500/30 bg-amber-500/15 text-amber-300";
+      : "border-yellow-500/30 bg-yellow-500/15 text-yellow-300";
 
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold md:text-sm ${style}`}
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold md:text-xs ${style}`}
     >
       {label}
     </span>
