@@ -170,13 +170,13 @@ const partnerLogos: PartnerLogo[] = [
     id: "xm",
     name: "XM",
     imageSrc: "/partners/xm-logo.png",
-    href: "https://SEU-LINK-DE-PARCEIRO-XM-AQUI",
+    href: "https://affs.click/0hkWv",
   },
   {
     id: "5p",
     name: "5P",
     imageSrc: "/partners/5pi-logo.png",
-    href: "https://SEU-LINK-DE-PARCEIRO-5PI-AQUI",
+    href: "https://www.5pi.com.br/parceiros/glucks-trader",
   },
 ];
 
