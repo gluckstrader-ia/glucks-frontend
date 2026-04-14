@@ -438,7 +438,7 @@ function RecentAnalysesCard({
   return (
     <div className="rounded-[30px] border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,14,22,0.98),rgba(5,8,14,0.98))] p-4 md:p-5">
       <div className="mb-4 flex items-center justify-between gap-4">
-        <div className="text-2xl font-bold md:text-3xl">Análises Recentes</div>
+        <div className="text-2xl font-bold md:text-3xl">Análises Recentes - EM BREVE </div>
 
         <div className="flex items-center gap-3">
           <button
