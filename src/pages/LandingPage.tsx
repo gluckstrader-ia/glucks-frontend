@@ -349,32 +349,6 @@ export default function LandingPage() {
       <section className="relative overflow-hidden">
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-14 lg:py-24">
           <div>
-
-            {/* 🔴 BOTÃO LIVE YOUTUBE */}
-            <div className="mb-4">
-              <a
-                href="https://www.youtube.com/watch?v=vDDqHt-vpcg"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white bg-red-600 shadow-lg transition-all duration-300 hover:bg-red-500 hover:scale-105"
-              >
-                <span className="absolute inset-0 rounded-full bg-red-500 opacity-70 blur-xl animate-ping"></span>
-
-                <span className="relative flex items-center gap-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="white"
-                    className="w-5 h-5"
-                  >
-                    <path d="M21.8 8s-.2-1.4-.8-2c-.8-.8-1.6-.8-2-.9C16.2 5 12 5 12 5h0s-4.2 0-7 .1c-.4 0-1.2.1-2 .9-.6.6-.8 2-.8 2S2 9.6 2 11.2v1.6C2 14.4 2.2 16 2.2 16s.2 1.4.8 2c.8.8 1.8.8 2.2.9 1.6.2 6.8.2 6.8.2s4.2 0 7-.1c.4 0 1.2-.1 2-.9.6-.6.8-2 .8-2s.2-1.6.2-3.2v-1.6C22 9.6 21.8 8 21.8 8zM10 14.5v-5l5 2.5-5 2.5z"/>
-                  </svg>
-
-                  🔴 AO VIVO A PARTIR DAS 20H
-                </span>
-              </a>
-            </div>
-
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 sm:px-4 sm:text-sm">
               <Sparkles className="h-4 w-4" />
               Plataforma premium de análise com IA
