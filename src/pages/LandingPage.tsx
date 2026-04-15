@@ -353,7 +353,7 @@ export default function LandingPage() {
             {/* 🔴 BOTÃO LIVE YOUTUBE */}
             <div className="mb-4">
               <a
-                href="https://youtube.com/live/SEU_LINK_AQUI"
+                href="https://www.youtube.com/@GlucksTrader"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="relative inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white bg-red-600 shadow-lg transition-all duration-300 hover:bg-red-500 hover:scale-105"
@@ -370,7 +370,7 @@ export default function LandingPage() {
                     <path d="M21.8 8s-.2-1.4-.8-2c-.8-.8-1.6-.8-2-.9C16.2 5 12 5 12 5h0s-4.2 0-7 .1c-.4 0-1.2.1-2 .9-.6.6-.8 2-.8 2S2 9.6 2 11.2v1.6C2 14.4 2.2 16 2.2 16s.2 1.4.8 2c.8.8 1.8.8 2.2.9 1.6.2 6.8.2 6.8.2s4.2 0 7-.1c.4 0 1.2-.1 2-.9.6-.6.8-2 .8-2s.2-1.6.2-3.2v-1.6C22 9.6 21.8 8 21.8 8zM10 14.5v-5l5 2.5-5 2.5z"/>
                   </svg>
 
-                  🔴 AO VIVO A PARTIR DAS 20h
+                  🔴 AO VIVO A PARTIR DAS 20H
                 </span>
               </a>
             </div>
