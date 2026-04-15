@@ -353,7 +353,7 @@ export default function LandingPage() {
             {/* 🔴 BOTÃO LIVE YOUTUBE */}
             <div className="mb-4">
               <a
-                href="https://www.youtube.com/@GlucksTrader"
+                href="https://www.youtube.com/watch?v=vDDqHt-vpcg"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="relative inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white bg-red-600 shadow-lg transition-all duration-300 hover:bg-red-500 hover:scale-105"
