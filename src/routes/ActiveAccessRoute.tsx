@@ -1,12 +1,25 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { isAuthenticated, hasActiveAccess } from "../lib/auth";
+import { getStoredUser, isAuthenticated } from "../lib/auth";
 
 export default function ActiveAccessRoute() {
-  if (!isAuthenticated()) {
+  const authenticated = isAuthenticated();
+  const user = getStoredUser();
+
+  if (!authenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!hasActiveAccess()) {
+  if (user?.is_admin === true) {
+    return <Outlet />;
+  }
+
+  const hasAccess =
+    !!user &&
+    user.is_active === true &&
+    user.is_blocked === false &&
+    user.has_access === true;
+
+  if (!hasAccess) {
     return <Navigate to="/premium" replace />;
   }
 
