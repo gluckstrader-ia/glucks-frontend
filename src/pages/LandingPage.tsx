@@ -960,6 +960,85 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="relative overflow-hidden border-y border-emerald-500/10 bg-zinc-950 py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+    
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+      
+            {/* TEXTO */}
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                Programa de Parceiros
+              </div>
+
+              <h2 className="text-3xl font-black text-white sm:text-4xl">
+                Ganhe comissões recorrentes indicando a Gluck’s Trader IA
+              </h2>
+
+              <p className="mt-4 text-zinc-400">
+                Tenha seu próprio código exclusivo, acompanhe suas comissões em tempo real e utilize materiais prontos para divulgação.
+              </p>
+
+              <ul className="mt-6 space-y-3 text-sm text-zinc-300">
+                <li>✔ 10% de comissão recorrente</li>
+                <li>✔ Código exclusivo de indicação</li>
+                <li>✔ Dashboard completo de acompanhamento</li>
+                <li>✔ Materiais prontos para divulgar</li>
+              </ul>
+
+              <div className="mt-8 flex flex-wrap gap-4">
+                <a
+                  href="/parceiros"
+                  className="rounded-xl bg-emerald-500 px-6 py-3 font-bold text-zinc-950 transition hover:bg-emerald-400"
+                >
+                  Quero ser parceiro
+                </a>
+
+                <a
+                  href="/dashboard-parceiro"
+                  className="rounded-xl border border-zinc-700 bg-zinc-900 px-6 py-3 font-semibold text-white transition hover:bg-zinc-800"
+                >
+                  Já sou parceiro
+                </a>
+              </div>
+            </div>
+
+            {/* VISUAL */}
+            <div className="relative">
+              <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-emerald-500/10 to-transparent p-6 shadow-xl">
+          
+                <div className="space-y-4">
+                  <div className="rounded-xl bg-zinc-900 p-4">
+                    <div className="text-sm text-zinc-400">Seu código</div>
+                    <div className="text-xl font-black text-emerald-400">
+                      GLUCK123
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl bg-zinc-900 p-4">
+                    <div className="text-sm text-zinc-400">Comissões</div>
+                    <div className="text-xl font-black text-cyan-300">
+                      R$ 1.280,00
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl bg-zinc-900 p-4">
+                    <div className="text-sm text-zinc-400">Clientes ativos</div>
+                    <div className="text-xl font-black text-white">
+                      14
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+
       <footer className="border-t border-white/10 bg-black">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-zinc-500 sm:px-6 md:flex-row md:items-center md:justify-between">
           <div>
