@@ -13,6 +13,7 @@ import IndicadorPage from "./pages/IndicadorPage";
 import RoboPage from "./pages/RoboPage";
 import CursoPage from "./pages/CursoPage";
 import RegisterTrialPage from "./pages/RegisterTrialPage";
+import PartnerDashboardPage from "./pages/PartnerDashboardPage";
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/home-premium" element={<PremiumHomePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard-parceiro" element={<PartnerDashboardPage />} />
         </Route>
 
         <Route element={<AdminRoute />}>
@@ -43,6 +45,7 @@ export default function App() {
         <Route path="/curso" element={<CursoPage />} />
 
         <Route path="/cadastro-trial" element={<RegisterTrialPage />} />
+
 
       </Routes>
     </BrowserRouter>

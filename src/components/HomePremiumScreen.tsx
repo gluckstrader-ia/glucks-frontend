@@ -238,6 +238,18 @@ export default function HomePremiumScreen({
                       className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
                       onClick={() => {
                         setUserMenuOpen(false);
+                        navigate("/dashboard-parceiro");
+                      }}
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      Programa de parceiros
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
+                      onClick={() => {
+                        setUserMenuOpen(false);
                         navigate("/assinatura");
                       }}
                     >
@@ -284,13 +296,21 @@ export default function HomePremiumScreen({
             </div>
           </motion.section>
 
-          <motion.section variants={cardMotion} className="grid grid-cols-1 gap-5">
+          <motion.section variants={cardMotion} className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <HeroActionCard
               title="Nova Análise"
               subtitle="Analise qualquer ativo com IA avançada"
               icon={<TrendingUp className="h-7 w-7" />}
               accent="cyan"
               onClick={onOpenDashboard}
+            />
+
+            <HeroActionCard
+              title="Programa de Parceiros"
+              subtitle="Indique a Gluck’s Trader IA, acompanhe suas comissões e acesse seu dashboard exclusivo."
+              icon={<CreditCard className="h-7 w-7" />}
+              accent="amber"
+              onClick={() => navigate("/dashboard-parceiro")}
             />
           </motion.section>
 

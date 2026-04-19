@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { BrainCircuit } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
@@ -15,8 +15,16 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [partnerCode, setPartnerCode] = useState("");
   const [loadingAuth, setLoadingAuth] = useState(false);
   const [authError, setAuthError] = useState("");
+
+  useEffect(() => {
+    const ref = (searchParams.get("ref") || "").trim();
+    if (ref) {
+      setPartnerCode(ref);
+    }
+  }, [searchParams]);
 
   const selectedPlan = useMemo(() => {
     const plan = (searchParams.get("plan") || "mensal").toLowerCase();
@@ -64,6 +72,7 @@ export default function RegisterPage() {
           name,
           email,
           password,
+          referred_by_code: partnerCode.trim() || null,
         }),
       });
 
@@ -101,18 +110,23 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="space-y-4">
+            {/* 🔥 CAMPOS EM COLUNA */}
+            <div className="flex flex-col gap-4">
               <Input
                 placeholder="Nome"
                 value={name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setName(e.target.value)
+                }
                 className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
               />
 
               <Input
                 placeholder="Email"
                 value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setEmail(e.target.value)
+                }
                 className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
               />
 
@@ -120,7 +134,18 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="Senha"
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setPassword(e.target.value)
+                }
+                className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
+              />
+
+              <Input
+                placeholder="Código do parceiro (opcional)"
+                value={partnerCode}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setPartnerCode(e.target.value.toUpperCase())
+                }
                 className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
               />
             </div>
