@@ -97,7 +97,7 @@ export default function AffiliateLandingPage() {
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                 <Link
-                  to="/cadastro"
+                  to="/cadastro-parceiro"
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-bold text-zinc-950 transition hover:-translate-y-0.5 hover:bg-emerald-400"
                 >
                   Quero entrar no programa
