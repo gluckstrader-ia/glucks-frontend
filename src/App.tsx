@@ -17,6 +17,7 @@ import PartnerDashboardPage from "./pages/PartnerDashboardPage";
 import AffiliateLandingPage from "./pages/AffiliateLandingPage";
 import PartnerRegisterPage from "./pages/PartnerRegisterPage";
 import ActiveAccessRoute from "./routes/ActiveAccessRoute";
+import AdminAffiliatesPage from "./pages/AdminAffiliatesPage";
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
 
         <Route element={<AdminRoute />}>
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/afiliados" element={<AdminAffiliatesPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
