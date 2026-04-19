@@ -16,6 +16,7 @@ import RegisterTrialPage from "./pages/RegisterTrialPage";
 import PartnerDashboardPage from "./pages/PartnerDashboardPage";
 import AffiliateLandingPage from "./pages/AffiliateLandingPage";
 import PartnerRegisterPage from "./pages/PartnerRegisterPage";
+import ActiveAccessRoute from "./routes/ActiveAccessRoute";
 
 export default function App() {
   return (
@@ -35,8 +36,11 @@ export default function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/home-premium" element={<PremiumHomePage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/dashboard-parceiro" element={<PartnerDashboardPage />} />
+        </Route>
+
+        <Route element={<ActiveAccessRoute />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
         </Route>
 
         <Route element={<AdminRoute />}>
