@@ -14,6 +14,7 @@ import RoboPage from "./pages/RoboPage";
 import CursoPage from "./pages/CursoPage";
 import RegisterTrialPage from "./pages/RegisterTrialPage";
 import PartnerDashboardPage from "./pages/PartnerDashboardPage";
+import AffiliateLandingPage from "./pages/AffiliateLandingPage";
 
 export default function App() {
   return (
@@ -24,6 +25,8 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/cadastro" element={<RegisterPage />} />
         </Route>
+
+        <Route path="/parceiros" element={<AffiliateLandingPage />} />
 
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/indicador" element={<IndicadorPage />} />
