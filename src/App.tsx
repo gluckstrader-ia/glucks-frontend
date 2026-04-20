@@ -16,7 +16,6 @@ import RegisterTrialPage from "./pages/RegisterTrialPage";
 import PartnerDashboardPage from "./pages/PartnerDashboardPage";
 import AffiliateLandingPage from "./pages/AffiliateLandingPage";
 import PartnerRegisterPage from "./pages/PartnerRegisterPage";
-
 import AdminAffiliatesPage from "./pages/AdminAffiliatesPage";
 
 export default function App() {
