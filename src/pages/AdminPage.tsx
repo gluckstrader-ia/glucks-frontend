@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { BarChart3 } from "lucide-react";
 import {
   AlertTriangle,
   BadgeDollarSign,
@@ -583,6 +584,23 @@ export default function AdminPage() {
             Atualizar tudo
           </button>
         </div>
+      </div>
+
+      <div
+        onClick={() => navigate("/admin/afiliados")}
+        className="cursor-pointer rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-emerald-500/40 hover:bg-zinc-800"
+      >
+        <div className="mb-4 inline-flex rounded-xl bg-emerald-500/10 p-3 text-emerald-400">
+          <BarChart3 className="h-6 w-6" />
+        </div>
+
+        <h3 className="text-lg font-bold text-white">
+          Afiliados
+        </h3>
+
+        <p className="mt-2 text-sm text-zinc-400">
+          Gerencie parceiros, comissões e repasses
+        </p>
       </div>
 
       <div className="mx-auto max-w-[1500px] px-4 py-8 md:px-6 lg:px-8">
