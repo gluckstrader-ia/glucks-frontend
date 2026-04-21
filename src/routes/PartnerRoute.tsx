@@ -19,7 +19,7 @@ export default function PartnerRoute() {
     !!user &&
     user.is_partner === true &&
     user.is_blocked === false &&
-    (user.partner_status === "active" || !user.partner_status);
+    user.partner_status === "active";
 
   if (!isPartner) {
     return <Navigate to="/parceiros" replace />;
