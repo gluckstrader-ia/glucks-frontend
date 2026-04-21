@@ -5,99 +5,57 @@ export type AuthUser = {
   is_active: boolean;
   is_blocked: boolean;
   is_admin: boolean;
-  plan: string;
-  plan_status: string;
-  access_expires_at: string | null;
-  has_access: boolean;
-  is_partner?: boolean;
+  is_partner: boolean;
   partner_code?: string | null;
   partner_status?: string | null;
+  referred_by_user_id?: number | null;
+  referred_by_code?: string | null;
+  plan: string;
+  plan_status: string;
+  access_expires_at?: string | null;
+  has_access: boolean;
   created_at?: string | null;
   updated_at?: string | null;
 };
 
-function getApiUrl() {
-  return import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+export type AuthResponse = {
+  access_token: string;
+  token_type: string;
+  user: AuthUser;
+};
+
+const TOKEN_KEY = "glucks_token";
+const USER_KEY = "glucks_user";
+
+export function saveAuth(data: AuthResponse) {
+  localStorage.setItem(TOKEN_KEY, data.access_token);
+  localStorage.setItem(USER_KEY, JSON.stringify(data.user));
 }
 
-export function getStoredToken() {
-  return localStorage.getItem("token");
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
 }
 
-export function getStoredUser(): AuthUser | null {
+export function getUser(): AuthUser | null {
+  const raw = localStorage.getItem(USER_KEY);
+  if (!raw) return null;
+
   try {
-    const raw = localStorage.getItem("user");
-    if (!raw) return null;
-
-    const user = JSON.parse(raw);
-
-    return {
-      ...user,
-      has_access: user?.has_access === true,
-      is_active: user?.is_active === true,
-      is_blocked: user?.is_blocked === true,
-      is_admin: user?.is_admin === true,
-      is_partner: user?.is_partner === true,
-      partner_code: user?.partner_code ?? null,
-      partner_status: user?.partner_status ?? null,
-    };
+    return JSON.parse(raw);
   } catch {
     return null;
   }
 }
 
-export function saveAuth(token: string, user: AuthUser) {
-  localStorage.setItem("token", token);
-  localStorage.setItem("user", JSON.stringify(user));
-}
-
 export function updateStoredUser(user: AuthUser) {
-  localStorage.setItem("user", JSON.stringify(user));
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 export function clearAuth() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
 }
 
-export function isAuthenticated() {
-  return !!getStoredToken();
-}
-
-export function hasActiveAccess() {
-  const user = getStoredUser();
-
-  if (!user) return false;
-  if (user.is_admin === true) return true;
-
-  return (
-    user.is_active === true &&
-    user.is_blocked === false &&
-    user.has_access === true
-  );
-}
-
-export function isAdminUser() {
-  const user = getStoredUser();
-  return !!user && user.is_admin === true;
-}
-
-export async function refreshStoredUser() {
-  const token = getStoredToken();
-  if (!token) return null;
-
-  const res = await fetch(`${getApiUrl()}/auth/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!res.ok) {
-    clearAuth();
-    return null;
-  }
-
-  const user: AuthUser = await res.json();
-  updateStoredUser(user);
-  return user;
+export function isAuthenticated(): boolean {
+  return !!getToken();
 }

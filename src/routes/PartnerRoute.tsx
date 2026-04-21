@@ -1,28 +1,16 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { getStoredUser, isAuthenticated } from "../lib/auth";
+import { getToken, getUser } from "../lib/auth";
 
 export default function PartnerRoute() {
-  const authenticated = isAuthenticated();
-  const user = getStoredUser();
+  const token = getToken();
+  const user = getUser();
 
-  if (!authenticated) {
+  if (!token || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Admin pode acessar
-  if (user?.is_admin === true) {
-    return <Outlet />;
-  }
-
-  // Só parceiro ativo entra na área do parceiro
-  const isPartner =
-    !!user &&
-    user.is_partner === true &&
-    user.is_blocked === false &&
-    user.partner_status === "active";
-
-  if (!isPartner) {
-    return <Navigate to="/parceiros" replace />;
+  if (user.is_partner !== true) {
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;

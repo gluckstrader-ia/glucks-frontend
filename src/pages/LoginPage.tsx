@@ -42,12 +42,31 @@ export default function LoginPage() {
         throw new Error(data.detail || "Falha no login");
       }
 
-      saveAuth(data.access_token, data.user);
+      saveAuth(data);
+
+      const user = data.user;
+
+      if (!user) {
+        throw new Error("Usuário não retornado no login");
+      }
+
+      if (user.is_admin === true) {
+        navigate("/admin");
+        return;
+      }
+
+      if (user.is_partner === true) {
+        navigate("/partner-dashboard");
+        return;
+      }
 
       const hasAccess =
-        !!data.user &&
-        data.user.is_active === true &&
-        data.user.is_blocked === false;
+        user.has_access === true ||
+        (
+          user.is_active === true &&
+          user.is_blocked === false &&
+          user.plan_status === "active"
+        );
 
       if (hasAccess) {
         navigate("/home-premium");
@@ -112,6 +131,16 @@ export default function LoginPage() {
               className="text-emerald-400 hover:text-emerald-300"
             >
               Criar conta
+            </Link>
+          </div>
+
+          <div className="text-center text-sm text-zinc-400">
+            Quer ser parceiro?{" "}
+            <Link
+              to="/cadastro-parceiro"
+              className="text-emerald-400 hover:text-emerald-300"
+            >
+              Cadastre-se como parceiro
             </Link>
           </div>
         </CardContent>

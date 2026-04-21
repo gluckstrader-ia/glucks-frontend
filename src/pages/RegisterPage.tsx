@@ -22,7 +22,7 @@ export default function RegisterPage() {
   useEffect(() => {
     const ref = (searchParams.get("ref") || "").trim();
     if (ref) {
-      setPartnerCode(ref);
+      setPartnerCode(ref.toUpperCase());
     }
   }, [searchParams]);
 
@@ -59,6 +59,11 @@ export default function RegisterPage() {
   }, [selectedPlan]);
 
   async function handleRegister() {
+    if (!name || !email || !password) {
+      setAuthError("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
     try {
       setLoadingAuth(true);
       setAuthError("");
@@ -82,7 +87,9 @@ export default function RegisterPage() {
         throw new Error(data.detail || "Falha no cadastro");
       }
 
-      saveAuth(data.access_token, data.user);
+      // 🔥 CORREÇÃO AQUI
+      saveAuth(data);
+
       navigate(`/premium?plan=${selectedPlan}`);
     } catch (error: any) {
       setAuthError(error.message || "Erro ao criar conta");
@@ -110,7 +117,6 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* 🔥 CAMPOS EM COLUNA */}
             <div className="flex flex-col gap-4">
               <Input
                 placeholder="Nome"
@@ -173,54 +179,33 @@ export default function RegisterPage() {
                 Entrar
               </Link>
             </div>
+
+            <div className="text-center text-sm text-zinc-400">
+              Quer ser parceiro?{" "}
+              <Link
+                to="/cadastro-parceiro"
+                className="text-emerald-400 hover:text-emerald-300"
+              >
+                Cadastre-se como parceiro
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
-        <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-8">
-          <div className="text-sm uppercase tracking-[0.2em] text-emerald-400 font-semibold">
-            Plano selecionado
-          </div>
-
-          <h2 className="mt-4 text-3xl font-black text-white">
-            {planMeta.label}
+        {/* Lado direito mantido */}
+        <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-900 p-8">
+          <h2 className="text-2xl font-bold text-white">
+            Plano {planMeta.label}
           </h2>
+          <p className="text-zinc-400 mt-2">{planMeta.description}</p>
 
-          <div className="mt-4 flex items-end gap-2">
-            <div className="text-5xl font-black text-cyan-400">
-              {planMeta.price}
-            </div>
+          <div className="mt-6 text-4xl font-black text-emerald-400">
+            {planMeta.price}
           </div>
 
-          <p className="mt-4 text-zinc-400 leading-7">
-            {planMeta.description}
+          <p className="text-sm text-zinc-500 mt-2">
+            Após criar sua conta, você continuará para finalizar a assinatura.
           </p>
-
-          <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5">
-            <div className="text-white font-semibold">
-              O que acontece depois do cadastro?
-            </div>
-            <div className="mt-3 space-y-3 text-sm text-zinc-300">
-              <div>1. Sua conta é criada na plataforma.</div>
-              <div>2. Você segue para a área de assinatura.</div>
-              <div>3. O plano escolhido já aparece destacado.</div>
-              <div>4. No próximo passo, conectamos o pagamento.</div>
-            </div>
-          </div>
-
-          <div className="mt-8 space-y-3 text-sm text-zinc-400">
-            <div className="flex gap-3">
-              <span className="text-emerald-400">✓</span>
-              <span>Acesso ao fluxo premium da plataforma</span>
-            </div>
-            <div className="flex gap-3">
-              <span className="text-emerald-400">✓</span>
-              <span>Plano já selecionado automaticamente</span>
-            </div>
-            <div className="flex gap-3">
-              <span className="text-emerald-400">✓</span>
-              <span>Pronto para integração com liberação automática</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>

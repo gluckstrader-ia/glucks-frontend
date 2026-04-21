@@ -9,15 +9,15 @@ import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
 import AdminRoute from "./routes/AdminRoute";
-import PartnerRoute from "./routes/PartnerRoute";
 import IndicadorPage from "./pages/IndicadorPage";
 import RoboPage from "./pages/RoboPage";
 import CursoPage from "./pages/CursoPage";
 import RegisterTrialPage from "./pages/RegisterTrialPage";
-import PartnerDashboardPage from "./pages/PartnerDashboardPage";
 import AffiliateLandingPage from "./pages/AffiliateLandingPage";
-import PartnerRegisterPage from "./pages/PartnerRegisterPage";
 import AdminAffiliatesPage from "./pages/AdminAffiliatesPage";
+import PartnerRegisterPage from "./pages/PartnerRegisterPage";
+import PartnerDashboardPage from "./pages/PartnerDashboardPage";
+import PartnerRoute from "./routes/PartnerRoute";
 
 export default function App() {
   return (
@@ -27,18 +27,17 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/cadastro" element={<RegisterPage />} />
+          <Route path="/cadastro-parceiro" element={<PartnerRegisterPage />} />
         </Route>
 
         <Route path="/parceiros" element={<AffiliateLandingPage />} />
-        <Route path="/cadastro-parceiro" element={<PartnerRegisterPage />} />
-
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/indicador" element={<IndicadorPage />} />
         <Route path="/robo" element={<RoboPage />} />
         <Route path="/curso" element={<CursoPage />} />
         <Route path="/cadastro-trial" element={<RegisterTrialPage />} />
 
-        {/* SISTEMA PRINCIPAL - continua como está hoje */}
+        {/* SISTEMA PRINCIPAL - clientes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/home-premium" element={<PremiumHomePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
@@ -46,7 +45,7 @@ export default function App() {
 
         {/* SISTEMA DE PARCEIROS - isolado */}
         <Route element={<PartnerRoute />}>
-          <Route path="/dashboard-parceiro" element={<PartnerDashboardPage />} />
+          <Route path="/partner-dashboard" element={<PartnerDashboardPage />} />
         </Route>
 
         <Route element={<AdminRoute />}>

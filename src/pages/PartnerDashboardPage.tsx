@@ -1,556 +1,305 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { clearAuth, getToken } from "../lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
-type Material = {
-  id: number;
-  title: string;
-  category: string;
-  content?: string;
-  file_url?: string;
+type PartnerDashboardData = {
+  partner_name: string;
+  partner_email: string;
+  partner_code: string | null;
+  partner_status: string | null;
+  total_indications: number;
+  total_sales: number;
+  total_commission_generated: number;
+  total_commission_paid: number;
+  total_commission_pending: number;
 };
 
-type Commission = {
+type PartnerIndication = {
   id: number;
+  name: string;
+  email: string;
   plan: string;
-  gross_amount: number;
-  commission_amount: number;
-  status: string;
-  billing_cycle: string;
-  created_at: string;
-};
-
-type DashboardData = {
-  partner_code: string;
-  partner_link: string;
-  pix_key?: string | null;
-  pix_type?: string | null;
-  metrics: {
-    clicks: number;
-    referred_users: number;
-    active_customers: number;
-    pending_amount: number;
-    available_amount: number;
-    paid_amount: number;
-  };
-  recent_commissions: Commission[];
-  materials: Material[];
+  plan_status: string;
+  is_active: boolean;
+  is_blocked: boolean;
+  has_access: boolean;
+  referred_by_code?: string | null;
+  created_at?: string | null;
+  access_expires_at?: string | null;
 };
 
 export default function PartnerDashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [pixKey, setPixKey] = useState("");
-  const [pixType, setPixType] = useState("email");
+  const navigate = useNavigate();
+
+  const [dashboard, setDashboard] = useState<PartnerDashboardData | null>(null);
+  const [indications, setIndications] = useState<PartnerIndication[]>([]);
   const [loading, setLoading] = useState(true);
-  const [joining, setJoining] = useState(false);
-  const [savingPix, setSavingPix] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  async function loadData() {
-    try {
-      setLoading(true);
-      setError("");
-      setMessage("");
-
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${API_URL}/partners/dashboard`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        throw new Error(json.detail || "Erro ao carregar dashboard do parceiro.");
-      }
-
-      setData(json);
-      setPixKey(json.pix_key || "");
-      setPixType(json.pix_type || "email");
-    } catch (err: any) {
-      setData(null);
-      setError(err.message || "Erro ao carregar dashboard.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function joinProgram() {
-    try {
-      setJoining(true);
-      setError("");
-      setMessage("");
-
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${API_URL}/partners/join`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        throw new Error(json.detail || "Erro ao ativar programa de parceiros.");
-      }
-
-      setMessage("Programa de parceiros ativado com sucesso.");
-      await loadData();
-    } catch (err: any) {
-      setError(err.message || "Erro ao ativar programa.");
-    } finally {
-      setJoining(false);
-    }
-  }
-
-  async function savePix() {
-    try {
-      setSavingPix(true);
-      setError("");
-      setMessage("");
-
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${API_URL}/partners/pix`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          pix_key: pixKey,
-          pix_type: pixType,
-        }),
-      });
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        throw new Error(json.detail || "Erro ao salvar chave Pix.");
-      }
-
-      setMessage("Chave Pix salva com sucesso.");
-      await loadData();
-    } catch (err: any) {
-      setError(err.message || "Erro ao salvar Pix.");
-    } finally {
-      setSavingPix(false);
-    }
-  }
-
-  async function copyPartnerLink() {
-    if (!data?.partner_link) return;
-
-    try {
-      await navigator.clipboard.writeText(data.partner_link);
-      setMessage("Link copiado com sucesso.");
-      setError("");
-    } catch {
-      setError("Não foi possível copiar o link.");
-    }
-  }
-
-  async function copyMaterial(text?: string) {
-    if (!text) return;
-
-    try {
-      await navigator.clipboard.writeText(text);
-      setMessage("Material copiado com sucesso.");
-      setError("");
-    } catch {
-      setError("Não foi possível copiar o material.");
-    }
-  }
+  const [copySuccess, setCopySuccess] = useState("");
 
   useEffect(() => {
-    loadData();
-  }, []);
+    async function loadPartnerData() {
+      const token = getToken();
+
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError("");
+
+        const [dashboardResponse, indicationsResponse] = await Promise.all([
+          fetch(`${API_URL}/auth/partner-dashboard`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          fetch(`${API_URL}/auth/partner-indications`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        ]);
+
+        const dashboardData = await dashboardResponse.json();
+        const indicationsData = await indicationsResponse.json();
+
+        if (!dashboardResponse.ok) {
+          throw new Error(
+            dashboardData.detail || "Erro ao carregar dashboard do parceiro"
+          );
+        }
+
+        if (!indicationsResponse.ok) {
+          throw new Error(
+            indicationsData.detail || "Erro ao carregar indicados do parceiro"
+          );
+        }
+
+        setDashboard(dashboardData);
+        setIndications(Array.isArray(indicationsData) ? indicationsData : []);
+      } catch (error: any) {
+        setError(error.message || "Erro ao carregar dashboard do parceiro");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadPartnerData();
+  }, [navigate]);
+
+  async function handleCopyCode() {
+    if (!dashboard?.partner_code) return;
+
+    try {
+      await navigator.clipboard.writeText(dashboard.partner_code);
+      setCopySuccess("Código copiado com sucesso!");
+      setTimeout(() => setCopySuccess(""), 2000);
+    } catch {
+      setCopySuccess("Não foi possível copiar o código.");
+      setTimeout(() => setCopySuccess(""), 2000);
+    }
+  }
+
+  function handleLogout() {
+    clearAuth();
+    navigate("/login");
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white">
-        <div className="mx-auto max-w-7xl px-6 py-10">
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-            Carregando dashboard do parceiro...
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="min-h-screen bg-zinc-950 text-white">
-        <div className="mx-auto max-w-4xl px-6 py-10">
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">
-            <div className="text-sm uppercase tracking-[0.2em] text-emerald-400">
-              Programa de Parceiros
-            </div>
-            <h1 className="mt-3 text-3xl font-black">
-              Entre no programa e receba seu código exclusivo
-            </h1>
-            <p className="mt-4 text-zinc-400">
-              Você ainda não está ativo como parceiro. Clique abaixo para entrar no programa e liberar seu dashboard.
-            </p>
-
-            {error && (
-              <div className="mt-6 rounded-xl border border-red-900/40 bg-red-950/20 p-4 text-red-400">
-                {error}
-              </div>
-            )}
-
-            {message && (
-              <div className="mt-6 rounded-xl border border-emerald-900/40 bg-emerald-950/20 p-4 text-emerald-400">
-                {message}
-              </div>
-            )}
-
-            <button
-              onClick={joinProgram}
-              disabled={joining}
-              className="mt-8 rounded-2xl bg-emerald-500 px-6 py-4 font-bold text-zinc-950 transition hover:bg-emerald-400 disabled:opacity-60"
-            >
-              {joining ? "Ativando..." : "Quero entrar no programa de parceiros"}
-            </button>
-          </div>
-        </div>
+      <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center p-6">
+        <div className="text-zinc-400">Carregando dashboard do parceiro...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8 lg:py-10">
-        {message && (
-          <div className="mb-6 rounded-xl border border-emerald-900/40 bg-emerald-950/20 p-4 text-emerald-400">
-            {message}
+    <div className="min-h-screen bg-black text-zinc-100 p-6">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="flex flex-col gap-4 rounded-3xl border border-zinc-800 bg-zinc-900 p-6 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">
+              Dashboard do Parceiro
+            </h1>
+            <p className="mt-2 text-zinc-400">
+              Acompanhe seu código, clientes indicados e comissões.
+            </p>
           </div>
-        )}
+
+          <Button
+            onClick={handleLogout}
+            className="bg-zinc-800 text-white hover:bg-zinc-700"
+          >
+            Sair
+          </Button>
+        </div>
 
         {error && (
-          <div className="mb-6 rounded-xl border border-red-900/40 bg-red-950/20 p-4 text-red-400">
+          <div className="rounded-xl border border-red-900/40 bg-red-950/20 p-4 text-sm text-red-400">
             {error}
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-          <aside className="rounded-[28px] border border-zinc-800 bg-zinc-900/90 p-5">
-            <div className="flex items-center gap-3 border-b border-zinc-800 pb-5">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-xl font-black text-emerald-400">
-                GT
-              </div>
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="p-6">
+              <p className="text-sm text-zinc-400">Indicados</p>
+              <h2 className="mt-2 text-3xl font-black text-white">
+                {dashboard?.total_indications ?? 0}
+              </h2>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="p-6">
+              <p className="text-sm text-zinc-400">Vendas</p>
+              <h2 className="mt-2 text-3xl font-black text-white">
+                {dashboard?.total_sales ?? 0}
+              </h2>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="p-6">
+              <p className="text-sm text-zinc-400">Comissão gerada</p>
+              <h2 className="mt-2 text-2xl font-black text-emerald-400">
+                R$ {(dashboard?.total_commission_generated ?? 0).toFixed(2)}
+              </h2>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="p-6">
+              <p className="text-sm text-zinc-400">Comissão paga</p>
+              <h2 className="mt-2 text-2xl font-black text-white">
+                R$ {(dashboard?.total_commission_paid ?? 0).toFixed(2)}
+              </h2>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="p-6">
+              <p className="text-sm text-zinc-400">Comissão pendente</p>
+              <h2 className="mt-2 text-2xl font-black text-yellow-400">
+                R$ {(dashboard?.total_commission_pending ?? 0).toFixed(2)}
+              </h2>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="p-8 space-y-4">
               <div>
-                <div className="text-sm text-zinc-400">Área do parceiro</div>
-                <div className="text-lg font-bold">Gluck’s Trader IA</div>
+                <p className="text-sm text-zinc-400">Parceiro</p>
+                <h2 className="mt-2 text-2xl font-bold text-white">
+                  {dashboard?.partner_name || "-"}
+                </h2>
+                <p className="mt-1 text-zinc-400 break-all">
+                  {dashboard?.partner_email || "-"}
+                </p>
               </div>
-            </div>
 
-            <div className="mt-5 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-              <div className="text-sm text-zinc-300">Seu código</div>
-              <div className="mt-1 text-2xl font-black text-emerald-400">
-                {data.partner_code}
+              <div>
+                <p className="text-sm text-zinc-400">Status</p>
+                <div className="mt-2 inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-400">
+                  {dashboard?.partner_status || "active"}
+                </div>
               </div>
-              <div className="mt-3 text-xs text-zinc-400">Status do parceiro</div>
-              <div className="mt-2 inline-flex rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-                Ativo
-              </div>
-            </div>
 
-            <nav className="mt-5 space-y-2">
-              {["Visão geral", "Comissões", "Minha chave Pix", "Materiais", "Suporte"].map(
-                (item, index) => (
-                  <button
-                    key={item}
-                    className={`w-full rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
-                      index === 0
-                        ? "bg-emerald-500 text-zinc-950"
-                        : "bg-zinc-950 text-zinc-300 hover:bg-zinc-800"
-                    }`}
-                  >
-                    {item}
-                  </button>
-                )
-              )}
-            </nav>
-
-            <div className="mt-5 rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-              <div className="text-sm font-semibold text-white">Seu link exclusivo</div>
-              <div className="mt-3 break-all rounded-xl bg-zinc-900 px-3 py-3 font-mono text-xs text-emerald-300">
-                {data.partner_link}
+              <div>
+                <p className="text-sm text-zinc-400">Seu código exclusivo</p>
+                <div className="mt-3 text-3xl font-black tracking-wide text-emerald-400">
+                  {dashboard?.partner_code || "SEM CÓDIGO"}
+                </div>
               </div>
-              <button
-                onClick={copyPartnerLink}
-                className="mt-3 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm font-semibold text-white transition hover:border-emerald-400/30 hover:bg-zinc-800"
+
+              <Button
+                onClick={handleCopyCode}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
               >
-                Copiar link
-              </button>
-            </div>
-          </aside>
+                Copiar código
+              </Button>
 
-          <main className="space-y-6">
-            <section className="rounded-[28px] border border-emerald-500/15 bg-zinc-900/90 p-6">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                  <div className="text-sm uppercase tracking-[0.2em] text-emerald-400">
-                    Dashboard do parceiro
-                  </div>
-                  <h1 className="mt-2 text-3xl font-black sm:text-4xl">
-                    Acompanhe suas comissões e sua performance
-                  </h1>
-                  <p className="mt-3 max-w-2xl text-zinc-400">
-                    Veja seus resultados, gerencie sua chave Pix e use os materiais prontos para divulgar a Gluck’s Trader IA com mais consistência.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
-                  <div className="text-sm text-zinc-400">Disponível para receber</div>
-                  <div className="mt-1 text-2xl font-black text-cyan-300">
-                    R$ {data.metrics.available_amount.toFixed(2)}
-                  </div>
-                  <div className="mt-1 text-xs text-zinc-500">Repasse semanal por Pix</div>
-                </div>
-              </div>
-            </section>
-
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <Card
-                title="Cliques no link"
-                value={String(data.metrics.clicks)}
-                caption="Total registrado"
-              />
-              <Card
-                title="Cadastros com seu código"
-                value={String(data.metrics.referred_users)}
-                caption="Usuários vinculados"
-              />
-              <Card
-                title="Clientes ativos"
-                value={String(data.metrics.active_customers)}
-                caption="Gerando recorrência"
-              />
-              <Card
-                title="Comissões pagas"
-                value={`R$ ${data.metrics.paid_amount.toFixed(2)}`}
-                caption="Histórico acumulado"
-              />
-            </section>
-
-            <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <div className="rounded-[28px] border border-zinc-800 bg-zinc-900 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold">Comissões recentes</h2>
-                    <p className="mt-1 text-sm text-zinc-400">
-                      Visualize suas últimas vendas e recorrências.
-                    </p>
-                  </div>
-                </div>
-
-                {data.recent_commissions.length === 0 ? (
-                  <p className="mt-5 text-zinc-400">Nenhuma comissão registrada ainda.</p>
-                ) : (
-                  <div className="mt-5 overflow-hidden rounded-2xl border border-zinc-800">
-                    <div className="grid grid-cols-5 gap-3 bg-zinc-950 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                      <div>Data</div>
-                      <div>Plano</div>
-                      <div>Venda</div>
-                      <div>Comissão</div>
-                      <div>Status</div>
-                    </div>
-
-                    <div className="divide-y divide-zinc-800">
-                      {data.recent_commissions.map((item) => (
-                        <div key={item.id} className="grid grid-cols-5 gap-3 px-4 py-4 text-sm">
-                          <div className="text-zinc-300">
-                            {new Date(item.created_at).toLocaleString()}
-                          </div>
-                          <div className="font-semibold text-white">{item.plan}</div>
-                          <div className="text-zinc-300">
-                            R$ {item.gross_amount.toFixed(2)}
-                          </div>
-                          <div className="font-bold text-emerald-400">
-                            R$ {item.commission_amount.toFixed(2)}
-                          </div>
-                          <div>
-                            <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusClass(item.status)}`}>
-                              {labelStatus(item.status)}
-                            </span>
-                            <div className="mt-1 text-xs text-zinc-500">
-                              {item.billing_cycle === "first_payment" ? "Primeira venda" : "Recorrente"}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-6">
-                <section className="rounded-[28px] border border-zinc-800 bg-zinc-900 p-6">
-                  <h2 className="text-xl font-bold">Recebimento por Pix</h2>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    Cadastre a chave para receber seus repasses semanais.
-                  </p>
-
-                  <div className="mt-5 space-y-4">
-                    <div>
-                      <label className="mb-2 block text-sm text-zinc-400">Tipo de chave</label>
-                      <select
-                        value={pixType}
-                        onChange={(e) => setPixType(e.target.value)}
-                        className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
-                      >
-                        <option value="email">Email</option>
-                        <option value="cpf">CPF</option>
-                        <option value="telefone">Telefone</option>
-                        <option value="aleatoria">Aleatória</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm text-zinc-400">Chave Pix</label>
-                      <input
-                        value={pixKey}
-                        onChange={(e) => setPixKey(e.target.value)}
-                        className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white"
-                        placeholder="Digite sua chave Pix"
-                      />
-                    </div>
-
-                    <button
-                      onClick={savePix}
-                      disabled={savingPix}
-                      className="w-full rounded-xl bg-emerald-500 px-5 py-3 font-bold text-zinc-950 transition hover:bg-emerald-400 disabled:opacity-60"
-                    >
-                      {savingPix ? "Salvando..." : "Salvar chave Pix"}
-                    </button>
-                  </div>
-                </section>
-
-                <section className="rounded-[28px] border border-zinc-800 bg-zinc-900 p-6">
-                  <h2 className="text-xl font-bold">Resumo financeiro</h2>
-                  <div className="mt-5 space-y-3">
-                    <Row label="Pendentes" value={`R$ ${data.metrics.pending_amount.toFixed(2)}`} />
-                    <Row label="Disponíveis" value={`R$ ${data.metrics.available_amount.toFixed(2)}`} />
-                    <Row label="Pagas" value={`R$ ${data.metrics.paid_amount.toFixed(2)}`} />
-                  </div>
-                </section>
-              </div>
-            </section>
-
-            <section className="rounded-[28px] border border-zinc-800 bg-zinc-900 p-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="text-xl font-bold">Central de divulgação</h2>
-                  <p className="mt-1 text-sm text-zinc-400">
-                    Materiais prontos para acelerar sua divulgação.
-                  </p>
-                </div>
-              </div>
-
-              {data.materials.length === 0 ? (
-                <p className="mt-5 text-zinc-400">Nenhum material disponível ainda.</p>
-              ) : (
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  {data.materials.map((item) => (
-                    <div key={item.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-emerald-400">
-                        {item.category}
-                      </div>
-                      <div className="mt-2 text-lg font-bold text-white">{item.title}</div>
-
-                      {item.content ? (
-                        <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-zinc-400">
-                          {item.content}
-                        </div>
-                      ) : null}
-
-                      <div className="mt-4 flex gap-3">
-                        {item.content ? (
-                          <button
-                            onClick={() => copyMaterial(item.content)}
-                            className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-bold text-zinc-950 hover:bg-emerald-400"
-                          >
-                            Copiar
-                          </button>
-                        ) : null}
-
-                        {item.file_url ? (
-                          <a
-                            href={item.file_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-                          >
-                            Abrir material
-                          </a>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
+              {copySuccess && (
+                <div className="rounded-xl border border-emerald-900/40 bg-emerald-950/20 p-3 text-sm text-emerald-400">
+                  {copySuccess}
                 </div>
               )}
-            </section>
-          </main>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-bold text-white">
+                    Clientes indicados
+                  </h3>
+                  <p className="mt-1 text-sm text-zinc-400">
+                    Lista real dos cadastros vinculados ao seu código.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="border-b border-zinc-800 text-zinc-400">
+                    <tr>
+                      <th className="px-3 py-3">Nome</th>
+                      <th className="px-3 py-3">E-mail</th>
+                      <th className="px-3 py-3">Plano</th>
+                      <th className="px-3 py-3">Status</th>
+                      <th className="px-3 py-3">Acesso</th>
+                      <th className="px-3 py-3">Cadastro</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {indications.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-3 py-6 text-zinc-500">
+                          Nenhum indicado encontrado até o momento.
+                        </td>
+                      </tr>
+                    ) : (
+                      indications.map((item) => (
+                        <tr
+                          key={item.id}
+                          className="border-b border-zinc-800/60 text-zinc-200"
+                        >
+                          <td className="px-3 py-3">{item.name}</td>
+                          <td className="px-3 py-3 break-all">{item.email}</td>
+                          <td className="px-3 py-3 capitalize">{item.plan}</td>
+                          <td className="px-3 py-3">{item.plan_status}</td>
+                          <td className="px-3 py-3">
+                            {item.has_access ? (
+                              <span className="text-emerald-400">Ativo</span>
+                            ) : (
+                              <span className="text-zinc-400">Sem acesso</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-3">
+                            {item.created_at
+                              ? new Date(item.created_at).toLocaleString("pt-BR")
+                              : "-"}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
-}
-
-function Card({
-  title,
-  value,
-  caption,
-}: {
-  title: string;
-  value: string;
-  caption: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-xl shadow-black/10">
-      <div className="text-sm text-zinc-400">{title}</div>
-      <div className="mt-2 text-3xl font-black text-white">{value}</div>
-      <div className="mt-2 text-sm text-zinc-500">{caption}</div>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between rounded-xl bg-zinc-950 px-4 py-3">
-      <span className="text-sm text-zinc-400">{label}</span>
-      <span className="font-bold text-white">{value}</span>
-    </div>
-  );
-}
-
-function labelStatus(status: string) {
-  if (status === "pending") return "Pendente";
-  if (status === "available") return "Disponível";
-  if (status === "paid") return "Paga";
-  if (status === "canceled") return "Cancelada";
-  return status;
-}
-
-function statusClass(status: string) {
-  if (status === "pending") {
-    return "text-amber-300 bg-amber-500/10 border-amber-400/20";
-  }
-
-  if (status === "available") {
-    return "text-cyan-300 bg-cyan-500/10 border-cyan-400/20";
-  }
-
-  if (status === "paid") {
-    return "text-emerald-300 bg-emerald-500/10 border-emerald-400/20";
-  }
-
-  return "text-zinc-300 bg-zinc-500/10 border-zinc-400/20";
 }
