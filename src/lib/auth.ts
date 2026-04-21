@@ -13,7 +13,7 @@ export type AuthUser = {
   plan: string;
   plan_status: string;
   access_expires_at?: string | null;
-  has_access: boolean;
+  has_access?: boolean;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -27,6 +27,38 @@ export type AuthResponse = {
 const TOKEN_KEY = "glucks_token";
 const USER_KEY = "glucks_user";
 
+function isFutureDate(value?: string | null): boolean {
+  if (!value) return false;
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return false;
+
+  return parsed.getTime() >= Date.now();
+}
+
+export function computeHasAccess(user: AuthUser | null): boolean {
+  if (!user) return false;
+
+  if (user.is_admin === true) return true;
+  if (user.is_partner === true) return true;
+
+  if (user.is_blocked === true) return false;
+  if (user.is_active !== true) return false;
+
+  if ((user.plan_status || "").toLowerCase() !== "active") return false;
+
+  if (user.has_access === true) return true;
+
+  return isFutureDate(user.access_expires_at);
+}
+
+function normalizeUser(user: AuthUser): AuthUser {
+  return {
+    ...user,
+    has_access: computeHasAccess(user),
+  };
+}
+
 export function saveAuth(data: AuthResponse): void;
 export function saveAuth(token: string, user: AuthUser): void;
 export function saveAuth(
@@ -38,13 +70,17 @@ export function saveAuth(
       throw new Error("saveAuth requires user when called with token string");
     }
 
+    const normalized = normalizeUser(maybeUser);
+
     localStorage.setItem(TOKEN_KEY, dataOrToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(maybeUser));
+    localStorage.setItem(USER_KEY, JSON.stringify(normalized));
     return;
   }
 
+  const normalized = normalizeUser(dataOrToken.user);
+
   localStorage.setItem(TOKEN_KEY, dataOrToken.access_token);
-  localStorage.setItem(USER_KEY, JSON.stringify(dataOrToken.user));
+  localStorage.setItem(USER_KEY, JSON.stringify(normalized));
 }
 
 export function getToken(): string | null {
@@ -60,7 +96,8 @@ export function getUser(): AuthUser | null {
   if (!raw) return null;
 
   try {
-    return JSON.parse(raw) as AuthUser;
+    const parsed = JSON.parse(raw) as AuthUser;
+    return normalizeUser(parsed);
   } catch {
     return null;
   }
@@ -71,11 +108,21 @@ export function getStoredUser(): AuthUser | null {
 }
 
 export function updateStoredUser(user: AuthUser): void {
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
+  const normalized = normalizeUser(user);
+  localStorage.setItem(USER_KEY, JSON.stringify(normalized));
 }
 
-export function refreshStoredUser(user: AuthUser): void {
-  updateStoredUser(user);
+export function refreshStoredUser(user?: AuthUser | null): AuthUser | null {
+  if (user) {
+    updateStoredUser(user);
+    return normalizeUser(user);
+  }
+
+  const stored = getUser();
+  if (stored) {
+    updateStoredUser(stored);
+  }
+  return stored;
 }
 
 export function clearAuth(): void {
