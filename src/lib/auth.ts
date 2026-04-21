@@ -2,16 +2,16 @@ export type AuthUser = {
   id: number;
   name: string;
   email: string;
-  is_active: boolean;
-  is_blocked: boolean;
-  is_admin: boolean;
-  is_partner: boolean;
+  is_active?: boolean;
+  is_blocked?: boolean;
+  is_admin?: boolean;
+  is_partner?: boolean;
   partner_code?: string | null;
   partner_status?: string | null;
   referred_by_user_id?: number | null;
   referred_by_code?: string | null;
-  plan: string;
-  plan_status: string;
+  plan?: string;
+  plan_status?: string;
   access_expires_at?: string | null;
   has_access?: boolean;
   created_at?: string | null;
@@ -54,8 +54,32 @@ export function computeHasAccess(user: AuthUser | null): boolean {
 
 function normalizeUser(user: AuthUser): AuthUser {
   return {
-    ...user,
-    has_access: computeHasAccess(user),
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    is_active: user.is_active ?? false,
+    is_blocked: user.is_blocked ?? false,
+    is_admin: user.is_admin ?? false,
+    is_partner: user.is_partner ?? false,
+    partner_code: user.partner_code ?? null,
+    partner_status: user.partner_status ?? null,
+    referred_by_user_id: user.referred_by_user_id ?? null,
+    referred_by_code: user.referred_by_code ?? null,
+    plan: user.plan ?? "none",
+    plan_status: user.plan_status ?? "pending",
+    access_expires_at: user.access_expires_at ?? null,
+    has_access: computeHasAccess({
+      ...user,
+      is_active: user.is_active ?? false,
+      is_blocked: user.is_blocked ?? false,
+      is_admin: user.is_admin ?? false,
+      is_partner: user.is_partner ?? false,
+      plan: user.plan ?? "none",
+      plan_status: user.plan_status ?? "pending",
+      access_expires_at: user.access_expires_at ?? null,
+    }),
+    created_at: user.created_at ?? null,
+    updated_at: user.updated_at ?? null,
   };
 }
 
