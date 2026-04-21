@@ -9,7 +9,7 @@ export default function PartnerRoute() {
     return <Navigate to="/login" replace />;
   }
 
-  // Admin pode acessar tudo
+  // Admin pode acessar
   if (user?.is_admin === true) {
     return <Outlet />;
   }
