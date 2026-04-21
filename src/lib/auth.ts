@@ -27,13 +27,32 @@ export type AuthResponse = {
 const TOKEN_KEY = "glucks_token";
 const USER_KEY = "glucks_user";
 
-export function saveAuth(data: AuthResponse) {
-  localStorage.setItem(TOKEN_KEY, data.access_token);
-  localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+export function saveAuth(data: AuthResponse): void;
+export function saveAuth(token: string, user: AuthUser): void;
+export function saveAuth(
+  dataOrToken: AuthResponse | string,
+  maybeUser?: AuthUser
+): void {
+  if (typeof dataOrToken === "string") {
+    if (!maybeUser) {
+      throw new Error("saveAuth requires user when called with token string");
+    }
+
+    localStorage.setItem(TOKEN_KEY, dataOrToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(maybeUser));
+    return;
+  }
+
+  localStorage.setItem(TOKEN_KEY, dataOrToken.access_token);
+  localStorage.setItem(USER_KEY, JSON.stringify(dataOrToken.user));
 }
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
+}
+
+export function getStoredToken(): string | null {
+  return getToken();
 }
 
 export function getUser(): AuthUser | null {
@@ -41,17 +60,25 @@ export function getUser(): AuthUser | null {
   if (!raw) return null;
 
   try {
-    return JSON.parse(raw);
+    return JSON.parse(raw) as AuthUser;
   } catch {
     return null;
   }
 }
 
-export function updateStoredUser(user: AuthUser) {
+export function getStoredUser(): AuthUser | null {
+  return getUser();
+}
+
+export function updateStoredUser(user: AuthUser): void {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
-export function clearAuth() {
+export function refreshStoredUser(user: AuthUser): void {
+  updateStoredUser(user);
+}
+
+export function clearAuth(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
 }
