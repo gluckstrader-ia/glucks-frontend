@@ -4185,14 +4185,14 @@ const resolvedAssetType =
                   }
                   className="h-10 w-full rounded-xl bg-zinc-900 border border-zinc-700 px-3 text-white"
                 >
-                  <option value="Índices">Índices</option>
-                  <option value="Ações">Ações</option>
-                  <option value="Forex">Forex</option>
-                  <option value="Crypto">Crypto</option>
-                  <option value="B3">B3</option>
-                  <option value="Commodities">Commodities</option>
-                  <option value="Futuros BR">Futuros BR</option>
-                  <option value="Futuros US">Futuros US</option>
+                  <option value="Forex">🌍 Forex (Moedas)</option>
+                  <option value="Futuros BR">📉 Futuros Brasil (WIN/WDO)</option>
+                  <option value="Índices">📊 Índices Globais</option>
+                  <option value="Crypto">₿ Criptomoedas</option>
+                  <option value="Ações">🏛️ Ações Internacionais</option>
+                  <option value="B3">🇧🇷 Ações Brasileiras</option>
+                  <option value="Commodities">🛢️ Commodities</option>
+                  <option value="Futuros US">📈 Futuros EUA</option>
                 </select>
               </div>
 
