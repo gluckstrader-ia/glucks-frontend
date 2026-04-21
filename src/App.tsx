@@ -9,6 +9,7 @@ import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicOnlyRoute from "./routes/PublicOnlyRoute";
 import AdminRoute from "./routes/AdminRoute";
+import PartnerRoute from "./routes/PartnerRoute";
 import IndicadorPage from "./pages/IndicadorPage";
 import RoboPage from "./pages/RoboPage";
 import CursoPage from "./pages/CursoPage";
@@ -16,7 +17,6 @@ import RegisterTrialPage from "./pages/RegisterTrialPage";
 import PartnerDashboardPage from "./pages/PartnerDashboardPage";
 import AffiliateLandingPage from "./pages/AffiliateLandingPage";
 import PartnerRegisterPage from "./pages/PartnerRegisterPage";
-
 import AdminAffiliatesPage from "./pages/AdminAffiliatesPage";
 
 export default function App() {
@@ -34,10 +34,18 @@ export default function App() {
 
         <Route path="/premium" element={<PremiumPage />} />
         <Route path="/indicador" element={<IndicadorPage />} />
+        <Route path="/robo" element={<RoboPage />} />
+        <Route path="/curso" element={<CursoPage />} />
+        <Route path="/cadastro-trial" element={<RegisterTrialPage />} />
 
+        {/* SISTEMA PRINCIPAL - continua como está hoje */}
         <Route element={<ProtectedRoute />}>
           <Route path="/home-premium" element={<PremiumHomePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+        </Route>
+
+        {/* SISTEMA DE PARCEIROS - isolado */}
+        <Route element={<PartnerRoute />}>
           <Route path="/dashboard-parceiro" element={<PartnerDashboardPage />} />
         </Route>
 
@@ -47,14 +55,6 @@ export default function App() {
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
-
-        <Route path="/robo" element={<RoboPage />} />
-
-        <Route path="/curso" element={<CursoPage />} />
-
-        <Route path="/cadastro-trial" element={<RegisterTrialPage />} />
-
-
       </Routes>
     </BrowserRouter>
   );
