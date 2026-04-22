@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
-import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { BrainCircuit, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
 import { saveAuth } from "../lib/auth";
 
@@ -13,6 +13,11 @@ type RegisterResponseUser = {
   is_active: boolean;
   is_blocked: boolean;
   is_admin: boolean;
+  is_partner?: boolean;
+  partner_code?: string | null;
+  partner_status?: string | null;
+  referred_by_user_id?: number | null;
+  referred_by_code?: string | null;
   plan: string;
   plan_status: string;
   access_expires_at: string | null;
@@ -33,13 +38,22 @@ type ErrorResponse = {
 
 export default function RegisterTrialPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [partnerCode, setPartnerCode] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const ref = (searchParams.get("ref") || "").trim();
+    if (ref) {
+      setPartnerCode(ref.toUpperCase());
+    }
+  }, [searchParams]);
 
   const trialEndLabel = useMemo(() => {
     const now = new Date();
@@ -64,6 +78,7 @@ export default function RegisterTrialPage() {
     const trimmedName = name.trim();
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
+    const trimmedPartnerCode = partnerCode.trim().toUpperCase();
 
     if (!trimmedName || !trimmedEmail || !trimmedPassword) {
       setError("Preencha nome, email e senha.");
@@ -88,6 +103,7 @@ export default function RegisterTrialPage() {
           name: trimmedName,
           email: trimmedEmail,
           password: trimmedPassword,
+          referred_by_code: trimmedPartnerCode || null,
         }),
       });
 
@@ -115,7 +131,6 @@ export default function RegisterTrialPage() {
 
       const authData = data as RegisterResponse;
 
-      // Mantém compatibilidade com o que já funciona no projeto
       saveAuth(authData.access_token, authData.user);
 
       if (authData.user?.has_access) {
@@ -138,83 +153,107 @@ export default function RegisterTrialPage() {
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-center px-4 py-8 md:px-6 lg:px-10">
         <div className="grid w-full items-center gap-8 lg:grid-cols-[1.08fr_0.92fr]">
-          <section className="relative rounded-[32px] border border-emerald-500/20 bg-white/[0.04] p-6 shadow-[0_0_80px_rgba(16,185,129,0.10)] backdrop-blur-2xl md:p-8 lg:p-10">
-            <div className="absolute -left-16 top-10 h-40 w-40 rounded-full bg-emerald-500/10 blur-3xl" />
-            <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-cyan-400/10 blur-3xl" />
+          <section className="relative rounded-[32px] border border-emerald-500/20 bg-white/[0.04] p-6 shadow-[0_0_80px_rgba(16,185,129,0.08)] backdrop-blur-xl md:p-8 lg:p-10">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
 
             <div className="mb-8 flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-400/30 bg-emerald-500/10 shadow-[0_0_35px_rgba(16,185,129,0.18)]">
-                <BrainCircuit className="h-7 w-7 text-emerald-300" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-300 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+                <BrainCircuit className="h-7 w-7" />
               </div>
 
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.38em] text-emerald-300/90">
-                  Acesso experimental
+                <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-emerald-300">
+                  Teste grátis
                 </p>
-                <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white md:text-4xl">
-                  Teste grátis por 5 dias
+                <h1 className="mt-2 text-3xl font-black tracking-tight text-white md:text-4xl">
+                  Crie sua conta e libere 5 dias de acesso
                 </h1>
               </div>
             </div>
 
-            <p className="max-w-xl text-sm leading-7 text-zinc-300 md:text-base">
-              Crie sua conta e entre agora na plataforma Gluck’s Trader IA com
-              acesso liberado ao ambiente premium, análises inteligentes e
-              experiência visual profissional.
+            <p className="max-w-2xl text-sm leading-7 text-zinc-300 md:text-base">
+              Acesse a experiência premium da Gluck&apos;s Trader IA por 5 dias.
+              Explore o dashboard, acompanhe as análises e conheça a plataforma
+              antes de escolher seu plano.
             </p>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-                  Liberação
-                </p>
-                <p className="mt-2 text-lg font-semibold text-white">
-                  Imediata
-                </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300">
+                <ShieldCheck className="h-4 w-4" />
+                Trial liberado até {trialEndLabel}
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                <p className="text-xs uppercase tracking-[0.28em] text-zinc-500">
-                  Expira em
-                </p>
-                <p className="mt-2 text-lg font-semibold text-white">
-                  {trialEndLabel}
-                </p>
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-medium text-cyan-300">
+                <Zap className="h-4 w-4" />
+                Sem compromisso inicial
               </div>
             </div>
 
-            <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-              <input
-                type="text"
-                placeholder="Seu nome completo"
-                autoComplete="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="h-14 w-full rounded-2xl border border-white/10 bg-[#050a12] px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/20"
-              />
+            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-zinc-200">
+                    Nome
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      setName(event.target.value)
+                    }
+                    placeholder="Digite seu nome"
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
+                  />
+                </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <input
-                  type="email"
-                  placeholder="Seu melhor e-mail"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-14 w-full rounded-2xl border border-white/10 bg-[#050a12] px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/20"
-                />
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-zinc-200">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      setEmail(event.target.value)
+                    }
+                    placeholder="voce@email.com"
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
+                  />
+                </div>
 
-                <input
-                  type="password"
-                  placeholder="Crie uma senha"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-14 w-full rounded-2xl border border-white/10 bg-[#050a12] px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/20"
-                />
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-zinc-200">
+                    Senha
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      setPassword(event.target.value)
+                    }
+                    placeholder="Crie sua senha"
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium text-zinc-200">
+                    Código do parceiro (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={partnerCode}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      setPartnerCode(event.target.value.toUpperCase())
+                    }
+                    placeholder="Digite o código do parceiro"
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
+                  />
+                </div>
               </div>
 
               {error ? (
-                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                   {error}
                 </div>
               ) : null}
@@ -222,7 +261,7 @@ export default function RegisterTrialPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative flex h-14 w-full items-center justify-center overflow-hidden rounded-2xl bg-emerald-400 text-base font-semibold text-black transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
+                className="group relative inline-flex h-14 w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-cyan-500 px-6 text-sm font-semibold text-black shadow-[0_0_40px_rgba(16,185,129,0.25)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <span className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.55),transparent)] translate-x-[-120%] transition duration-1000 group-hover:translate-x-[120%]" />
                 <span className="relative z-10">
@@ -297,87 +336,70 @@ export default function RegisterTrialPage() {
 
                   <div className="rounded-2xl bg-black/30 p-3">
                     <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">
-                      Setup
+                      Timing
                     </p>
                     <p className="mt-2 text-lg font-semibold text-cyan-300">
-                      Compra
+                      Forte
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-black/30 p-3">
                     <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">
-                      Timing
+                      Setup
                     </p>
-                    <p className="mt-2 text-lg font-semibold text-white">5m</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 h-28 rounded-2xl border border-white/10 bg-[linear-gradient(180deg,#07111d,#03070d)] p-4">
-                  <div className="flex h-full items-end gap-2">
-                    <div className="h-[35%] w-full rounded-t-xl bg-emerald-400/70" />
-                    <div className="h-[48%] w-full rounded-t-xl bg-emerald-400/70" />
-                    <div className="h-[42%] w-full rounded-t-xl bg-emerald-400/70" />
-                    <div className="h-[66%] w-full rounded-t-xl bg-cyan-400/70" />
-                    <div className="h-[55%] w-full rounded-t-xl bg-emerald-400/70" />
-                    <div className="h-[78%] w-full rounded-t-xl bg-cyan-400/70" />
-                    <div className="h-[72%] w-full rounded-t-xl bg-emerald-400/70" />
-                    <div className="h-[88%] w-full rounded-t-xl bg-emerald-400/80" />
+                    <p className="mt-2 text-lg font-semibold text-white">
+                      Buy
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-                  <div className="mb-4 flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                    <p className="text-sm text-zinc-300">Recursos liberados</p>
-                  </div>
-
-                  <ul className="space-y-3 text-sm text-zinc-200">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                      Análise técnica e SMC
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                      Harmônicos e probabilística
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                      Timing e sinal final
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                      Ambiente premium completo
-                    </li>
-                  </ul>
+              <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                  <p className="text-sm text-zinc-300">Durante o trial</p>
                 </div>
 
-                <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-                  <div className="mb-4 flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-cyan-300" />
-                    <p className="text-sm text-zinc-300">Após o período</p>
-                  </div>
+                <ul className="space-y-3 text-sm text-zinc-200">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                    Acesso ao dashboard premium
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                    Recursos inteligentes liberados
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                    Ambiente premium completo
+                  </li>
+                </ul>
+              </div>
 
-                  <ul className="space-y-3 text-sm text-zinc-200">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-cyan-300" />
-                      Conta permanece criada
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-cyan-300" />
-                      Trial encerra automaticamente
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-cyan-300" />
-                      Acesso bloqueia sem plano ativo
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-cyan-300" />
-                      Escolha um plano para continuar
-                    </li>
-                  </ul>
+              <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-cyan-300" />
+                  <p className="text-sm text-zinc-300">Após o período</p>
                 </div>
+
+                <ul className="space-y-3 text-sm text-zinc-200">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-cyan-300" />
+                    Conta permanece criada
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-cyan-300" />
+                    Trial encerra automaticamente
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-cyan-300" />
+                    Acesso bloqueia sem plano ativo
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-cyan-300" />
+                    Escolha um plano para continuar
+                  </li>
+                </ul>
               </div>
 
               <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/8 p-5">
