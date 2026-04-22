@@ -6,6 +6,8 @@ import { Input } from "../components/ui/input";
 import { BrainCircuit, BarChart3 } from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
 import { useB3MarketData } from "../hooks/useB3MarketData";
+import QuantDashboardCard from "../components/dashboard/QuantDashboardCard";
+import { useQuantDashboard } from "../hooks/useQuantDashboard";
 
 
 type AnalysisModules = {
@@ -1072,7 +1074,7 @@ function SummaryTab({
             >
               <div
                 className={`text-sm ${
-                  direction === "VENDA" ? "text-red-400" : "text-green-400"
+                  direction === "VENDA" ? "text-red-300" : "text-green-300"
                 }`}
               >
                 Take 2
@@ -1080,7 +1082,7 @@ function SummaryTab({
 
               <div
                 className={`text-3xl font-bold mt-2 ${
-                  direction === "VENDA" ? "text-red-400" : "text-green-400"
+                  direction === "VENDA" ? "text-red-300" : "text-green-300"
                 }`}
               >
                 {formatPrice(tp2, assetType)}
@@ -1111,7 +1113,7 @@ function SummaryTab({
 
               <div
                 className={`text-3xl font-bold mt-2 ${
-                  direction === "VENDA" ? "text-red-400" : "text-green-400"
+                  direction === "VENDA" ? "text-red-300" : "text-green-300"
                 }`}
               >
                 {formatPrice(tp3, assetType)}
@@ -4026,6 +4028,19 @@ const resolvedAssetType =
 
   const tvSymbol = getTradingViewSymbol(assetCategory, resolvedAsset);
 
+  const {
+    data: quantData,
+    loading: quantLoading,
+    error: quantError,
+    refetch: refetchQuant,
+  } = useQuantDashboard({
+    asset: resolvedAsset,
+    assetType: resolvedAssetType,
+    timeframe: tf,
+    token,
+    enabled: !!token,
+  });
+
   function handleLogout() {
     clearAuth();
     navigate("/login");
@@ -4088,6 +4103,7 @@ const resolvedAssetType =
         setProgress(90);
       }
       setAnalysisData(data);
+      await refetchQuant();
 
       if (showLoader) {
         setMainTab("Resumo");
@@ -4317,32 +4333,71 @@ const resolvedAssetType =
             </div>
           )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-4 items-start">
-            <div className="rounded-3xl border border-zinc-900 bg-zinc-950/80 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white font-semibold text-lg">
-                  Gráfico do Ativo
-                </h3>
-                <div className="text-sm text-zinc-400">
-                  {assetCategory} • {resolvedAsset} •{" "}
-                  {tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
+          {quantError && (
+            <div className="rounded-2xl border border-yellow-900/40 bg-yellow-950/20 p-4 text-yellow-300">
+              {quantError}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_0px] gap-4 items-start">
+            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.9fr)_420px_340px] gap-4 items-start">
+              {/* GRÁFICO */}
+              <div className="rounded-3xl border border-zinc-900 bg-zinc-950/80 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-white font-semibold text-lg">
+                    Gráfico do Ativo
+                  </h3>
+                  <div className="text-sm text-zinc-400">
+                    {assetCategory} • {resolvedAsset} •{" "}
+                    {tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-black min-h-[640px]">
+                  <iframe
+                    title="TradingView Chart"
+                    className="w-full h-[619px]"
+                    src={`https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(
+                      tvSymbol
+                    )}&interval=${encodeURIComponent(
+                      tvInterval
+                    )}&theme=dark&style=1&timezone=America/Sao_Paulo&withdateranges=1&hide_side_toolbar=0&allow_symbol_change=1`}
+                  />
                 </div>
               </div>
 
-              <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-black min-h-[568px]">
-                <iframe
-                  title="TradingView Chart"
-                  className="w-full h-[567px]"
-                  src={`https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(
-                    tvSymbol
-                  )}&interval=${encodeURIComponent(
-                    tvInterval
-                  )}&theme=dark&style=1&timezone=America/Sao_Paulo&withdateranges=1&hide_side_toolbar=0&allow_symbol_change=1`}
+              {/* DASHBOARD QUANT */}
+              <div className="hidden xl:block">
+                <QuantDashboardCard
+                  asset={resolvedAsset}
+                  timeframe={tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
+                  data={quantData}
+                  loading={quantLoading}
+                />
+              </div>
+
+              {/* LATERAL DIREITA */}
+              <div className="hidden xl:block xl:sticky xl:top-4">
+                <SummaryTab
+                  asset={resolvedAsset}
+                  tf={tf}
+                  analysisData={analysisData}
+                  compact
+                  b3Data={b3Data}
+                  isB3Future={isB3Future}
                 />
               </div>
             </div>
 
-            <div className="xl:sticky xl:top-4">
+            {/* EM TELAS MENORES, QUANT E SUMMARY FICAM ABAIXO */}
+            <div className="grid grid-cols-1 gap-4 xl:hidden">
+              <QuantDashboardCard
+                asset={resolvedAsset}
+                timeframe={tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
+                data={quantData}
+                loading={quantLoading}
+              />
+
               <SummaryTab
                 asset={resolvedAsset}
                 tf={tf}
@@ -4351,8 +4406,8 @@ const resolvedAssetType =
                 b3Data={b3Data}
                 isB3Future={isB3Future}
               />
+              </div>
             </div>
-          </div>
 
           <div className="rounded-3xl border border-zinc-900 bg-zinc-950/80 p-4 flex flex-wrap gap-3">
             {tabs.map((tab) => (
