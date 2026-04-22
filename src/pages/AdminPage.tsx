@@ -69,6 +69,7 @@ export default function AdminPage() {
       setLoading(true);
       setPageError("");
 
+      // ROTA CORRETA: /auth/users
       const response = await fetch(`${API_URL}/auth/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -229,7 +230,7 @@ export default function AdminPage() {
     if (Number.isNaN(date.getTime())) return "-";
 
     return date.toLocaleString("pt-BR");
-    }
+  }
 
   function getAccessLabel(user: UserItem) {
     if (user.is_blocked) return "Bloqueado";
