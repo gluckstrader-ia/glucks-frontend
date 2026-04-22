@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchLiveRoomAnalysis, fetchLiveRoomVoice } from "../lib/liveRoomApi";
 import type { LiveRoomResponse } from "../lib/liveRoomApi";
 import LiveRoomChart from "../components/live-room/LiveRoomChart";
+import { useB3MarketData } from "../hooks/useB3MarketData";
 
 const ASSETS = [
   { symbol: "WIN", label: "Mini Índice", market: "Futuros BR" },
@@ -13,8 +14,26 @@ const ASSETS = [
   { symbol: "SPX", label: "S&P 500", market: "Índices" },
 ];
 
-function formatPrice(value: number | null) {
-  if (value === null || Number.isNaN(value)) return "-";
+type B3Feed = {
+  symbol?: string;
+  last_price?: number | null;
+  open_price?: number | null;
+  high_price?: number | null;
+  low_price?: number | null;
+  close_price?: number | null;
+  volume?: number | null;
+  bid?: number | null;
+  ask?: number | null;
+  last_trade_ts?: number | null;
+  source?: string;
+};
+
+function isB3Symbol(symbol: string) {
+  return ["WIN", "WDO"].includes(String(symbol).toUpperCase());
+}
+
+function formatPrice(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return "-";
   return new Intl.NumberFormat("pt-BR", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 5,
@@ -311,6 +330,114 @@ function assetCardClasses(active: boolean) {
     : "border-zinc-800 bg-zinc-950/70 hover:border-zinc-700 hover:bg-zinc-950";
 }
 
+function buildB3LiveRoomData(
+  asset: string,
+  b3Feed: B3Feed | null | undefined
+): LiveRoomResponse | null {
+  const last = Number(b3Feed?.last_price ?? 0);
+  if (!last || Number.isNaN(last)) return null;
+
+  const open = Number(b3Feed?.open_price ?? last);
+  const high = Number(b3Feed?.high_price ?? last);
+  const low = Number(b3Feed?.low_price ?? last);
+  const volume = Number(b3Feed?.volume ?? 0);
+
+  const direction =
+    last > open ? "buy" : last < open ? "sell" : "neutral";
+
+  const confidence =
+    last === open
+      ? 55
+      : Math.min(
+          78,
+          Math.max(
+            52,
+            Math.round((Math.abs(last - open) / Math.max(open, 1)) * 100000)
+          )
+        );
+
+  const updatedAt = b3Feed?.last_trade_ts
+    ? new Date(b3Feed.last_trade_ts).toISOString()
+    : new Date().toISOString();
+
+  const events = [
+    `Preço atual monitorado: ${formatPrice(last)}`,
+    `Confiança atual: ${confidence}%`,
+    `Direção atual: ${signalLabel(direction as LiveRoomResponse["signal"])}`,
+    `Volume observado: ${formatPrice(volume)}`,
+  ];
+
+  const alerts =
+    direction === "buy"
+      ? [
+          {
+            type: "strengthening",
+            priority: 1,
+            title: `${asset} sustentando força compradora`,
+            message: `Preço em ${formatPrice(last)} acima da abertura ${formatPrice(open)}.`,
+          },
+        ]
+      : direction === "sell"
+      ? [
+          {
+            type: "weakening",
+            priority: 1,
+            title: `${asset} pressionando para baixo`,
+            message: `Preço em ${formatPrice(last)} abaixo da abertura ${formatPrice(open)}.`,
+          },
+        ]
+      : [
+          {
+            type: "direction_change",
+            priority: 2,
+            title: `${asset} em equilíbrio`,
+            message: `Preço em ${formatPrice(last)} com leitura neutra no curto prazo.`,
+          },
+        ];
+
+  const payload = {
+    asset,
+    signal: direction,
+    confidence,
+    price: last,
+    entry: last,
+    stop: low || last,
+    target_1: high || last,
+    target_2: high || last,
+    updated_at: updatedAt,
+    market_regime: "Fluxo B3 em tempo real",
+    risk_reward: "1:0.00",
+    narration_text:
+      direction === "buy"
+        ? `${asset} com pressão compradora no fluxo ao vivo. Preço atual em ${formatPrice(last)}.`
+        : direction === "sell"
+        ? `${asset} com pressão vendedora no fluxo ao vivo. Preço atual em ${formatPrice(last)}.`
+        : `${asset} em leitura neutra no fluxo ao vivo. Preço atual em ${formatPrice(last)}.`,
+    alerts,
+    events,
+    scenario_memory: {
+      previous_signal: "neutral",
+      current_signal: direction,
+      evolution_label:
+        direction === "buy"
+          ? "Fluxo fortaleceu o lado comprador"
+          : direction === "sell"
+          ? "Fluxo fortaleceu o lado vendedor"
+          : "Sem deslocamento dominante",
+      confidence_delta: 0,
+    },
+    state_flags: {
+      trend_up: direction === "buy",
+      trend_down: direction === "sell",
+      lateralized: direction === "neutral",
+      above_vwap: direction === "buy",
+      exhaustion: false,
+    },
+  };
+
+  return payload as unknown as LiveRoomResponse;
+}
+
 export default function LiveRoomPage() {
   const [asset, setAsset] = useState("WIN");
   const [data, setData] = useState<LiveRoomResponse | null>(null);
@@ -327,7 +454,17 @@ export default function LiveRoomPage() {
   const audioUrlRef = useRef<string | null>(null);
   const speechJobRef = useRef(0);
 
+  const isB3Asset = useMemo(() => isB3Symbol(asset), [asset]);
+  const { data: b3Feed } = useB3MarketData(isB3Asset ? asset : "");
+
   async function loadAnalysis(selectedAsset: string, silent = false) {
+    if (isB3Symbol(selectedAsset)) {
+      if (!silent) setLoading(false);
+      if (silent) setRefreshing(false);
+      setError(null);
+      return;
+    }
+
     try {
       if (!silent) setLoading(true);
       if (silent) setRefreshing(true);
@@ -419,12 +556,33 @@ export default function LiveRoomPage() {
   }, [asset]);
 
   useEffect(() => {
+    if (isB3Asset) return;
+
     const interval = window.setInterval(() => {
       loadAnalysis(asset, true);
     }, 3000);
 
     return () => window.clearInterval(interval);
-  }, [asset]);
+  }, [asset, isB3Asset]);
+
+  useEffect(() => {
+    if (!isB3Asset) return;
+
+    const fallback = buildB3LiveRoomData(asset, b3Feed as B3Feed | null);
+    if (!fallback) {
+      setLoading(true);
+      return;
+    }
+
+    setError(null);
+    setLoading(false);
+    setRefreshing(false);
+
+    setData((current) => {
+      previousDataRef.current = current;
+      return fallback;
+    });
+  }, [asset, isB3Asset, b3Feed]);
 
   useEffect(() => {
     if (!voiceEnabled || !data) return;
@@ -457,8 +615,8 @@ export default function LiveRoomPage() {
     if (loading) return "Carregando Sala ao Vivo IA...";
     if (error) return "Erro na conexão com a Sala ao Vivo IA";
     if (refreshing) return "Atualizando leitura em tempo real...";
-    return "Conectado em tempo real";
-  }, [loading, error, refreshing]);
+    return isB3Asset ? "Conectado ao fluxo B3 em tempo real" : "Conectado em tempo real";
+  }, [loading, error, refreshing, isB3Asset]);
 
   const topAlert = data?.alerts?.[0] || null;
 
@@ -840,7 +998,7 @@ export default function LiveRoomPage() {
                     Cenário anterior
                   </div>
                   <div className="mt-2 text-lg font-bold text-white">
-                    {data?.scenario_memory.previous_signal
+                    {data?.scenario_memory?.previous_signal
                       ? signalLabel(data.scenario_memory.previous_signal)
                       : "Inicial"}
                   </div>
@@ -851,7 +1009,7 @@ export default function LiveRoomPage() {
                     Cenário atual
                   </div>
                   <div className="mt-2 text-lg font-bold text-white">
-                    {data?.scenario_memory.current_signal
+                    {data?.scenario_memory?.current_signal
                       ? signalLabel(data.scenario_memory.current_signal)
                       : "-"}
                   </div>
@@ -862,7 +1020,7 @@ export default function LiveRoomPage() {
                     Evolução
                   </div>
                   <div className="mt-2 text-base font-semibold text-sky-300">
-                    {data?.scenario_memory.evolution_label || "-"}
+                    {data?.scenario_memory?.evolution_label || "-"}
                   </div>
                 </div>
 
@@ -871,7 +1029,7 @@ export default function LiveRoomPage() {
                     Delta de confiança
                   </div>
                   <div className="mt-2 text-base font-semibold text-white">
-                    {typeof data?.scenario_memory.confidence_delta === "number"
+                    {typeof data?.scenario_memory?.confidence_delta === "number"
                       ? `${data.scenario_memory.confidence_delta > 0 ? "+" : ""}${data.scenario_memory.confidence_delta}`
                       : "-"}
                   </div>
@@ -933,33 +1091,33 @@ export default function LiveRoomPage() {
                 {[
                   {
                     label: "Tendência de alta",
-                    active: data?.state_flags.trend_up,
+                    active: data?.state_flags?.trend_up,
                     yesClass:
                       "bg-emerald-500/15 text-emerald-300 border-emerald-500/20",
                     noClass: "bg-zinc-500/15 text-zinc-300 border-zinc-500/20",
                   },
                   {
                     label: "Tendência de baixa",
-                    active: data?.state_flags.trend_down,
+                    active: data?.state_flags?.trend_down,
                     yesClass: "bg-red-500/15 text-red-300 border-red-500/20",
                     noClass: "bg-zinc-500/15 text-zinc-300 border-zinc-500/20",
                   },
                   {
                     label: "Mercado lateralizado",
-                    active: data?.state_flags.lateralized,
+                    active: data?.state_flags?.lateralized,
                     yesClass:
                       "bg-yellow-500/15 text-yellow-300 border-yellow-500/20",
                     noClass: "bg-zinc-500/15 text-zinc-300 border-zinc-500/20",
                   },
                   {
                     label: "Acima da VWAP",
-                    active: data?.state_flags.above_vwap,
+                    active: data?.state_flags?.above_vwap,
                     yesClass: "bg-cyan-500/15 text-cyan-300 border-cyan-500/20",
                     noClass: "bg-zinc-500/15 text-zinc-300 border-zinc-500/20",
                   },
                   {
                     label: "Exaustão detectada",
-                    active: data?.state_flags.exhaustion,
+                    active: data?.state_flags?.exhaustion,
                     yesClass:
                       "bg-amber-500/15 text-amber-300 border-amber-500/20",
                     noClass: "bg-zinc-500/15 text-zinc-300 border-zinc-500/20",
