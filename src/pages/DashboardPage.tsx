@@ -3950,7 +3950,7 @@ export default function DashboardPage() {
   const [progress, setProgress] = useState(0);
   const [assetCategory, setAssetCategory] =
     useState<AssetCategoryLabel>("Forex");
-  const [asset, setAsset] = useState("IBOV");
+  const [asset, setAsset] = useState("EURUSD");
   const [customAsset, setCustomAsset] = useState("");
   const [tf, setTf] = useState("5m");
   const [mainTab, setMainTab] = useState("Resumo");
