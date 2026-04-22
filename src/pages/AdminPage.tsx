@@ -1,509 +1,234 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { getStoredToken, getStoredUser, clearAuth } from "../lib/auth";
 import { useNavigate } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
-type UserItem = {
-  id: number;
-  name: string;
-  email: string;
-  is_active: boolean;
-  is_blocked: boolean;
-  is_admin: boolean;
-  is_partner?: boolean;
-  partner_code?: string | null;
-  partner_status?: string | null;
-  plan: string;
-  plan_status: string;
-  access_expires_at?: string | null;
-  has_access?: boolean;
-  created_at?: string | null;
-  updated_at?: string | null;
-};
-
-type ActionType = "activate" | "renew" | "block" | "make-admin";
-type PlanType = "mensal" | "trimestral" | "semestral";
-
 export default function AdminPage() {
   const navigate = useNavigate();
 
-  const [users, setUsers] = useState<UserItem[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pageError, setPageError] = useState("");
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [editData, setEditData] = useState<any>({});
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "blocked" | "trial" | "partners" | "admins"
-  >("all");
-
-  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
-  const [selectedPlanByUser, setSelectedPlanByUser] = useState<Record<number, PlanType>>({});
 
   useEffect(() => {
-    const token = getStoredToken();
     const user = getStoredUser();
-
-    if (!token || !user) {
-      navigate("/login", { replace: true });
+    if (!user || !user.is_admin) {
+      navigate("/home-premium");
       return;
     }
-
-    if (user.is_admin !== true) {
-      navigate("/home-premium", { replace: true });
-      return;
-    }
-
     loadUsers();
-  }, [navigate]);
+  }, []);
 
   async function loadUsers() {
     const token = getStoredToken();
 
-    if (!token) {
-      setPageError("Sessão expirada. Faça login novamente.");
-      setLoading(false);
-      return;
-    }
+    const res = await fetch(`${API_URL}/admin/users`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-    try {
-      setLoading(true);
-      setPageError("");
-
-      // ROTA CORRETA: /auth/users
-      const response = await fetch(`${API_URL}/admin/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401) {
-        clearAuth();
-        navigate("/login", { replace: true });
-        return;
-      }
-
-      if (response.status === 403) {
-        setPageError("Você não tem permissão para acessar esta página.");
-        setLoading(false);
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Erro ao carregar usuários.");
-      }
-
-      setUsers(Array.isArray(data) ? data : []);
-
-      const initialPlans: Record<number, PlanType> = {};
-      for (const user of Array.isArray(data) ? data : []) {
-        const currentPlan = (user.plan || "mensal").toLowerCase();
-        if (
-          currentPlan === "mensal" ||
-          currentPlan === "trimestral" ||
-          currentPlan === "semestral"
-        ) {
-          initialPlans[user.id] = currentPlan;
-        } else {
-          initialPlans[user.id] = "mensal";
-        }
-      }
-      setSelectedPlanByUser(initialPlans);
-    } catch (error: any) {
-      setPageError(error.message || "Erro ao carregar usuários.");
-    } finally {
-      setLoading(false);
-    }
+    const data = await res.json();
+    setUsers(data);
+    setLoading(false);
   }
 
-  async function runUserAction(
-    userId: number,
-    action: ActionType,
-    plan?: PlanType
-  ) {
+  function openEdit(user: any) {
+    setSelectedUser(user);
+    setEditData(user);
+  }
+
+  function closeEdit() {
+    setSelectedUser(null);
+  }
+
+  async function saveUser() {
     const token = getStoredToken();
 
-    if (!token) {
-      setPageError("Sessão expirada. Faça login novamente.");
-      return;
-    }
-
-    try {
-      setActionLoadingId(userId);
-
-      let url = "";
-      let body: Record<string, any> | undefined = undefined;
-
-      if (action === "activate") {
-        url = `${API_URL}/auth/activate/${userId}`;
-        body = { plan: plan || "mensal" };
-      }
-
-      if (action === "renew") {
-        url = `${API_URL}/auth/renew/${userId}`;
-        body = { plan: plan || "mensal" };
-      }
-
-      if (action === "block") {
-        url = `${API_URL}/auth/block/${userId}`;
-        body = { reason: "Ação administrativa" };
-      }
-
-      if (action === "make-admin") {
-        url = `${API_URL}/auth/make-admin/${userId}`;
-      }
-
-      const response = await fetch(url, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        ...(body ? { body: JSON.stringify(body) } : {}),
-      });
-
-      const data = await response.json();
-
-      if (response.status === 401) {
-        clearAuth();
-        navigate("/login", { replace: true });
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Erro ao executar ação.");
-      }
-
-      await loadUsers();
-    } catch (error: any) {
-      alert(error.message || "Erro ao executar ação.");
-    } finally {
-      setActionLoadingId(null);
-    }
-  }
-
-  function handleLogout() {
-    clearAuth();
-    navigate("/login", { replace: true });
-  }
-
-  const filteredUsers = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    return users.filter((user) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        user.name.toLowerCase().includes(normalizedSearch) ||
-        user.email.toLowerCase().includes(normalizedSearch);
-
-      if (!matchesSearch) return false;
-
-      if (statusFilter === "active") {
-        return user.is_active && !user.is_blocked;
-      }
-
-      if (statusFilter === "blocked") {
-        return user.is_blocked;
-      }
-
-      if (statusFilter === "trial") {
-        return (user.plan || "").toLowerCase() === "trial";
-      }
-
-      if (statusFilter === "partners") {
-        return user.is_partner === true;
-      }
-
-      if (statusFilter === "admins") {
-        return user.is_admin === true;
-      }
-
-      return true;
+    await fetch(`${API_URL}/admin/users/${selectedUser.id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        user_id: selectedUser.id,
+        ...editData,
+      }),
     });
-  }, [users, search, statusFilter]);
 
-  function formatDate(value?: string | null) {
-    if (!value) return "-";
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "-";
-
-    return date.toLocaleString("pt-BR");
+    closeEdit();
+    loadUsers();
   }
 
-  function getAccessLabel(user: UserItem) {
-    if (user.is_blocked) return "Bloqueado";
-    if (user.is_active && !user.is_blocked) return "Ativo";
-    return "Inativo";
+  async function toggleBlock(id: number) {
+    const token = getStoredToken();
+
+    await fetch(`${API_URL}/admin/users/${id}/toggle-block`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    loadUsers();
   }
 
-  function getBadgeClass(user: UserItem) {
-    if (user.is_blocked) {
-      return "bg-red-500/10 text-red-400 border border-red-500/20";
-    }
-    if (user.is_active && !user.is_blocked) {
-      return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-    }
-    return "bg-zinc-500/10 text-zinc-300 border border-zinc-500/20";
+  async function toggleActive(id: number) {
+    const token = getStoredToken();
+
+    await fetch(`${API_URL}/admin/users/${id}/toggle-active`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    loadUsers();
   }
+
+  function logout() {
+    clearAuth();
+    navigate("/login");
+  }
+
+  const filtered = users.filter(
+    (u) =>
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase())
+  );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        Carregando painel administrativo...
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        Carregando...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h1 className="text-3xl font-black">Painel Admin</h1>
-              <p className="mt-2 text-zinc-400">
-                Gerencie usuários, planos, bloqueios e permissões administrativas.
-              </p>
-            </div>
+    <div className="min-h-screen bg-black text-white p-6">
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-black">Painel Admin</h1>
+        <button
+          onClick={logout}
+          className="bg-red-600 px-4 py-2 rounded-xl"
+        >
+          Sair
+        </button>
+      </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={loadUsers}
-                className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
-              >
-                Atualizar
-              </button>
-              <button
-                onClick={handleLogout}
-                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500"
-              >
-                Sair
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* BUSCA */}
+      <input
+        type="text"
+        placeholder="Buscar usuário..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full mb-6 p-3 rounded-xl bg-zinc-900 border border-zinc-700"
+      />
 
-        {pageError ? (
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-            {pageError}
-          </div>
-        ) : null}
+      {/* TABELA */}
+      <div className="bg-zinc-900 rounded-2xl overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-zinc-800">
+            <tr>
+              <th className="p-3">Nome</th>
+              <th className="p-3">Email</th>
+              <th className="p-3">Plano</th>
+              <th className="p-3">Status</th>
+              <th className="p-3">Ações</th>
+            </tr>
+          </thead>
 
-        <div className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Total de usuários</p>
-            <p className="mt-2 text-3xl font-black">{users.length}</p>
-          </div>
+          <tbody>
+            {filtered.map((u) => (
+              <tr key={u.id} className="border-t border-zinc-800">
+                <td className="p-3">{u.name}</td>
+                <td className="p-3">{u.email}</td>
+                <td className="p-3">{u.plan}</td>
+                <td className="p-3">
+                  {u.is_blocked ? "Bloqueado" : u.is_active ? "Ativo" : "Inativo"}
+                </td>
+                <td className="p-3 flex gap-2">
+                  <button
+                    onClick={() => openEdit(u)}
+                    className="bg-blue-600 px-3 py-1 rounded-lg"
+                  >
+                    Editar
+                  </button>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Usuários ativos</p>
-            <p className="mt-2 text-3xl font-black">
-              {users.filter((u) => u.is_active && !u.is_blocked).length}
-            </p>
-          </div>
+                  <button
+                    onClick={() => toggleBlock(u.id)}
+                    className="bg-red-600 px-3 py-1 rounded-lg"
+                  >
+                    Bloquear
+                  </button>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Parceiros</p>
-            <p className="mt-2 text-3xl font-black">
-              {users.filter((u) => u.is_partner === true).length}
-            </p>
-          </div>
+                  <button
+                    onClick={() => toggleActive(u.id)}
+                    className="bg-green-600 px-3 py-1 rounded-lg"
+                  >
+                    Ativar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Admins</p>
-            <p className="mt-2 text-3xl font-black">
-              {users.filter((u) => u.is_admin === true).length}
-            </p>
-          </div>
-        </div>
+      {/* MODAL */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center">
+          <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-lg space-y-4">
+            <h2 className="text-xl font-bold">Editar Usuário</h2>
 
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5">
-          <div className="grid gap-4 md:grid-cols-[1fr_220px]">
             <input
-              type="text"
-              placeholder="Buscar por nome ou e-mail"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-12 rounded-2xl border border-zinc-700 bg-zinc-950 px-4 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-emerald-400/40"
+              value={editData.name || ""}
+              onChange={(e) =>
+                setEditData({ ...editData, name: e.target.value })
+              }
+              className="w-full p-2 rounded bg-zinc-800"
+              placeholder="Nome"
+            />
+
+            <input
+              value={editData.email || ""}
+              onChange={(e) =>
+                setEditData({ ...editData, email: e.target.value })
+              }
+              className="w-full p-2 rounded bg-zinc-800"
+              placeholder="Email"
             />
 
             <select
-              value={statusFilter}
+              value={editData.plan || "mensal"}
               onChange={(e) =>
-                setStatusFilter(
-                  e.target.value as
-                    | "all"
-                    | "active"
-                    | "blocked"
-                    | "trial"
-                    | "partners"
-                    | "admins"
-                )
+                setEditData({ ...editData, plan: e.target.value })
               }
-              className="h-12 rounded-2xl border border-zinc-700 bg-zinc-950 px-4 text-sm text-white outline-none focus:border-emerald-400/40"
+              className="w-full p-2 rounded bg-zinc-800"
             >
-              <option value="all">Todos</option>
-              <option value="active">Ativos</option>
-              <option value="blocked">Bloqueados</option>
-              <option value="trial">Trial</option>
-              <option value="partners">Parceiros</option>
-              <option value="admins">Admins</option>
+              <option value="mensal">Mensal</option>
+              <option value="trimestral">Trimestral</option>
+              <option value="semestral">Semestral</option>
             </select>
+
+            <div className="flex gap-2">
+              <button
+                onClick={saveUser}
+                className="bg-green-600 px-4 py-2 rounded-xl"
+              >
+                Salvar
+              </button>
+
+              <button
+                onClick={closeEdit}
+                className="bg-zinc-700 px-4 py-2 rounded-xl"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
-
-        <div className="overflow-x-auto rounded-3xl border border-zinc-800 bg-zinc-900">
-          <table className="min-w-[1200px] w-full text-left text-sm">
-            <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400">
-              <tr>
-                <th className="px-4 py-4">Usuário</th>
-                <th className="px-4 py-4">Plano</th>
-                <th className="px-4 py-4">Status</th>
-                <th className="px-4 py-4">Expira em</th>
-                <th className="px-4 py-4">Perfil</th>
-                <th className="px-4 py-4">Plano da ação</th>
-                <th className="px-4 py-4">Ações</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
-                    Nenhum usuário encontrado.
-                  </td>
-                </tr>
-              ) : (
-                filteredUsers.map((user) => {
-                  const currentPlan = selectedPlanByUser[user.id] || "mensal";
-                  const loadingThisUser = actionLoadingId === user.id;
-
-                  return (
-                    <tr
-                      key={user.id}
-                      className="border-b border-zinc-800/60 align-top"
-                    >
-                      <td className="px-4 py-4">
-                        <div className="font-semibold text-white">{user.name}</div>
-                        <div className="mt-1 text-zinc-400 break-all">
-                          {user.email}
-                        </div>
-                        <div className="mt-2 text-xs text-zinc-500">
-                          ID: {user.id}
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="capitalize text-white">{user.plan || "-"}</div>
-                        <div className="mt-1 text-zinc-400">
-                          {user.plan_status || "-"}
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getBadgeClass(
-                            user
-                          )}`}
-                        >
-                          {getAccessLabel(user)}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-4 text-zinc-300">
-                        {formatDate(user.access_expires_at)}
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="flex flex-col gap-2">
-                          {user.is_admin ? (
-                            <span className="inline-flex w-fit rounded-full border border-yellow-500/20 bg-yellow-500/10 px-3 py-1 text-xs font-medium text-yellow-300">
-                              Admin
-                            </span>
-                          ) : null}
-
-                          {user.is_partner ? (
-                            <span className="inline-flex w-fit rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">
-                              Parceiro
-                            </span>
-                          ) : null}
-
-                          {!user.is_admin && !user.is_partner ? (
-                            <span className="inline-flex w-fit rounded-full border border-zinc-500/20 bg-zinc-500/10 px-3 py-1 text-xs font-medium text-zinc-300">
-                              Cliente
-                            </span>
-                          ) : null}
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <select
-                          value={currentPlan}
-                          onChange={(e) =>
-                            setSelectedPlanByUser((prev) => ({
-                              ...prev,
-                              [user.id]: e.target.value as PlanType,
-                            }))
-                          }
-                          className="h-10 min-w-[150px] rounded-xl border border-zinc-700 bg-zinc-950 px-3 text-sm text-white outline-none"
-                        >
-                          <option value="mensal">Mensal</option>
-                          <option value="trimestral">Trimestral</option>
-                          <option value="semestral">Semestral</option>
-                        </select>
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            disabled={loadingThisUser}
-                            onClick={() =>
-                              runUserAction(user.id, "activate", currentPlan)
-                            }
-                            className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
-                          >
-                            Ativar
-                          </button>
-
-                          <button
-                            disabled={loadingThisUser}
-                            onClick={() =>
-                              runUserAction(user.id, "renew", currentPlan)
-                            }
-                            className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-500 disabled:opacity-50"
-                          >
-                            Renovar
-                          </button>
-
-                          <button
-                            disabled={loadingThisUser}
-                            onClick={() => runUserAction(user.id, "block")}
-                            className="rounded-xl bg-red-600 px-3 py-2 text-xs font-medium text-white hover:bg-red-500 disabled:opacity-50"
-                          >
-                            Bloquear
-                          </button>
-
-                          {!user.is_admin ? (
-                            <button
-                              disabled={loadingThisUser}
-                              onClick={() => runUserAction(user.id, "make-admin")}
-                              className="rounded-xl bg-yellow-600 px-3 py-2 text-xs font-medium text-black hover:bg-yellow-500 disabled:opacity-50"
-                            >
-                              Tornar admin
-                            </button>
-                          ) : null}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
