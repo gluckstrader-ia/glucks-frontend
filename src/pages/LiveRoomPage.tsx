@@ -3,6 +3,7 @@ import { fetchLiveRoomAnalysis, fetchLiveRoomVoice } from "../lib/liveRoomApi";
 import type { LiveRoomResponse } from "../lib/liveRoomApi";
 import LiveRoomChart from "../components/live-room/LiveRoomChart";
 import { useB3MarketData } from "../hooks/useB3MarketData";
+import { useNavigate } from "react-router-dom";
 
 const ASSETS = [
   { symbol: "WIN", label: "Mini Índice", market: "Futuros BR" },
@@ -439,6 +440,7 @@ function buildB3LiveRoomData(
 }
 
 export default function LiveRoomPage() {
+  const navigate = useNavigate();
   const [asset, setAsset] = useState("WIN");
   const [data, setData] = useState<LiveRoomResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -639,6 +641,13 @@ export default function LiveRoomPage() {
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm font-semibold text-zinc-200 transition hover:border-emerald-500/40 hover:text-white"
+              >
+                ← Voltar ao Dashboard
+              </button>
+
               <button
                 onClick={() => loadAnalysis(asset, false)}
                 className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20 hover:text-white"
