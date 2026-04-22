@@ -18,6 +18,7 @@ import AdminAffiliatesPage from "./pages/AdminAffiliatesPage";
 import PartnerRegisterPage from "./pages/PartnerRegisterPage";
 import PartnerDashboardPage from "./pages/PartnerDashboardPage";
 import PartnerRoute from "./routes/PartnerRoute";
+import LiveRoomPage from "./pages/LiveRoomPage";
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/home-premium" element={<PremiumHomePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/live-room" element={<LiveRoomPage />} />
         </Route>
 
         {/* SISTEMA DE PARCEIROS - isolado */}
