@@ -70,7 +70,7 @@ export default function AdminPage() {
       setPageError("");
 
       // ROTA CORRETA: /auth/users
-      const response = await fetch(`${API_URL}/auth/users`, {
+      const response = await fetch(`${API_URL}/admin/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
