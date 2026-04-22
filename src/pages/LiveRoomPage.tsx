@@ -79,17 +79,77 @@ function sanitizeForSpeech(text: string): string {
   return text
     .replace(/RSI/gi, "R S I")
     .replace(/VWAP/gi, "V W A P")
+    .replace(/WIN/gi, "uíni")
+    .replace(/WDO/gi, "dólar futuro")
+    .replace(/SPX/gi, "ésse pê xis")
+    .replace(/BTC/gi, "bitcoin")
+    .replace(/XAU/gi, "ouro")
     .replace(/tp/gi, "alvo ")
+    .replace(/_/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
+function numberToPtSpeech(value: number | string | null | undefined, maxDecimals = 2): string {
+  if (value == null) return "zero";
+
+  const num = Number(value);
+  if (Number.isNaN(num)) return "zero";
+
+  const fixed = num.toFixed(maxDecimals);
+  const [intPartRaw, decPartRaw] = fixed.split(".");
+
+  const intPart = String(Number(intPartRaw));
+  const decPart = decPartRaw?.replace(/0+$/, "");
+
+  if (!decPart) return intPart;
+
+  return `${intPart} vírgula ${decPart}`;
+}
+
+function priceToSpeech(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "zero";
+
+  const abs = Math.abs(value);
+
+  if (abs >= 1000) {
+    return numberToPtSpeech(value, 0);
+  }
+
+  if (abs >= 1) {
+    return numberToPtSpeech(value, 2);
+  }
+
+  return numberToPtSpeech(value, 5);
+}
+
+function percentToSpeech(value: number | string | null | undefined): string {
+  if (value == null) return "zero por cento";
+
+  const num = Number(value);
+  if (Number.isNaN(num)) return "zero por cento";
+
+  return `${numberToPtSpeech(num, 0)} por cento`;
+}
+
+function rrToSpeech(value: string | number | null | undefined): string {
+  if (value == null) return "não definido";
+
+  const text = String(value);
+
+  return text
+    .replace("1:", "um para ")
+    .replace(":", " para ")
+    .replace(".", " vírgula ");
+}
+
 function buildSpokenSummary(data: LiveRoomResponse): string {
-  const confidence = data.confidence;
-  const price = formatPrice(data.price);
-  const entry = formatPrice(data.entry);
-  const stop = formatPrice(data.stop);
-  const target = formatPrice(data.target_1);
+  const confidence = percentToSpeech(data.confidence);
+  const price = priceToSpeech(data.price);
+  const entry = priceToSpeech(data.entry);
+  const stop = priceToSpeech(data.stop);
+  const target = priceToSpeech(data.target_1);
+  const rr = rrToSpeech(data.risk_reward);
 
   const firstEvent = data.events?.[0] || "";
   const secondEvent = data.events?.[1] || "";
@@ -97,9 +157,12 @@ function buildSpokenSummary(data: LiveRoomResponse): string {
   if (data.signal === "buy") {
     return sanitizeForSpeech(
       `${data.asset}. Compra em observação. ` +
-        `Confiança em ${confidence} por cento. ` +
-        `Preço atual ${price}. ` +
-        `Entrada na região de ${entry}. Stop em ${stop}. Alvo em ${target}. ` +
+        `Confiança em ${confidence}. ` +
+        `Preço atual em ${price}. ` +
+        `Entrada na região de ${entry}. ` +
+        `Stop em ${stop}. ` +
+        `Alvo em ${target}. ` +
+        `Risco retorno ${rr}. ` +
         `${firstEvent}. ${secondEvent}.`
     );
   }
@@ -107,9 +170,12 @@ function buildSpokenSummary(data: LiveRoomResponse): string {
   if (data.signal === "sell") {
     return sanitizeForSpeech(
       `${data.asset}. Venda em observação. ` +
-        `Confiança em ${confidence} por cento. ` +
-        `Preço atual ${price}. ` +
-        `Entrada na região de ${entry}. Stop em ${stop}. Alvo em ${target}. ` +
+        `Confiança em ${confidence}. ` +
+        `Preço atual em ${price}. ` +
+        `Entrada na região de ${entry}. ` +
+        `Stop em ${stop}. ` +
+        `Alvo em ${target}. ` +
+        `Risco retorno ${rr}. ` +
         `${firstEvent}. ${secondEvent}.`
     );
   }
@@ -117,16 +183,16 @@ function buildSpokenSummary(data: LiveRoomResponse): string {
   if (data.signal === "neutral") {
     return sanitizeForSpeech(
       `${data.asset}. Mercado neutro no momento. ` +
-        `Confiança em ${confidence} por cento. ` +
-        `Preço atual ${price}. ` +
+        `Confiança em ${confidence}. ` +
+        `Preço atual em ${price}. ` +
         `${firstEvent}.`
     );
   }
 
   return sanitizeForSpeech(
     `${data.asset}. Aguardar confirmação. ` +
-      `Confiança em ${confidence} por cento. ` +
-      `Preço atual ${price}. ` +
+      `Confiança em ${confidence}. ` +
+      `Preço atual em ${price}. ` +
       `${firstEvent}.`
   );
 }
