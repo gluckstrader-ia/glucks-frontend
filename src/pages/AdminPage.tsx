@@ -16,10 +16,21 @@ import {
   Mail,
   CalendarClock,
   BadgeDollarSign,
+  Wallet,
+  Copy,
+  LayoutDashboard,
+  ArrowRightLeft,
+  BadgeCheck,
 } from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+
+// Endpoints de afiliados: mantidos isolados para fácil ajuste se necessário
+const AFFILIATES_LIST_ENDPOINT = `${API_URL}/admin/affiliates`;
+const AFFILIATE_DETAIL_ENDPOINT = (id: number) => `${API_URL}/admin/affiliates/${id}`;
+const AFFILIATE_TOGGLE_STATUS_ENDPOINT = (id: number) =>
+  `${API_URL}/admin/affiliates/${id}/toggle-status`;
 
 type UserItem = {
   id: number;
@@ -37,6 +48,34 @@ type UserItem = {
   has_access?: boolean;
   created_at?: string | null;
   updated_at?: string | null;
+};
+
+type AffiliateItem = {
+  id: number;
+  name: string;
+  email: string;
+  partner_code?: string | null;
+  partner_status?: string | null;
+  is_partner?: boolean;
+  total_indications?: number;
+  total_sales?: number;
+  total_commission_generated?: number;
+  total_commission_paid?: number;
+  total_commission_pending?: number;
+  partner_pix_key?: string | null;
+  partner_pix_type?: string | null;
+  created_at?: string | null;
+};
+
+type AffiliateDetail = AffiliateItem & {
+  indications?: Array<{
+    id: number;
+    name: string;
+    email: string;
+    created_at?: string | null;
+    plan?: string | null;
+    plan_status?: string | null;
+  }>;
 };
 
 type StatusFilter = "all" | "active" | "blocked" | "trial" | "partners" | "admins";
@@ -64,14 +103,27 @@ export default function AdminPage() {
   const navigate = useNavigate();
 
   const [users, setUsers] = useState<UserItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [affiliates, setAffiliates] = useState<AffiliateItem[]>([]);
+
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingAffiliates, setLoadingAffiliates] = useState(true);
+
   const [pageError, setPageError] = useState("");
+  const [affiliatesError, setAffiliatesError] = useState("");
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<EditFormState | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+
+  const [selectedAffiliate, setSelectedAffiliate] = useState<AffiliateDetail | null>(null);
+  const [affiliateDetailLoading, setAffiliateDetailLoading] = useState(false);
+
   const [toast, setToast] = useState<ToastState>(null);
+
+  const loading = loadingUsers || loadingAffiliates;
 
   useEffect(() => {
     const token = getStoredToken();
@@ -87,26 +139,30 @@ export default function AdminPage() {
       return;
     }
 
-    loadUsers();
+    initializePage();
   }, [navigate]);
 
   useEffect(() => {
     if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 3000);
+    const timer = setTimeout(() => setToast(null), 3200);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  async function initializePage() {
+    await Promise.all([loadUsers(), loadAffiliates()]);
+  }
 
   async function loadUsers() {
     const token = getStoredToken();
 
     if (!token) {
       setPageError("Sessão expirada. Faça login novamente.");
-      setLoading(false);
+      setLoadingUsers(false);
       return;
     }
 
     try {
-      setLoading(true);
+      setLoadingUsers(true);
       setPageError("");
 
       const response = await fetch(`${API_URL}/admin/users`, {
@@ -125,7 +181,7 @@ export default function AdminPage() {
 
       if (response.status === 403) {
         setPageError("Você não tem permissão para acessar esta página.");
-        setLoading(false);
+        setLoadingUsers(false);
         return;
       }
 
@@ -137,7 +193,58 @@ export default function AdminPage() {
     } catch (error: any) {
       setPageError(error.message || "Erro ao carregar usuários.");
     } finally {
-      setLoading(false);
+      setLoadingUsers(false);
+    }
+  }
+
+  async function loadAffiliates() {
+    const token = getStoredToken();
+
+    if (!token) {
+      setAffiliatesError("Sessão expirada.");
+      setLoadingAffiliates(false);
+      return;
+    }
+
+    try {
+      setLoadingAffiliates(true);
+      setAffiliatesError("");
+
+      const response = await fetch(AFFILIATES_LIST_ENDPOINT, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (response.status === 401) {
+        clearAuth();
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      // Não derruba a página inteira se o módulo de afiliados estiver incompleto
+      if (response.status === 404) {
+        setAffiliates([]);
+        setAffiliatesError(
+          "Módulo de afiliados ainda não disponível no backend publicado."
+        );
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          (data && data.detail) || "Erro ao carregar afiliados."
+        );
+      }
+
+      setAffiliates(Array.isArray(data) ? data : []);
+    } catch (error: any) {
+      setAffiliatesError(error.message || "Erro ao carregar afiliados.");
+      setAffiliates([]);
+    } finally {
+      setLoadingAffiliates(false);
     }
   }
 
@@ -179,6 +286,41 @@ export default function AdminPage() {
       await loadUsers();
     } catch (error: any) {
       setToast({ message: error.message || "Erro ao executar ação.", type: "error" });
+    } finally {
+      setActionLoadingId(null);
+    }
+  }
+
+  async function toggleAffiliateStatus(affiliateId: number) {
+    const token = getStoredToken();
+    if (!token) return;
+
+    try {
+      setActionLoadingId(affiliateId);
+
+      const response = await fetch(AFFILIATE_TOGGLE_STATUS_ENDPOINT(affiliateId), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          (data && data.detail) || "Erro ao alterar status do afiliado."
+        );
+      }
+
+      setToast({ message: "Status do afiliado atualizado.", type: "success" });
+      await loadAffiliates();
+
+      if (selectedAffiliate?.id === affiliateId) {
+        await openAffiliateDetail(affiliateId);
+      }
+    } catch (error: any) {
+      setToast({ message: error.message || "Erro ao alterar status.", type: "error" });
     } finally {
       setActionLoadingId(null);
     }
@@ -257,9 +399,48 @@ export default function AdminPage() {
     }
   }
 
+  async function openAffiliateDetail(affiliateId: number) {
+    const token = getStoredToken();
+    if (!token) return;
+
+    try {
+      setAffiliateDetailLoading(true);
+
+      const response = await fetch(AFFILIATE_DETAIL_ENDPOINT(affiliateId), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          (data && data.detail) || "Erro ao carregar detalhes do afiliado."
+        );
+      }
+
+      setSelectedAffiliate(data);
+    } catch (error: any) {
+      setToast({ message: error.message || "Erro ao carregar detalhes.", type: "error" });
+    } finally {
+      setAffiliateDetailLoading(false);
+    }
+  }
+
   function handleLogout() {
     clearAuth();
-    navigate("/login", { replace: true });
+    navigate("/login");
+  }
+
+  async function copyText(text?: string | null) {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setToast({ message: "Copiado com sucesso.", type: "success" });
+    } catch {
+      setToast({ message: "Não foi possível copiar.", type: "error" });
+    }
   }
 
   const filteredUsers = useMemo(() => {
@@ -297,7 +478,21 @@ export default function AdminPage() {
     });
   }, [users, search, statusFilter]);
 
-  const stats = useMemo(() => {
+  const filteredAffiliates = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return affiliates.filter((item) => {
+      if (!q) return true;
+
+      return (
+        item.name?.toLowerCase().includes(q) ||
+        item.email?.toLowerCase().includes(q) ||
+        (item.partner_code || "").toLowerCase().includes(q)
+      );
+    });
+  }, [affiliates, search]);
+
+  const userStats = useMemo(() => {
     return {
       total: users.length,
       active: users.filter((u) => u.is_active && !u.is_blocked).length,
@@ -308,11 +503,63 @@ export default function AdminPage() {
     };
   }, [users]);
 
+  const affiliateStats = useMemo(() => {
+    return {
+      total: affiliates.length,
+      active: affiliates.filter((a) => (a.partner_status || "").toLowerCase() === "active")
+        .length,
+      blocked: affiliates.filter((a) => (a.partner_status || "").toLowerCase() === "blocked")
+        .length,
+      indications: affiliates.reduce((sum, a) => sum + (a.total_indications || 0), 0),
+      generated: affiliates.reduce(
+        (sum, a) => sum + Number(a.total_commission_generated || 0),
+        0
+      ),
+      pending: affiliates.reduce(
+        (sum, a) => sum + Number(a.total_commission_pending || 0),
+        0
+      ),
+    };
+  }, [affiliates]);
+
+  const expiringSoon = useMemo(() => {
+    const now = Date.now();
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+    return users
+      .filter((u) => {
+        if (!u.access_expires_at) return false;
+        const ts = new Date(u.access_expires_at).getTime();
+        return !Number.isNaN(ts) && ts >= now && ts <= now + sevenDays;
+      })
+      .slice(0, 6);
+  }, [users]);
+
+  const recentUsers = useMemo(() => {
+    return [...users]
+      .sort((a, b) => {
+        const ta = new Date(a.created_at || 0).getTime();
+        const tb = new Date(b.created_at || 0).getTime();
+        return tb - ta;
+      })
+      .slice(0, 6);
+  }, [users]);
+
+  const topAffiliates = useMemo(() => {
+    return [...affiliates]
+      .sort(
+        (a, b) =>
+          Number(b.total_commission_generated || 0) -
+          Number(a.total_commission_generated || 0)
+      )
+      .slice(0, 6);
+  }, [affiliates]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#05070b] text-white flex items-center justify-center">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-4 text-zinc-300 shadow-2xl">
-          Carregando painel administrativo...
+          Carregando central administrativa...
         </div>
       </div>
     );
@@ -328,24 +575,24 @@ export default function AdminPage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">
                 <Sparkles className="h-3.5 w-3.5" />
-                Central Administrativa
+                Central Administrativa Completa
               </div>
               <h1 className="mt-4 text-3xl font-black tracking-tight text-white md:text-4xl">
-                Painel Admin Premium
+                Admin Empresarial Unificado
               </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-zinc-400 md:text-base">
-                Gerencie usuários, permissões, status, planos, parceiros e acessos
-                com uma visão executiva e operacional da plataforma.
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-zinc-400 md:text-base">
+                Usuários, acessos, permissões, parceiros, comissões e operação em
+                um único painel executivo.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={loadUsers}
+                onClick={initializePage}
                 className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10"
               >
                 <RefreshCcw className="h-4 w-4" />
-                Atualizar
+                Atualizar tudo
               </button>
 
               <button
@@ -380,12 +627,96 @@ export default function AdminPage() {
         ) : null}
 
         <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-          <StatCard title="Total" value={stats.total} icon={<Users className="h-5 w-5" />} />
-          <StatCard title="Ativos" value={stats.active} icon={<UserCheck className="h-5 w-5" />} />
-          <StatCard title="Bloqueados" value={stats.blocked} icon={<UserX className="h-5 w-5" />} />
-          <StatCard title="Parceiros" value={stats.partners} icon={<BadgeDollarSign className="h-5 w-5" />} />
-          <StatCard title="Admins" value={stats.admins} icon={<Crown className="h-5 w-5" />} />
-          <StatCard title="Trial" value={stats.trial} icon={<CalendarClock className="h-5 w-5" />} />
+          <StatCard title="Usuários" value={userStats.total} icon={<Users className="h-5 w-5" />} />
+          <StatCard title="Ativos" value={userStats.active} icon={<UserCheck className="h-5 w-5" />} />
+          <StatCard title="Bloqueados" value={userStats.blocked} icon={<UserX className="h-5 w-5" />} />
+          <StatCard title="Parceiros" value={userStats.partners} icon={<BadgeDollarSign className="h-5 w-5" />} />
+          <StatCard title="Admins" value={userStats.admins} icon={<Crown className="h-5 w-5" />} />
+          <StatCard title="Trial" value={userStats.trial} icon={<CalendarClock className="h-5 w-5" />} />
+        </div>
+
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MoneyCard title="Afiliados ativos" value={affiliateStats.active} icon={<BadgeCheck className="h-5 w-5" />} />
+          <MoneyCard title="Indicados" value={affiliateStats.indications} icon={<ArrowRightLeft className="h-5 w-5" />} />
+          <MoneyCard
+            title="Comissão gerada"
+            value={affiliateStats.generated}
+            icon={<Wallet className="h-5 w-5" />}
+            money
+          />
+          <MoneyCard
+            title="Comissão pendente"
+            value={affiliateStats.pending}
+            icon={<Wallet className="h-5 w-5" />}
+            money
+          />
+        </div>
+
+        <div className="mb-6 grid gap-6 xl:grid-cols-3">
+          <PanelCard
+            title="Expirações próximas"
+            subtitle="Acessos vencendo nos próximos 7 dias"
+            icon={<CalendarClock className="h-4 w-4" />}
+          >
+            {expiringSoon.length === 0 ? (
+              <p className="text-sm text-zinc-500">Nenhuma expiração próxima.</p>
+            ) : (
+              <div className="space-y-3">
+                {expiringSoon.map((user) => (
+                  <MiniUserRow
+                    key={user.id}
+                    title={user.name}
+                    subtitle={user.email}
+                    meta={formatDate(user.access_expires_at)}
+                  />
+                ))}
+              </div>
+            )}
+          </PanelCard>
+
+          <PanelCard
+            title="Usuários recentes"
+            subtitle="Últimos cadastros da plataforma"
+            icon={<LayoutDashboard className="h-4 w-4" />}
+          >
+            {recentUsers.length === 0 ? (
+              <p className="text-sm text-zinc-500">Nenhum cadastro recente.</p>
+            ) : (
+              <div className="space-y-3">
+                {recentUsers.map((user) => (
+                  <MiniUserRow
+                    key={user.id}
+                    title={user.name}
+                    subtitle={user.email}
+                    meta={formatDate(user.created_at)}
+                  />
+                ))}
+              </div>
+            )}
+          </PanelCard>
+
+          <PanelCard
+            title="Top afiliados"
+            subtitle="Maior comissão gerada"
+            icon={<BadgeDollarSign className="h-4 w-4" />}
+          >
+            {affiliatesError ? (
+              <p className="text-sm text-zinc-500">{affiliatesError}</p>
+            ) : topAffiliates.length === 0 ? (
+              <p className="text-sm text-zinc-500">Nenhum afiliado disponível.</p>
+            ) : (
+              <div className="space-y-3">
+                {topAffiliates.map((item) => (
+                  <MiniUserRow
+                    key={item.id}
+                    title={item.name}
+                    subtitle={item.partner_code || item.email}
+                    meta={`R$ ${Number(item.total_commission_generated || 0).toFixed(2)}`}
+                  />
+                ))}
+              </div>
+            )}
+          </PanelCard>
         </div>
 
         <div className="mb-6 rounded-[26px] border border-white/10 bg-white/[0.03] p-4 shadow-[0_20px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl">
@@ -394,7 +725,7 @@ export default function AdminPage() {
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
               <input
                 type="text"
-                placeholder="Buscar por nome ou e-mail"
+                placeholder="Buscar por nome, e-mail ou código"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/30"
@@ -416,131 +747,321 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] shadow-[0_20px_100px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-          <div className="overflow-x-auto">
-            <table className="min-w-[1300px] w-full text-left text-sm">
-              <thead className="border-b border-white/10 bg-black/25 text-zinc-400">
-                <tr>
-                  <th className="px-5 py-4">Usuário</th>
-                  <th className="px-5 py-4">Plano</th>
-                  <th className="px-5 py-4">Status</th>
-                  <th className="px-5 py-4">Expiração</th>
-                  <th className="px-5 py-4">Perfil</th>
-                  <th className="px-5 py-4">Criado em</th>
-                  <th className="px-5 py-4 text-right">Ações</th>
-                </tr>
-              </thead>
+        <div className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
+          <div className="space-y-6">
+            <SectionShell title="Gestão de usuários" icon={<Users className="h-4 w-4" />}>
+              <div className="overflow-x-auto">
+                <table className="min-w-[1200px] w-full text-left text-sm">
+                  <thead className="border-b border-white/10 bg-black/25 text-zinc-400">
+                    <tr>
+                      <th className="px-5 py-4">Usuário</th>
+                      <th className="px-5 py-4">Plano</th>
+                      <th className="px-5 py-4">Status</th>
+                      <th className="px-5 py-4">Expiração</th>
+                      <th className="px-5 py-4">Perfil</th>
+                      <th className="px-5 py-4">Criado em</th>
+                      <th className="px-5 py-4 text-right">Ações</th>
+                    </tr>
+                  </thead>
 
-              <tbody>
-                {filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-14 text-center text-zinc-500">
-                      Nenhum usuário encontrado.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredUsers.map((user) => {
-                    const loadingThisUser = actionLoadingId === user.id;
-
-                    return (
-                      <tr
-                        key={user.id}
-                        className="border-b border-white/5 transition hover:bg-white/[0.025]"
-                      >
-                        <td className="px-5 py-5">
-                          <div className="font-semibold text-white">{user.name}</div>
-                          <div className="mt-1 inline-flex items-center gap-2 text-zinc-400">
-                            <Mail className="h-3.5 w-3.5" />
-                            <span className="break-all">{user.email}</span>
-                          </div>
-                          <div className="mt-2 text-xs text-zinc-500">ID #{user.id}</div>
-                        </td>
-
-                        <td className="px-5 py-5">
-                          <div className="capitalize font-medium text-white">
-                            {user.plan || "-"}
-                          </div>
-                          <div className="mt-1 text-zinc-400">
-                            {user.plan_status || "-"}
-                          </div>
-                        </td>
-
-                        <td className="px-5 py-5">
-                          <StatusBadge user={user} />
-                        </td>
-
-                        <td className="px-5 py-5 text-zinc-300">
-                          {formatDate(user.access_expires_at)}
-                        </td>
-
-                        <td className="px-5 py-5">
-                          <div className="flex flex-wrap gap-2">
-                            {user.is_admin ? (
-                              <ProfileBadge label="Admin" tone="yellow" />
-                            ) : null}
-
-                            {user.is_partner ? (
-                              <ProfileBadge label="Parceiro" tone="cyan" />
-                            ) : null}
-
-                            {!user.is_admin && !user.is_partner ? (
-                              <ProfileBadge label="Cliente" tone="zinc" />
-                            ) : null}
-                          </div>
-                        </td>
-
-                        <td className="px-5 py-5 text-zinc-400">
-                          {formatDate(user.created_at)}
-                        </td>
-
-                        <td className="px-5 py-5">
-                          <div className="flex flex-wrap justify-end gap-2">
-                            <ActionButton
-                              label="Editar"
-                              icon={<UserCog className="h-4 w-4" />}
-                              onClick={() => openEditModal(user)}
-                              variant="neutral"
-                            />
-
-                            <ActionButton
-                              label={user.is_blocked ? "Desbloquear" : "Bloquear"}
-                              icon={<ShieldX className="h-4 w-4" />}
-                              onClick={() =>
-                                runPostAction(
-                                  user.id,
-                                  `/admin/users/${user.id}/toggle-block`,
-                                  user.is_blocked
-                                    ? "Usuário desbloqueado com sucesso."
-                                    : "Usuário bloqueado com sucesso."
-                                )
-                              }
-                              loading={loadingThisUser}
-                              variant="danger"
-                            />
-
-                            <ActionButton
-                              label={user.is_active ? "Desativar" : "Ativar"}
-                              icon={<ShieldCheck className="h-4 w-4" />}
-                              onClick={() =>
-                                runPostAction(
-                                  user.id,
-                                  `/admin/users/${user.id}/toggle-active`,
-                                  user.is_active
-                                    ? "Usuário desativado com sucesso."
-                                    : "Usuário ativado com sucesso."
-                                )
-                              }
-                              loading={loadingThisUser}
-                              variant="success"
-                            />
-                          </div>
+                  <tbody>
+                    {filteredUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-14 text-center text-zinc-500">
+                          Nenhum usuário encontrado.
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                    ) : (
+                      filteredUsers.map((user) => {
+                        const loadingThisUser = actionLoadingId === user.id;
+
+                        return (
+                          <tr
+                            key={user.id}
+                            className="border-b border-white/5 transition hover:bg-white/[0.025]"
+                          >
+                            <td className="px-5 py-5">
+                              <div className="font-semibold text-white">{user.name}</div>
+                              <div className="mt-1 inline-flex items-center gap-2 text-zinc-400">
+                                <Mail className="h-3.5 w-3.5" />
+                                <span className="break-all">{user.email}</span>
+                              </div>
+                              <div className="mt-2 text-xs text-zinc-500">ID #{user.id}</div>
+                            </td>
+
+                            <td className="px-5 py-5">
+                              <div className="capitalize font-medium text-white">
+                                {user.plan || "-"}
+                              </div>
+                              <div className="mt-1 text-zinc-400">
+                                {user.plan_status || "-"}
+                              </div>
+                            </td>
+
+                            <td className="px-5 py-5">
+                              <StatusBadge user={user} />
+                            </td>
+
+                            <td className="px-5 py-5 text-zinc-300">
+                              {formatDate(user.access_expires_at)}
+                            </td>
+
+                            <td className="px-5 py-5">
+                              <div className="flex flex-wrap gap-2">
+                                {user.is_admin ? (
+                                  <ProfileBadge label="Admin" tone="yellow" />
+                                ) : null}
+
+                                {user.is_partner ? (
+                                  <ProfileBadge label="Parceiro" tone="cyan" />
+                                ) : null}
+
+                                {!user.is_admin && !user.is_partner ? (
+                                  <ProfileBadge label="Cliente" tone="zinc" />
+                                ) : null}
+                              </div>
+                            </td>
+
+                            <td className="px-5 py-5 text-zinc-400">
+                              {formatDate(user.created_at)}
+                            </td>
+
+                            <td className="px-5 py-5">
+                              <div className="flex flex-wrap justify-end gap-2">
+                                <ActionButton
+                                  label="Editar"
+                                  icon={<UserCog className="h-4 w-4" />}
+                                  onClick={() => openEditModal(user)}
+                                  variant="neutral"
+                                />
+
+                                <ActionButton
+                                  label={user.is_blocked ? "Desbloquear" : "Bloquear"}
+                                  icon={<ShieldX className="h-4 w-4" />}
+                                  onClick={() =>
+                                    runPostAction(
+                                      user.id,
+                                      `/admin/users/${user.id}/toggle-block`,
+                                      user.is_blocked
+                                        ? "Usuário desbloqueado com sucesso."
+                                        : "Usuário bloqueado com sucesso."
+                                    )
+                                  }
+                                  loading={loadingThisUser}
+                                  variant="danger"
+                                />
+
+                                <ActionButton
+                                  label={user.is_active ? "Desativar" : "Ativar"}
+                                  icon={<ShieldCheck className="h-4 w-4" />}
+                                  onClick={() =>
+                                    runPostAction(
+                                      user.id,
+                                      `/admin/users/${user.id}/toggle-active`,
+                                      user.is_active
+                                        ? "Usuário desativado com sucesso."
+                                        : "Usuário ativado com sucesso."
+                                    )
+                                  }
+                                  loading={loadingThisUser}
+                                  variant="success"
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </SectionShell>
+
+            <SectionShell
+              title="Gestão de afiliados"
+              icon={<ArrowRightLeft className="h-4 w-4" />}
+            >
+              {affiliatesError ? (
+                <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-300">
+                  {affiliatesError}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-[980px] w-full text-left text-sm">
+                    <thead className="border-b border-white/10 bg-black/25 text-zinc-400">
+                      <tr>
+                        <th className="px-5 py-4">Afiliado</th>
+                        <th className="px-5 py-4">Código</th>
+                        <th className="px-5 py-4">Status</th>
+                        <th className="px-5 py-4">Indicados</th>
+                        <th className="px-5 py-4">Gerado</th>
+                        <th className="px-5 py-4 text-right">Ações</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {filteredAffiliates.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-14 text-center text-zinc-500">
+                            Nenhum afiliado encontrado.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredAffiliates.map((item) => (
+                          <tr
+                            key={item.id}
+                            className="border-b border-white/5 transition hover:bg-white/[0.025]"
+                          >
+                            <td className="px-5 py-5">
+                              <div className="font-semibold text-white">{item.name}</div>
+                              <div className="mt-1 inline-flex items-center gap-2 text-zinc-400">
+                                <Mail className="h-3.5 w-3.5" />
+                                <span className="break-all">{item.email}</span>
+                              </div>
+                            </td>
+
+                            <td className="px-5 py-5">
+                              <div className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">
+                                <span>{item.partner_code || "-"}</span>
+                                <button
+                                  onClick={() => copyText(item.partner_code)}
+                                  className="text-cyan-300 hover:text-cyan-200"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+
+                            <td className="px-5 py-5">
+                              <StatusPill status={item.partner_status || "active"} />
+                            </td>
+
+                            <td className="px-5 py-5 text-white">
+                              {item.total_indications || 0}
+                            </td>
+
+                            <td className="px-5 py-5 text-emerald-300 font-semibold">
+                              R$ {Number(item.total_commission_generated || 0).toFixed(2)}
+                            </td>
+
+                            <td className="px-5 py-5">
+                              <div className="flex flex-wrap justify-end gap-2">
+                                <ActionButton
+                                  label="Detalhes"
+                                  icon={<LayoutDashboard className="h-4 w-4" />}
+                                  onClick={() => openAffiliateDetail(item.id)}
+                                  variant="neutral"
+                                />
+
+                                <ActionButton
+                                  label={
+                                    (item.partner_status || "").toLowerCase() === "active"
+                                      ? "Bloquear"
+                                      : "Ativar"
+                                  }
+                                  icon={<ShieldCheck className="h-4 w-4" />}
+                                  onClick={() => toggleAffiliateStatus(item.id)}
+                                  loading={actionLoadingId === item.id}
+                                  variant="success"
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </SectionShell>
+          </div>
+
+          <div className="space-y-6">
+            <SectionShell
+              title="Afiliado em foco"
+              icon={<BadgeDollarSign className="h-4 w-4" />}
+            >
+              {affiliateDetailLoading ? (
+                <div className="text-zinc-400">Carregando detalhes do afiliado...</div>
+              ) : selectedAffiliate ? (
+                <div>
+                  <div className="mb-5">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
+                      <Crown className="h-3.5 w-3.5" />
+                      Afiliado em foco
+                    </div>
+                    <h2 className="mt-4 text-2xl font-black text-white">
+                      {selectedAffiliate.name}
+                    </h2>
+                    <p className="mt-1 text-sm text-zinc-400 break-all">
+                      {selectedAffiliate.email}
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <DetailBox label="Código" value={selectedAffiliate.partner_code || "-"} />
+                    <DetailBox
+                      label="Status"
+                      value={selectedAffiliate.partner_status || "active"}
+                    />
+                    <DetailBox
+                      label="PIX"
+                      value={
+                        selectedAffiliate.partner_pix_key
+                          ? `${selectedAffiliate.partner_pix_type || "chave"}: ${selectedAffiliate.partner_pix_key}`
+                          : "Não informado"
+                      }
+                    />
+                    <DetailBox
+                      label="Indicados"
+                      value={String(selectedAffiliate.total_indications || 0)}
+                    />
+                    <DetailBox
+                      label="Comissão gerada"
+                      value={`R$ ${Number(selectedAffiliate.total_commission_generated || 0).toFixed(2)}`}
+                    />
+                    <DetailBox
+                      label="Comissão paga"
+                      value={`R$ ${Number(selectedAffiliate.total_commission_paid || 0).toFixed(2)}`}
+                    />
+                    <DetailBox
+                      label="Comissão pendente"
+                      value={`R$ ${Number(selectedAffiliate.total_commission_pending || 0).toFixed(2)}`}
+                    />
+                  </div>
+
+                  <div className="mt-6">
+                    <h3 className="mb-3 text-lg font-bold text-white">Indicados recentes</h3>
+
+                    {selectedAffiliate.indications && selectedAffiliate.indications.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedAffiliate.indications.slice(0, 6).map((item) => (
+                          <div
+                            key={item.id}
+                            className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3"
+                          >
+                            <div className="font-medium text-white">{item.name}</div>
+                            <div className="mt-1 text-sm text-zinc-400 break-all">
+                              {item.email}
+                            </div>
+                            <div className="mt-2 text-xs text-zinc-500">
+                              {item.plan || "-"} • {item.plan_status || "-"} •{" "}
+                              {formatDate(item.created_at)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-zinc-500">Nenhum indicado encontrado.</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-zinc-500">
+                  Selecione um afiliado para ver os detalhes.
+                </div>
+              )}
+            </SectionShell>
           </div>
         </div>
       </div>
@@ -552,13 +1073,13 @@ export default function AdminPage() {
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">
                   <UserCog className="h-3.5 w-3.5" />
-                  Edição Premium
+                  Edição Empresarial
                 </div>
                 <h2 className="mt-4 text-2xl font-black text-white">
                   Editar usuário
                 </h2>
                 <p className="mt-1 text-sm text-zinc-400">
-                  Atualize dados cadastrais, permissões, plano e acesso.
+                  Atualize dados cadastrais, permissões, plano e vencimento.
                 </p>
               </div>
 
@@ -696,6 +1217,95 @@ function StatCard({
   );
 }
 
+function MoneyCard({
+  title,
+  value,
+  icon,
+  money,
+}: {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  money?: boolean;
+}) {
+  return (
+    <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5 shadow-[0_10px_50px_rgba(0,0,0,0.25)] backdrop-blur-xl">
+      <div className="flex items-center justify-between">
+        <div className="text-zinc-400">{title}</div>
+        <div className="text-cyan-300">{icon}</div>
+      </div>
+      <div className="mt-4 text-3xl font-black text-white">
+        {money ? `R$ ${value.toFixed(2)}` : value}
+      </div>
+    </div>
+  );
+}
+
+function PanelCard({
+  title,
+  subtitle,
+  icon,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl">
+      <div className="mb-4">
+        <div className="inline-flex items-center gap-2 text-sm font-medium text-emerald-300">
+          {icon}
+          {title}
+        </div>
+        <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function SectionShell({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] shadow-[0_20px_100px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+      <div className="border-b border-white/10 bg-black/20 px-5 py-4">
+        <div className="inline-flex items-center gap-2 text-sm font-medium text-emerald-300">
+          {icon}
+          {title}
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function MiniUserRow({
+  title,
+  subtitle,
+  meta,
+}: {
+  title: string;
+  subtitle: string;
+  meta: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3">
+      <div className="font-medium text-white">{title}</div>
+      <div className="mt-1 text-sm text-zinc-400 break-all">{subtitle}</div>
+      <div className="mt-2 text-xs text-zinc-500">{meta}</div>
+    </div>
+  );
+}
+
 function ProfileBadge({
   label,
   tone,
@@ -740,6 +1350,30 @@ function StatusBadge({ user }: { user: UserItem }) {
     <span className="inline-flex rounded-full border border-zinc-500/20 bg-zinc-500/10 px-3 py-1 text-xs font-medium text-zinc-300">
       Inativo
     </span>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const normalized = status.toLowerCase();
+
+  const styles =
+    normalized === "active"
+      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+      : "border-red-500/20 bg-red-500/10 text-red-300";
+
+  return (
+    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${styles}`}>
+      {normalized === "active" ? "Ativo" : "Bloqueado"}
+    </span>
+  );
+}
+
+function DetailBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3">
+      <div className="text-xs uppercase tracking-[0.18em] text-zinc-500">{label}</div>
+      <div className="mt-2 text-white break-all">{value}</div>
+    </div>
   );
 }
 
