@@ -643,7 +643,7 @@ export default function LiveRoomPage() {
                 onClick={() => loadAnalysis(asset, false)}
                 className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20 hover:text-white"
               >
-                Atualizar agora
+                Iniciar Sala
               </button>
 
               <button
