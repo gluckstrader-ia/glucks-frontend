@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchLiveRoomAnalysis, fetchLiveRoomVoice } from "../lib/liveRoomApi";
 import type { LiveRoomResponse } from "../lib/liveRoomApi";
 import LiveRoomChart from "../components/live-room/LiveRoomChart";
