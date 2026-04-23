@@ -14,13 +14,24 @@ export type B3MarketData = {
   source?: string;
 };
 
-export async function fetchB3MarketData(symbol: "WIN" | "WDO"): Promise<B3MarketData> {
+export async function fetchB3MarketData(
+  symbol: "WIN" | "WDO"
+): Promise<B3MarketData> {
   const response = await fetch(`${API_URL}/internal/market-data/${symbol}`, {
     credentials: "include",
   });
 
   if (!response.ok) {
-    throw new Error(`Falha ao buscar market data de ${symbol}`);
+    let detail = `Falha ao buscar market data de ${symbol}`;
+
+    try {
+      const errorJson = await response.json();
+      detail = errorJson?.detail || detail;
+    } catch {
+      // mantém a mensagem padrão
+    }
+
+    throw new Error(detail);
   }
 
   const json = await response.json();

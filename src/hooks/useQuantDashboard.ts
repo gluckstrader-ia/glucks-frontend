@@ -12,7 +12,9 @@ function normalizeSignal(score: number): QuantDashboardData["signal"] {
   return "NEUTRO";
 }
 
-function normalizeTrend(value: number): QuantDashboardData["shortTrend"] {
+function normalizeTrend(
+  value: number
+): QuantDashboardData["shortTrend"] {
   if (value >= 0.8) return "FORTE ALTISTA";
   if (value >= 0.2) return "ALTISTA";
   if (value <= -0.8) return "FORTE BAIXISTA";
@@ -20,16 +22,14 @@ function normalizeTrend(value: number): QuantDashboardData["shortTrend"] {
   return "NEUTRO";
 }
 
-function buildB3QuantFromLiveData(
-  payload: {
-    last_price?: number | null;
-    open_price?: number | null;
-    high_price?: number | null;
-    low_price?: number | null;
-    volume?: number | null;
-    last_trade_ts?: number | null;
-  }
-): QuantDashboardData {
+function buildB3QuantFromLiveData(payload: {
+  last_price?: number | null;
+  open_price?: number | null;
+  high_price?: number | null;
+  low_price?: number | null;
+  volume?: number | null;
+  last_trade_ts?: number | null;
+}): QuantDashboardData {
   const last = Number(payload.last_price ?? 0);
   const open = Number(payload.open_price ?? last);
   const high = Number(payload.high_price ?? last);
@@ -89,16 +89,25 @@ export function useQuantDashboard({
 
     const upperAsset = asset.toUpperCase();
     const isB3Future =
-      assetType === "future_br" && (upperAsset === "WIN" || upperAsset === "WDO");
+      assetType === "future_br" &&
+      (upperAsset === "WIN" || upperAsset === "WDO");
 
     try {
       setLoading(true);
       setError("");
 
       if (isB3Future) {
-        const liveData = await fetchB3MarketData(upperAsset as "WIN" | "WDO");
-        const mapped = buildB3QuantFromLiveData(liveData);
-        setData(mapped);
+        try {
+          const liveData = await fetchB3MarketData(upperAsset as "WIN" | "WDO");
+          const mapped = buildB3QuantFromLiveData(liveData);
+          setData(mapped);
+          setError("");
+        } catch (err: any) {
+          setData(null);
+          setError(
+            err?.message || `Falha ao buscar market data de ${upperAsset}`
+          );
+        }
         return;
       }
 
@@ -122,7 +131,9 @@ export function useQuantDashboard({
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload?.detail || "Erro ao carregar o Dashboard Quant.");
+        throw new Error(
+          payload?.detail || "Erro ao carregar o Dashboard Quant."
+        );
       }
 
       setData({
@@ -140,6 +151,7 @@ export function useQuantDashboard({
         updatedAt: payload.updated_at,
       });
     } catch (err: any) {
+      setData(null);
       setError(err?.message || "Erro ao carregar o Dashboard Quant.");
     } finally {
       setLoading(false);
