@@ -166,13 +166,13 @@ export default function RegisterTrialPage() {
                   Teste grátis
                 </p>
                 <h1 className="mt-2 text-3xl font-black tracking-tight text-white md:text-4xl">
-                  Crie sua conta e libere 5 dias de acesso
+                  Crie sua conta e libere 2 dias de acesso
                 </h1>
               </div>
             </div>
 
             <p className="max-w-2xl text-sm leading-7 text-zinc-300 md:text-base">
-              Acesse a experiência premium da Gluck&apos;s Trader IA por 5 dias.
+              Acesse a experiência premium da Gluck&apos;s Trader IA por 2 dias.
               Explore o dashboard, acompanhe as análises e conheça a plataforma
               antes de escolher seu plano.
             </p>
