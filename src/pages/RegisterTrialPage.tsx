@@ -57,7 +57,7 @@ export default function RegisterTrialPage() {
 
   const trialEndLabel = useMemo(() => {
     const now = new Date();
-    const end = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+    const end = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
 
     try {
       return end.toLocaleDateString("pt-BR", {
@@ -66,7 +66,7 @@ export default function RegisterTrialPage() {
         year: "numeric",
       });
     } catch {
-      return "em 5 dias";
+      return "em 2 dias";
     }
   }, []);
 
