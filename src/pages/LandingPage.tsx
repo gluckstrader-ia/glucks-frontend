@@ -437,67 +437,81 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="rounded-3xl border border-white/8 bg-white/[0.03] p-5 backdrop-blur-xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">
-            O que você vai ver
-          </p>
-          <h3 className="mt-3 text-2xl font-bold text-white">
-            Uma apresentação clara, visual e convincente da plataforma
-          </h3>
-          <p className="mt-3 text-sm leading-7 text-zinc-300 sm:text-base">
-            Essa seção ajuda o visitante a entender mais rápido o valor da solução,
-            aumenta permanência na página e fortalece a decisão de clicar no teste
-            grátis ou escolher um plano.
-          </p>
-        </div>
+      <div className="space-y-5">
+  {/* TEXTO PRINCIPAL */}
+  <div className="rounded-3xl border border-white/8 bg-white/[0.03] p-5 backdrop-blur-xl">
+    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">
+      Demonstração real da plataforma
+    </p>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4">
-            <p className="text-sm font-semibold text-emerald-300">Mais confiança</p>
-            <p className="mt-2 text-sm leading-6 text-zinc-300">
-              O vídeo gera percepção de valor mais alta e deixa a oferta mais tangível.
-            </p>
-          </div>
+    <h3 className="mt-3 text-2xl font-bold text-white">
+      Uma visão clara de como tomar decisões melhores no mercado
+    </h3>
 
-          <div className="rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-4">
-            <p className="text-sm font-semibold text-cyan-300">Mais retenção</p>
-            <p className="mt-2 text-sm leading-6 text-zinc-300">
-              Visitantes tendem a permanecer mais tempo quando há mídia forte logo após a hero.
-            </p>
-          </div>
+    <p className="mt-3 text-sm leading-7 text-zinc-300 sm:text-base">
+      Assista à demonstração e entenda como a Gluck’s Trader IA transforma análise técnica,
+      fluxo institucional e probabilidade em decisões objetivas, com entrada, stop e alvo definidos.
+    </p>
+  </div>
 
-          <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-            <p className="text-sm font-semibold text-white">Mais autoridade</p>
-            <p className="mt-2 text-sm leading-6 text-zinc-300">
-              A apresentação em vídeo posiciona a Gluck&apos;s Trader IA como produto premium.
-            </p>
-          </div>
+  {/* CARDS */}
+  <div className="grid gap-4 sm:grid-cols-2">
 
-          <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-            <p className="text-sm font-semibold text-white">Mais conversão</p>
-            <p className="mt-2 text-sm leading-6 text-zinc-300">
-              Ideal para conduzir o visitante até o botão de teste grátis ou planos pagos.
-            </p>
-          </div>
-        </div>
+    <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4">
+      <p className="text-sm font-semibold text-emerald-300">
+        Leitura profissional
+      </p>
+      <p className="mt-2 text-sm leading-6 text-zinc-300">
+        Interpretação do mercado com base em confluência técnica e comportamento institucional.
+      </p>
+    </div>
 
-        <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-          <a
-            href="/cadastro"
-            className="inline-flex items-center justify-center rounded-full bg-emerald-400 px-6 py-3 text-sm font-bold text-black transition hover:scale-[1.02] hover:bg-emerald-300 hover:shadow-[0_0_25px_rgba(52,211,153,0.45)]"
-          >
-            Testar grátis agora
-          </a>
+    <div className="rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-4">
+      <p className="text-sm font-semibold text-cyan-300">
+        Mais precisão
+      </p>
+      <p className="mt-2 text-sm leading-6 text-zinc-300">
+        Reduza decisões impulsivas e opere com mais clareza, contexto e direção.
+      </p>
+    </div>
 
-          <a
-            href="/premium"
-            className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-white transition hover:border-emerald-400/40 hover:bg-emerald-500/10"
-          >
-            Ver planos
-          </a>
-        </div>
-      </div>
+    <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+      <p className="text-sm font-semibold text-white">
+        Estrutura completa
+      </p>
+      <p className="mt-2 text-sm leading-6 text-zinc-300">
+        Receba entrada, stop, alvo e nível de confiança em uma única análise.
+      </p>
+    </div>
+
+    <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+      <p className="text-sm font-semibold text-white">
+        Decisão mais rápida
+      </p>
+      <p className="mt-2 text-sm leading-6 text-zinc-300">
+        Tudo pronto em segundos para você agir com confiança no momento certo.
+      </p>
+    </div>
+
+  </div>
+
+  {/* BOTÕES */}
+  <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+    <a
+      href="/cadastro"
+      className="inline-flex items-center justify-center rounded-full bg-emerald-400 px-6 py-3 text-sm font-bold text-black transition hover:scale-[1.02] hover:bg-emerald-300 hover:shadow-[0_0_25px_rgba(52,211,153,0.45)]"
+    >
+      Testar grátis agora
+    </a>
+
+    <a
+      href="/premium"
+      className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-white transition hover:border-emerald-400/40 hover:bg-emerald-500/10"
+    >
+      Ver planos
+    </a>
+  </div>
+</div>
     </div>
   </div>
 </section>
