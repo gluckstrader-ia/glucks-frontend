@@ -3963,9 +3963,10 @@ export default function DashboardPage() {
   const shouldUseB3Feed =
     assetCategory === "Futuros BR" && ["WIN", "WDO"].includes(selectedAsset);
 
-  const { data: b3Data, isB3Future } = useB3MarketData(
-    shouldUseB3Feed ? selectedAsset : ""
-  );
+  const {
+    data: b3Data,
+    isB3Future,
+  } = useB3MarketData(shouldUseB3Feed ? selectedAsset : "");
 
   const tradingViewIntervalMap: Record<string, string> = {
     "1m": "1",
