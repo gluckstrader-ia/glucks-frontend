@@ -4033,12 +4033,13 @@ const resolvedAssetType =
     loading: quantLoading,
     error: quantError,
     refetch: refetchQuant,
-  } = useQuantDashboard({
+  }  = useQuantDashboard({
     asset: resolvedAsset,
     assetType: resolvedAssetType,
     timeframe: tf,
     token,
     enabled: !!token,
+    b3Data,
   });
 
   function handleLogout() {

@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import type { QuantDashboardData } from "../components/dashboard/QuantDashboardCard";
-import { fetchB3MarketData } from "../lib/marketData";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+
+type B3QuantInput = {
+  last_price?: number | null;
+  open_price?: number | null;
+  high_price?: number | null;
+  low_price?: number | null;
+  volume?: number | null;
+  last_trade_ts?: number | null;
+};
 
 function normalizeSignal(score: number): QuantDashboardData["signal"] {
   if (score >= 55) return "COMPRA FORTE";
@@ -22,15 +30,10 @@ function normalizeTrend(
   return "NEUTRO";
 }
 
-function buildB3QuantFromLiveData(payload: {
-  last_price?: number | null;
-  open_price?: number | null;
-  high_price?: number | null;
-  low_price?: number | null;
-  volume?: number | null;
-  last_trade_ts?: number | null;
-}): QuantDashboardData {
+function buildB3QuantFromLiveData(payload: B3QuantInput): QuantDashboardData | null {
   const last = Number(payload.last_price ?? 0);
+  if (!last || Number.isNaN(last)) return null;
+
   const open = Number(payload.open_price ?? last);
   const high = Number(payload.high_price ?? last);
   const low = Number(payload.low_price ?? last);
@@ -47,8 +50,6 @@ function buildB3QuantFromLiveData(payload: {
   const rocApprox = open > 0 ? ((last / open) - 1) * 100 : 0;
   const atrApprox = Math.abs(high - low);
   const relativeVolatilityApprox = open > 0 ? atrApprox / open : 0;
-
-  // Mantemos simples para B3 snapshot:
   const relativeVolumeApprox = volume > 0 ? 1 : 0;
 
   return {
@@ -75,12 +76,14 @@ export function useQuantDashboard({
   timeframe,
   token,
   enabled,
+  b3Data,
 }: {
   asset: string;
   assetType: string;
   timeframe: string;
   token?: string | null;
   enabled: boolean;
+  b3Data?: B3QuantInput | null;
 }) {
   const [data, setData] = useState<QuantDashboardData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -99,25 +102,14 @@ export function useQuantDashboard({
       setError("");
 
       if (isB3Future) {
-        try {
-          const liveData = await fetchB3MarketData(upperAsset as "WIN" | "WDO");
-          const mapped = buildB3QuantFromLiveData(liveData);
+        const mapped = buildB3QuantFromLiveData(b3Data || {});
+        if (mapped) {
           setData(mapped);
           setError("");
-        } catch (err: any) {
-          const message =
-            err?.message || `Falha ao buscar market data de ${upperAsset}`;
-
-          // IMPORTANTE:
-          // não apagamos o último snapshot bom do Quant
-          // e não mexemos no SummaryTab/lateral
-          if (message.includes("Ativo sem dados em memória")) {
-            setError("");
-          } else {
-            setError(message);
-          }
+        } else {
+          // mantém último snapshot válido, sem quebrar o card
+          setError("");
         }
-
         return;
       }
 
@@ -167,7 +159,7 @@ export function useQuantDashboard({
     } finally {
       setLoading(false);
     }
-  }, [enabled, token, asset, assetType, timeframe]);
+  }, [enabled, token, asset, assetType, timeframe, b3Data]);
 
   useEffect(() => {
     fetchQuant();
