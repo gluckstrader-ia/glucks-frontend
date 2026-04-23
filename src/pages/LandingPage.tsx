@@ -10,6 +10,7 @@ import {
   LineChart,
   Lock,
   Menu,
+  Play,
   Radar,
   ShieldCheck,
   Sparkles,
@@ -226,6 +227,7 @@ function MobileMenu({
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -345,6 +347,160 @@ export default function LandingPage() {
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
       />
+
+      <section className="relative overflow-hidden border-t border-emerald-500/10 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.10),transparent_45%),linear-gradient(to_bottom,rgba(3,7,18,0.96),rgba(0,0,0,1))]">
+  <div className="absolute inset-0 pointer-events-none">
+    <div className="absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
+    <div className="absolute right-10 bottom-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+  </div>
+
+  <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
+    <div className="mx-auto max-w-3xl text-center">
+      <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">
+        <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]" />
+        Demonstração da plataforma
+      </div>
+
+      <h2 className="mt-6 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+        Veja a <span className="text-emerald-400">Gluck&apos;s Trader IA</span> em ação
+      </h2>
+
+      <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-zinc-300 sm:text-lg">
+        Assista à apresentação da plataforma e entenda como unir confluência técnica,
+        Smart Money, WEGD, probabilidade e sinal final em uma experiência visual
+        premium, rápida e objetiva.
+      </p>
+    </div>
+
+    <div className="mt-10 grid gap-6 lg:grid-cols-[1.12fr_0.88fr] lg:items-center">
+      <div className="relative">
+        <div className="absolute -inset-2 rounded-[2rem] bg-gradient-to-r from-emerald-500/20 via-cyan-500/10 to-emerald-500/20 blur-2xl" />
+
+        <div className="relative overflow-hidden rounded-[2rem] border border-emerald-500/20 bg-zinc-950/80 shadow-[0_0_60px_rgba(16,185,129,0.12)]">
+          <div className="flex items-center justify-between border-b border-white/5 px-4 py-3 sm:px-6">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-red-500/80" />
+              <span className="h-3 w-3 rounded-full bg-yellow-500/80" />
+              <span className="h-3 w-3 rounded-full bg-emerald-500/80" />
+            </div>
+            <div className="text-xs font-medium tracking-[0.24em] text-zinc-500 uppercase">
+              Gluck&apos;s Trader IA
+            </div>
+          </div>
+
+          <div className="relative aspect-video bg-black">
+            {!showVideo ? (
+              <button
+                type="button"
+                onClick={() => setShowVideo(true)}
+                className="group relative h-full w-full overflow-hidden text-left"
+              >
+                <img
+                  src="https://img.youtube.com/vi/S0hCGYcEEa8/maxresdefault.jpg"
+                  alt="Vídeo de apresentação da Gluck's Trader IA"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-black/20" />
+                <div className="absolute inset-0 bg-emerald-500/8 opacity-80 transition group-hover:opacity-100" />
+
+                <div className="absolute left-6 top-6 rounded-full border border-white/10 bg-black/45 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300 backdrop-blur-md">
+                  Vídeo oficial
+                </div>
+
+                <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full border border-emerald-400/40 bg-emerald-500/20 text-white shadow-[0_0_35px_rgba(16,185,129,0.45)] backdrop-blur-xl transition duration-300 group-hover:scale-110 group-hover:shadow-[0_0_55px_rgba(16,185,129,0.75)] sm:h-24 sm:w-24">
+                    <Play className="ml-1 h-9 w-9 fill-current sm:h-10 sm:w-10" />
+                  </div>
+
+                  <h3 className="mt-6 text-2xl font-black text-white sm:text-3xl">
+                    Assista agora
+                  </h3>
+
+                  <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-200 sm:text-base">
+                    Clique para ver como a plataforma entrega leitura de mercado,
+                    setup, confiança e direção operacional em uma interface premium.
+                  </p>
+                </div>
+              </button>
+            ) : (
+              <iframe
+                className="h-full w-full"
+                src="https://www.youtube.com/embed/S0hCGYcEEa8?autoplay=1&rel=0"
+                title="Vídeo Gluck's Trader IA"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="rounded-3xl border border-white/8 bg-white/[0.03] p-5 backdrop-blur-xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300">
+            O que você vai ver
+          </p>
+          <h3 className="mt-3 text-2xl font-bold text-white">
+            Uma apresentação clara, visual e convincente da plataforma
+          </h3>
+          <p className="mt-3 text-sm leading-7 text-zinc-300 sm:text-base">
+            Essa seção ajuda o visitante a entender mais rápido o valor da solução,
+            aumenta permanência na página e fortalece a decisão de clicar no teste
+            grátis ou escolher um plano.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4">
+            <p className="text-sm font-semibold text-emerald-300">Mais confiança</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              O vídeo gera percepção de valor mais alta e deixa a oferta mais tangível.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-4">
+            <p className="text-sm font-semibold text-cyan-300">Mais retenção</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              Visitantes tendem a permanecer mais tempo quando há mídia forte logo após a hero.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+            <p className="text-sm font-semibold text-white">Mais autoridade</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              A apresentação em vídeo posiciona a Gluck&apos;s Trader IA como produto premium.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+            <p className="text-sm font-semibold text-white">Mais conversão</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              Ideal para conduzir o visitante até o botão de teste grátis ou planos pagos.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+          <a
+            href="/cadastro"
+            className="inline-flex items-center justify-center rounded-full bg-emerald-400 px-6 py-3 text-sm font-bold text-black transition hover:scale-[1.02] hover:bg-emerald-300 hover:shadow-[0_0_25px_rgba(52,211,153,0.45)]"
+          >
+            Testar grátis agora
+          </a>
+
+          <a
+            href="/premium"
+            className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-white transition hover:border-emerald-400/40 hover:bg-emerald-500/10"
+          >
+            Ver planos
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
       <section className="relative overflow-hidden">
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-14 lg:py-24">
