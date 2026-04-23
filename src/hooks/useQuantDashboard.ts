@@ -32,7 +32,10 @@ function normalizeTrend(
 
 function buildB3QuantFromLiveData(payload: B3QuantInput): QuantDashboardData | null {
   const last = Number(payload.last_price ?? 0);
-  if (!last || Number.isNaN(last)) return null;
+
+  if (!last || Number.isNaN(last)) {
+    return null;
+  }
 
   const open = Number(payload.open_price ?? last);
   const high = Number(payload.high_price ?? last);
@@ -40,7 +43,7 @@ function buildB3QuantFromLiveData(payload: B3QuantInput): QuantDashboardData | n
   const volume = Number(payload.volume ?? 0);
 
   const delta = last - open;
-  const range = Math.max(high - low, 1);
+  const range = Math.max(Math.abs(high - low), 1);
   const pressure = last > 0 ? ((last - open) / last) * 100 : 0;
 
   const directionalStrength = Math.max(-1, Math.min(1, delta / range));
@@ -93,9 +96,9 @@ export function useQuantDashboard({
     if (!enabled || !asset || !assetType || !timeframe) return;
 
     const upperAsset = asset.toUpperCase();
-    const isB3Future =
-      assetType === "future_br" &&
-      (upperAsset === "WIN" || upperAsset === "WDO");
+
+    // Mais robusto: WIN/WDO entram no fluxo B3 independentemente do assetType
+    const isB3Future = upperAsset === "WIN" || upperAsset === "WDO";
 
     try {
       setLoading(true);
@@ -103,13 +106,15 @@ export function useQuantDashboard({
 
       if (isB3Future) {
         const mapped = buildB3QuantFromLiveData(b3Data || {});
+
         if (mapped) {
           setData(mapped);
           setError("");
         } else {
-          // mantém último snapshot válido, sem quebrar o card
+          // mantém último snapshot se existir
           setError("");
         }
+
         return;
       }
 
