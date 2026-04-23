@@ -47,6 +47,8 @@ function buildB3QuantFromLiveData(payload: {
   const rocApprox = open > 0 ? ((last / open) - 1) * 100 : 0;
   const atrApprox = Math.abs(high - low);
   const relativeVolatilityApprox = open > 0 ? atrApprox / open : 0;
+
+  // Mantemos simples para B3 snapshot:
   const relativeVolumeApprox = volume > 0 ? 1 : 0;
 
   return {
@@ -103,11 +105,19 @@ export function useQuantDashboard({
           setData(mapped);
           setError("");
         } catch (err: any) {
-          setData(null);
-          setError(
-            err?.message || `Falha ao buscar market data de ${upperAsset}`
-          );
+          const message =
+            err?.message || `Falha ao buscar market data de ${upperAsset}`;
+
+          // IMPORTANTE:
+          // não apagamos o último snapshot bom do Quant
+          // e não mexemos no SummaryTab/lateral
+          if (message.includes("Ativo sem dados em memória")) {
+            setError("");
+          } else {
+            setError(message);
+          }
         }
+
         return;
       }
 
@@ -150,6 +160,7 @@ export function useQuantDashboard({
         adx: Number(payload.adx ?? 0),
         updatedAt: payload.updated_at,
       });
+      setError("");
     } catch (err: any) {
       setData(null);
       setError(err?.message || "Erro ao carregar o Dashboard Quant.");
