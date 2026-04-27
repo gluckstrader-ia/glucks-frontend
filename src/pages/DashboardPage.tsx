@@ -4183,42 +4183,38 @@ const resolvedAssetType =
 
 
         <div className="mb-6 flex justify-center">
-  <button
-    type="button"
-    onClick={() =>
-      navigate("/live-room", {
-        state: {
-          asset: resolvedAsset,
-          timeframe: tf,
-          analysisData,
-          b3Data,
-          isB3Future,
-        },
-      })
-    }
-    className="group relative inline-flex items-center gap-3 overflow-hidden rounded-xl border border-amber-500/40 bg-[#0a0a0a] px-5 py-2.5 text-sm font-semibold text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.12)] transition-all duration-300 hover:scale-[1.03] hover:border-amber-400 hover:text-white"
-  >
-    <span className="absolute inset-0 z-0 rounded-xl opacity-0 blur-lg transition duration-500 group-hover:opacity-100">
-      <span className="absolute inset-0 animate-pulse bg-amber-400/20" />
-    </span>
+          <a
+            href="/live-room"
+            className="group relative inline-flex items-center gap-3 overflow-hidden rounded-xl border border-amber-500/40 bg-[#0a0a0a] px-5 py-2.5 text-sm font-semibold text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.12)] transition-all duration-300 hover:scale-[1.03] hover:border-amber-400 hover:text-white"
+          >
+            {/* glow */}
+            <span className="absolute inset-0 z-0 rounded-xl opacity-0 blur-lg transition duration-500 group-hover:opacity-100">
+              <span className="absolute inset-0 animate-pulse bg-amber-400/20" />
+            </span>
 
-    <span className="absolute -inset-full z-0 bg-gradient-to-r from-transparent via-amber-300/30 to-transparent opacity-0 transition duration-700 group-hover:translate-x-full group-hover:opacity-100" />
+            {/* brilho passando */}
+            <span className="absolute -inset-full z-0 bg-gradient-to-r from-transparent via-amber-300/30 to-transparent opacity-0 transition duration-700 group-hover:translate-x-full group-hover:opacity-100" />
 
-    <span className="absolute -top-1 -right-1 z-20 rounded-full bg-amber-400 px-1.5 py-[2px] text-[9px] font-bold text-black">
-      AO VIVO
-    </span>
+            {/* badge pequeno */}
+            <span className="absolute -top-1 -right-1 z-20 rounded-full bg-amber-400 px-1.5 py-[2px] text-[9px] font-bold text-black">
+              AO VIVO
+            </span>
 
-    <span className="relative z-10 font-bold tracking-wide">
-      SALA AO VIVO IA
-    </span>
+            {/* conteúdo */}
+            <span className="relative z-10 font-bold tracking-wide">
+              SALA AO VIVO IA
+            </span>
 
-    <span className="relative z-10 text-xs text-amber-300/70 group-hover:text-white hidden sm:inline">
-      tempo real
-    </span>
+            <span className="relative z-10 text-xs text-amber-300/70 group-hover:text-white hidden sm:inline">
+              tempo real
+            </span>
 
-    <span className="relative z-10 text-base">⚡</span>
-  </button>
-</div>
+            {/* ícone */}
+            <span className="relative z-10 text-base">
+              ⚡
+            </span>
+          </a>
+        </div>
 
           <div className="flex items-center gap-3 flex-wrap">
             {user && (
