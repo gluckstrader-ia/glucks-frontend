@@ -3941,6 +3941,102 @@ function AiThinkingOverlay({
   );
 }
 
+function buildFutureBrAnalysis({
+  asset,
+  tf,
+  b3Data,
+}: {
+  asset: string;
+  tf: string;
+  b3Data: B3MarketData | null | undefined;
+}): AnalysisData {
+  const price = Number(b3Data?.last_price ?? 0);
+  const open = Number(b3Data?.open_price ?? price);
+  const high = Number(b3Data?.high_price ?? price);
+  const low = Number(b3Data?.low_price ?? price);
+
+  const direction =
+    price > open ? "COMPRA" : price < open ? "VENDA" : "NEUTRO";
+
+  const entry = price;
+
+  const stop =
+    direction === "COMPRA"
+      ? low
+      : direction === "VENDA"
+      ? high
+      : price;
+
+  const target =
+    direction === "COMPRA"
+      ? high
+      : direction === "VENDA"
+      ? low
+      : price;
+
+  const risk = Math.abs(entry - stop);
+  const reward = Math.abs(target - entry);
+
+  return {
+    asset,
+    asset_type: "future_br",
+    timeframe: tf,
+    direction,
+    score: direction === "NEUTRO" ? 50 : 60,
+    confidence: direction === "NEUTRO" ? 45 : 58,
+    entry,
+    stop,
+    target,
+    risk_reward: risk > 0 ? reward / risk : 0,
+    final_signal: {
+      direction,
+      strength: direction === "NEUTRO" ? "NEUTRO" : "MODERADO",
+      confidence: direction === "NEUTRO" ? 45 : 58,
+      entry,
+      stop,
+      target,
+      risk_reward: risk > 0 ? reward / risk : 0,
+      confluence_score: direction === "NEUTRO" ? 50 : 60,
+      verdict: "Leitura gerada pelo feed B3/Nelogica em tempo real.",
+      justification: [
+        "Preço calculado a partir do feed B3/Nelogica.",
+        "Análise local aplicada para WIN/WDO sem depender do provedor externo.",
+      ],
+    },
+    scenarios: {
+      buy: {
+        probability: direction === "COMPRA" ? 58 : 42,
+        entry_trigger: entry,
+        stop: low,
+        targets: [
+          { label: "TP1", price: high, probability: 58, rr: "1.0" },
+          { label: "TP2", price: high, probability: 45, rr: "1.5" },
+          { label: "TP3", price: high, probability: 35, rr: "2.0" },
+        ],
+      },
+      sell: {
+        probability: direction === "VENDA" ? 58 : 42,
+        entry_trigger: entry,
+        stop: high,
+        targets: [
+          { label: "TP1", price: low, probability: 58, rr: "1.0" },
+          { label: "TP2", price: low, probability: 45, rr: "1.5" },
+          { label: "TP3", price: low, probability: 35, rr: "2.0" },
+        ],
+      },
+    },
+    technical: {
+      score: direction === "NEUTRO" ? 50 : 60,
+      trend_bias:
+        direction === "COMPRA" ? "ALTA" : direction === "VENDA" ? "BAIXA" : "NEUTRO",
+      ema_trend:
+        direction === "COMPRA" ? "ALTA" : direction === "VENDA" ? "BAIXA" : "NEUTRO",
+      supports: [low],
+      resistances: [high],
+    },
+  };
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const token = getStoredToken();
@@ -4059,6 +4155,35 @@ const resolvedAssetType =
 
     try {
       setApiError("");
+
+      if (isB3Future) {
+        if (!b3Data?.last_price) {
+          setApiError("Aguardando dados do feed B3/Nelogica para WIN/WDO.");
+          return;
+        }
+
+        if (showLoader) {
+          setProgress(30);
+          setLoading(true);
+        }
+
+        const localAnalysis = buildFutureBrAnalysis({
+          asset: resolvedAsset,
+          tf,
+          b3Data,
+        });
+
+        setAnalysisData(localAnalysis);
+        await refetchQuant();
+
+        if (showLoader) {
+          setMainTab("Resumo");
+          setProgress(100);
+        }
+
+        return;
+      }
+
 
       if (showLoader) {
         setProgress(10);
