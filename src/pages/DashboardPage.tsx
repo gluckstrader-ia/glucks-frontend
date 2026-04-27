@@ -862,10 +862,132 @@ type B3MarketData = {
   volume?: number | null;
   bid?: number | null;
   ask?: number | null;
-  last_trade_ts?: number | null;
+  last_trade_ts?: number | string | null;
   source?: string;
 };
 
+function buildFutureBrAnalysis({
+  asset,
+  tf,
+  b3Data,
+}: {
+  asset: string;
+  tf: string;
+  b3Data: B3MarketData;
+}): AnalysisData {
+  const price = Number(b3Data.last_price ?? 0);
+  const open = Number(b3Data.open_price ?? b3Data.close_price ?? price);
+  const high = Number(b3Data.high_price ?? Math.max(open, price));
+  const low = Number(b3Data.low_price ?? Math.min(open, price));
+  //const close = Number(b3Data.close_price ?? price);
+
+  const range = Math.max(Math.abs(high - low), 1);
+  const delta = price - open;
+
+  const direction =
+    delta > 0 ? "COMPRA" : delta < 0 ? "VENDA" : "NEUTRO";
+
+  const entry = price;
+  const stop =
+    direction === "COMPRA"
+      ? low
+      : direction === "VENDA"
+      ? high
+      : price;
+
+  const target =
+    direction === "COMPRA"
+      ? high
+      : direction === "VENDA"
+      ? low
+      : price;
+
+  const risk = Math.abs(entry - stop);
+  const reward = Math.abs(target - entry);
+  const rr = risk > 0 ? reward / risk : 0;
+
+  const directionalStrength = Math.min(1, Math.abs(delta) / range);
+  const confidence =
+    direction === "NEUTRO" ? 50 : Math.round(52 + directionalStrength * 32);
+  const score =
+    direction === "COMPRA"
+      ? Math.round(50 + directionalStrength * 40)
+      : direction === "VENDA"
+      ? Math.round(50 - directionalStrength * 40)
+      : 50;
+
+  const trendLabel =
+    direction === "COMPRA" ? "ALTA" : direction === "VENDA" ? "BAIXA" : "NEUTRO";
+
+  return {
+    asset,
+    asset_type: "future_br",
+    timeframe: tf,
+    direction,
+    score,
+    confidence,
+    entry,
+    stop,
+    target,
+    risk_reward: rr,
+    technical: {
+      score,
+      buy_signals: direction === "COMPRA" ? 2 : 0,
+      sell_signals: direction === "VENDA" ? 2 : 0,
+      neutral_signals: direction === "NEUTRO" ? 2 : 0,
+      trend_bias: trendLabel,
+      ema_trend: trendLabel,
+      supports: [low],
+      resistances: [high],
+    },
+    scenarios: {
+      buy: {
+        probability: direction === "COMPRA" ? confidence : 42,
+        entry_trigger: entry,
+        entry_reason: "Leitura local pelo feed B3/Nelogica em tempo real.",
+        stop: low,
+        targets: [
+          { label: "TP1", price: high, probability: confidence, rr: "1.0" },
+          { label: "TP2", price: high, probability: Math.max(confidence - 10, 35), rr: "1.5" },
+          { label: "TP3", price: high, probability: Math.max(confidence - 20, 25), rr: "2.0" },
+        ],
+      },
+      sell: {
+        probability: direction === "VENDA" ? confidence : 42,
+        entry_trigger: entry,
+        entry_reason: "Leitura local pelo feed B3/Nelogica em tempo real.",
+        stop: high,
+        targets: [
+          { label: "TP1", price: low, probability: confidence, rr: "1.0" },
+          { label: "TP2", price: low, probability: Math.max(confidence - 10, 35), rr: "1.5" },
+          { label: "TP3", price: low, probability: Math.max(confidence - 20, 25), rr: "2.0" },
+        ],
+      },
+    },
+    final_signal: {
+      direction,
+      strength: direction === "NEUTRO" ? "NEUTRO" : "MODERADO",
+      confidence,
+      entry,
+      stop,
+      target,
+      risk_reward: rr,
+      confluence_score: score,
+      verdict: "Leitura gerada pelo feed B3/Nelogica em tempo real.",
+      justification: [
+        "Preço, máxima, mínima e abertura calculados a partir do feed B3/Nelogica.",
+        "Futuros BR usam análise local para não depender do provedor externo do endpoint /analyze.",
+      ],
+    },
+    timing: {
+      market_name: "B3 Futuros",
+      timezone: "America/Sao_Paulo",
+      status: "ATIVO",
+      best_window_label: "Pregão B3",
+      notes: "Leitura em tempo real conforme disponibilidade do feed local.",
+    },
+  };
+}
 
 function SummaryTab({
   asset,
@@ -905,7 +1027,7 @@ function SummaryTab({
 
   const summary = (analysisData as any)?.summary ?? {};
 
-  const signalLabel = analysisData?.final_signal?.direction ?? "—";
+  const signalLabel = analysisData?.final_signal?.direction ?? direction ?? "—";
 
   const confluence =
     summary.confluence ??
@@ -4003,8 +4125,8 @@ export default function DashboardPage() {
 
   const resolvedAsset = selectedAsset;
 
-const resolvedAssetType =
-  selectedAssetConfig?.apiType ??
+  const resolvedAssetType =
+    selectedAssetConfig?.apiType ??
   (assetCategory === "Índices"
     ? "index"
     : assetCategory === "Ações"
@@ -4028,9 +4150,9 @@ const resolvedAssetType =
 
   const tvSymbol = getTradingViewSymbol(assetCategory, resolvedAsset);
 
-  const isB3Future =
-  resolvedAssetType === "future_br" &&
-  ["WIN", "WDO"].includes(String(resolvedAsset).toUpperCase());
+    const isB3Future =
+    resolvedAssetType === "future_br" &&
+    ["WIN", "WDO"].includes(String(resolvedAsset).toUpperCase());
 
   const {
     data: quantData,
@@ -4042,9 +4164,22 @@ const resolvedAssetType =
     assetType: resolvedAssetType,
     timeframe: tf,
     token,
-    enabled: !!token && (!isB3Future || !!b3Data?.last_price),
+    enabled: !!token,
     b3Data,
   });
+
+  useEffect(() => {
+    if (!isB3Future || !b3Data?.last_price) return;
+
+    setApiError("");
+    setAnalysisData(
+      buildFutureBrAnalysis({
+        asset: resolvedAsset,
+        tf,
+        b3Data,
+      })
+    );
+  }, [isB3Future, b3Data, resolvedAsset, tf]);
   
   function handleLogout() {
     clearAuth();
@@ -4059,6 +4194,34 @@ const resolvedAssetType =
 
     try {
       setApiError("");
+
+      if (isB3Future) {
+        if (showLoader) {
+          setProgress(35);
+          setLoading(true);
+        }
+
+        if (b3Data?.last_price) {
+          setAnalysisData(
+            buildFutureBrAnalysis({
+              asset: resolvedAsset,
+              tf,
+              b3Data,
+            })
+          );
+          await refetchQuant();
+
+          if (showLoader) {
+            setMainTab("Resumo");
+            setProgress(100);
+          }
+        } else {
+          await refetchQuant();
+          setApiError("Aguardando o primeiro tick do feed B3/Nelogica para WIN/WDO. Confira se o collector/bridge está rodando.");
+        }
+
+        return;
+      }
 
       if (showLoader) {
         setProgress(10);
@@ -4338,7 +4501,7 @@ const resolvedAssetType =
             </div>
           )}
 
-          {quantError && (
+          {!isB3Future && quantError && (
             <div className="rounded-2xl border border-yellow-900/40 bg-yellow-950/20 p-4 text-yellow-300">
               {quantError}
             </div>
