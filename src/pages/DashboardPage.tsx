@@ -4042,7 +4042,7 @@ const resolvedAssetType =
     assetType: resolvedAssetType,
     timeframe: tf,
     token,
-    enabled: !!token && (!isB3Future || !!b3Data?.last_price),
+    enabled: !!token,
     b3Data,
   });
   
