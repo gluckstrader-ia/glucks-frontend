@@ -4046,6 +4046,11 @@ const resolvedAssetType =
     b3Data,
   });
   
+  console.log("[B3 DATA]", b3Data);
+  console.log("[QUANT DATA]", quantData);
+  console.log("[QUANT LOADING]", quantLoading);
+  console.log("[QUANT ERROR]", quantError);
+
   function handleLogout() {
     clearAuth();
     navigate("/login");
