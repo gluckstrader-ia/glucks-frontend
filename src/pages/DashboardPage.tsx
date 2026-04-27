@@ -4044,6 +4044,7 @@ const resolvedAssetType =
     token,
     enabled: !!token,
     b3Data,
+    analysisData,
   });
   
   console.log("[B3 DATA]", b3Data);

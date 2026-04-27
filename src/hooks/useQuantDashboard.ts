@@ -50,9 +50,7 @@ function normalizeDate(value?: number | string | null): string {
   }
 
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return new Date().toISOString();
-  }
+  if (Number.isNaN(parsed.getTime())) return new Date().toISOString();
 
   return parsed.toISOString();
 }
@@ -66,9 +64,7 @@ function buildB3Quant(data: B3Data): QuantDashboardData | null {
     Number(data.low_price) ||
     0;
 
-  if (!price || Number.isNaN(price)) {
-    return null;
-  }
+  if (!price || Number.isNaN(price)) return null;
 
   const open = Number(data.open_price ?? price);
   const high = Number(data.high_price ?? price);
@@ -82,47 +78,92 @@ function buildB3Quant(data: B3Data): QuantDashboardData | null {
   const delta = price - open;
   const body = close - open;
 
-  const directional = Math.max(-1, Math.min(1, delta / range));
-  const bodyForce = Math.max(-1, Math.min(1, body / range));
+  const directional = clamp(delta / range, -1, 1);
+  const bodyForce = clamp(body / range, -1, 1);
 
   let bidAskPressure = 0;
 
   if (bid > 0 && ask > 0 && ask >= bid) {
     const spread = Math.max(ask - bid, 1);
-    bidAskPressure = Math.max(
-      -0.15,
-      Math.min(0.15, (price - bid) / spread - 0.5)
-    );
+    bidAskPressure = clamp((price - bid) / spread - 0.5, -0.15, 0.15);
   }
 
-  const rawScore =
-    directional * 70 +
-    bodyForce * 20 +
-    bidAskPressure * 100;
-
+  const rawScore = directional * 70 + bodyForce * 20 + bidAskPressure * 100;
   const score = clamp(rawScore, -100, 100);
 
   return {
-    score,
+    score: Number(score.toFixed(2)),
     signal: getSignal(score),
-
-    shortTrend:
-      directional >= 0.8 ? "FORTE ALTISTA" :
-      directional >= 0.2 ? "ALTISTA" :
-      directional <= -0.8 ? "FORTE BAIXISTA" :
-      directional <= -0.2 ? "BAIXISTA" :
-      "NEUTRO",
-
+    shortTrend: getTrend(directional),
     midTrend: getTrend(directional * 0.8),
-
-    roc: open > 0 ? ((price / open) - 1) * 100 : 0,
-    rsi: Math.max(0, Math.min(100, 50 + directional * 35)),
-    pressure: price > 0 ? ((price - open) / price) * 100 : 0,
-    atr: Math.abs(high - low),
-    relativeVolatility: price > 0 ? Math.abs(high - low) / price : 0,
-    relativeVolume: volume > 0 ? volume / 1000 : 0,
-    adx: Math.abs(directional) * 50,
+    roc: Number((open > 0 ? ((price / open) - 1) * 100 : 0).toFixed(3)),
+    rsi: Number(clamp(50 + directional * 35, 0, 100).toFixed(2)),
+    pressure: Number((price > 0 ? ((price - open) / price) * 100 : 0).toFixed(3)),
+    atr: Number(Math.abs(high - low).toFixed(6)),
+    relativeVolatility: Number(
+      (price > 0 ? Math.abs(high - low) / price : 0).toFixed(4)
+    ),
+    relativeVolume: Number((volume > 0 ? volume / 1000 : 0).toFixed(2)),
+    adx: Number(clamp(Math.abs(directional) * 50, 0, 50).toFixed(2)),
     updatedAt: normalizeDate(data.last_trade_ts),
+  };
+}
+
+function buildQuantFromAnalysisData(analysisData: any): QuantDashboardData | null {
+  if (!analysisData) return null;
+
+  const finalSignal = analysisData?.final_signal ?? {};
+  const technical = analysisData?.technical ?? {};
+  const probabilistic = analysisData?.probabilistic ?? {};
+  const historical = probabilistic?.historical ?? {};
+
+  const confidence = Number(
+    finalSignal?.confidence ??
+      analysisData?.confidence ??
+      technical?.score ??
+      analysisData?.score ??
+      0
+  );
+
+  const direction = String(
+    finalSignal?.direction ?? analysisData?.direction ?? "NEUTRO"
+  ).toUpperCase();
+
+  const signedScore =
+    direction === "COMPRA"
+      ? confidence
+      : direction === "VENDA"
+      ? -confidence
+      : 0;
+
+  const score = clamp(signedScore, -100, 100);
+
+  const trendRaw = String(
+    technical?.trend_bias ??
+      analysisData?.summary?.trend_label ??
+      direction
+  ).toUpperCase();
+
+  const trendValue =
+    trendRaw.includes("ALTA") || trendRaw.includes("COMPRA")
+      ? 0.45
+      : trendRaw.includes("BAIXA") || trendRaw.includes("VENDA")
+      ? -0.45
+      : 0;
+
+  return {
+    score: Number(score.toFixed(2)),
+    signal: getSignal(score),
+    shortTrend: getTrend(trendValue),
+    midTrend: getTrend(trendValue * 0.8),
+    roc: Number(historical?.return_pct ?? 0),
+    rsi: Number(technical?.rsi ?? 50),
+    pressure: Number(confidence ?? 0),
+    atr: Number(analysisData?.atr ?? 0),
+    relativeVolatility: Number(historical?.volatility_pct ?? 0),
+    relativeVolume: Number(analysisData?.volume_relative ?? 0),
+    adx: Number(analysisData?.adx ?? confidence ?? 0),
+    updatedAt: new Date().toISOString(),
   };
 }
 
@@ -133,6 +174,7 @@ export function useQuantDashboard({
   token,
   enabled,
   b3Data,
+  analysisData,
 }: {
   asset: string;
   assetType: string;
@@ -140,6 +182,7 @@ export function useQuantDashboard({
   token?: string | null;
   enabled: boolean;
   b3Data?: B3Data | null;
+  analysisData?: any | null;
 }) {
   const [data, setData] = useState<QuantDashboardData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -175,6 +218,15 @@ export function useQuantDashboard({
     try {
       setLoading(true);
       setError("");
+
+      const fromAnalysis = buildQuantFromAnalysisData(analysisData);
+
+      if (fromAnalysis) {
+        setData(fromAnalysis);
+        setError("");
+        setLoading(false);
+        return;
+      }
 
       if (isB3Future) {
         applyB3Quant();
@@ -238,6 +290,7 @@ export function useQuantDashboard({
     token,
     isB3Future,
     applyB3Quant,
+    analysisData,
   ]);
 
   useEffect(() => {
@@ -246,10 +299,20 @@ export function useQuantDashboard({
 
   useEffect(() => {
     if (!enabled || !isB3Future) return;
+
+    const fromAnalysis = buildQuantFromAnalysisData(analysisData);
+
+    if (fromAnalysis) {
+      setData(fromAnalysis);
+      setError("");
+      setLoading(false);
+      return;
+    }
+
     if (!b3Data) return;
 
     applyB3Quant();
-  }, [enabled, isB3Future, b3Data, applyB3Quant]);
+  }, [enabled, isB3Future, b3Data, analysisData, applyB3Quant]);
 
   return {
     data,
