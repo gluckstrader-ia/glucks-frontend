@@ -58,15 +58,21 @@ function normalizeDate(value?: number | string | null): string {
 }
 
 function buildB3Quant(data: B3Data): QuantDashboardData | null {
-  const price = Number(data.last_price ?? 0);
+  const price =
+    Number(data.last_price) ||
+    Number(data.close_price) ||
+    Number(data.open_price) ||
+    Number(data.high_price) ||
+    Number(data.low_price) ||
+    0;
 
   if (!price || Number.isNaN(price)) {
     return null;
   }
 
-  const open = Number(data.open_price ?? data.close_price ?? price);
-  const high = Number(data.high_price ?? Math.max(open, price));
-  const low = Number(data.low_price ?? Math.min(open, price));
+  const open = Number(data.open_price ?? price);
+  const high = Number(data.high_price ?? price);
+  const low = Number(data.low_price ?? price);
   const close = Number(data.close_price ?? price);
   const volume = Number(data.volume ?? 0);
   const bid = Number(data.bid ?? 0);
@@ -76,45 +82,46 @@ function buildB3Quant(data: B3Data): QuantDashboardData | null {
   const delta = price - open;
   const body = close - open;
 
-  const directional = clamp(delta / range, -1, 1);
-  const bodyForce = clamp(body / range, -1, 1);
+  const directional = Math.max(-1, Math.min(1, delta / range));
+  const bodyForce = Math.max(-1, Math.min(1, body / range));
 
   let bidAskPressure = 0;
 
   if (bid > 0 && ask > 0 && ask >= bid) {
     const spread = Math.max(ask - bid, 1);
-    bidAskPressure = clamp((price - bid) / spread - 0.5, -0.15, 0.15);
+    bidAskPressure = Math.max(
+      -0.15,
+      Math.min(0.15, (price - bid) / spread - 0.5)
+    );
   }
-
-  const volumeFactor = volume > 0 ? 1 : 0.85;
 
   const rawScore =
     directional * 70 +
     bodyForce * 20 +
     bidAskPressure * 100;
 
-  const score = clamp(rawScore * volumeFactor, -100, 100);
-
-  const roc = open > 0 ? ((price / open) - 1) * 100 : 0;
-  const rsi = clamp(50 + directional * 35, 0, 100);
-  const pressure = price > 0 ? ((price - open) / price) * 100 : 0;
-  const atr = Math.abs(high - low);
-  const relativeVolatility = price > 0 ? atr / price : 0;
-  const relativeVolume = volume > 0 ? clamp(volume / 1000, 0.1, 3) : 0;
-  const adx = clamp(Math.abs(directional) * 50, 0, 50);
+  const score = clamp(rawScore, -100, 100);
 
   return {
-    score: Number(score.toFixed(2)),
+    score,
     signal: getSignal(score),
-    shortTrend: getTrend(directional),
+
+    shortTrend:
+      directional >= 0.8 ? "FORTE ALTISTA" :
+      directional >= 0.2 ? "ALTISTA" :
+      directional <= -0.8 ? "FORTE BAIXISTA" :
+      directional <= -0.2 ? "BAIXISTA" :
+      "NEUTRO",
+
     midTrend: getTrend(directional * 0.8),
-    roc: Number(roc.toFixed(3)),
-    rsi: Number(rsi.toFixed(2)),
-    pressure: Number(pressure.toFixed(3)),
-    atr: Number(atr.toFixed(6)),
-    relativeVolatility: Number(relativeVolatility.toFixed(4)),
-    relativeVolume: Number(relativeVolume.toFixed(2)),
-    adx: Number(adx.toFixed(2)),
+
+    roc: open > 0 ? ((price / open) - 1) * 100 : 0,
+    rsi: Math.max(0, Math.min(100, 50 + directional * 35)),
+    pressure: price > 0 ? ((price - open) / price) * 100 : 0,
+    atr: Math.abs(high - low),
+    relativeVolatility: price > 0 ? Math.abs(high - low) / price : 0,
+    relativeVolume: volume > 0 ? volume / 1000 : 0,
+    adx: Math.abs(directional) * 50,
     updatedAt: normalizeDate(data.last_trade_ts),
   };
 }
@@ -148,7 +155,7 @@ export function useQuantDashboard({
   }, [assetType, upperAsset]);
 
   const applyB3Quant = useCallback(() => {
-    const quant = buildB3Quant(b3Data || {});
+    const quant = buildB3Quant(b3Data ?? {});
 
     if (quant) {
       setData(quant);
@@ -239,7 +246,7 @@ export function useQuantDashboard({
 
   useEffect(() => {
     if (!enabled || !isB3Future) return;
-    if (!b3Data?.last_price) return;
+    if (!b3Data) return;
 
     applyB3Quant();
   }, [enabled, isB3Future, b3Data, applyB3Quant]);
