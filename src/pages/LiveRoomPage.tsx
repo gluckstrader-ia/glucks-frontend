@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchLiveRoomAnalysis, fetchLiveRoomVoice } from "../lib/liveRoomApi";
+import { fetchLiveRoomVoice } from "../lib/liveRoomApi";
 import type { LiveRoomResponse } from "../lib/liveRoomApi";
 import LiveRoomChart from "../components/live-room/LiveRoomChart";
 import { useB3MarketData } from "../hooks/useB3MarketData";
@@ -729,51 +729,33 @@ export default function LiveRoomPage() {
   const { data: b3Feed } = useB3MarketData(isB3Asset ? asset : "");
 
   async function loadAnalysis(selectedAsset: string, silent = false) {
+  try {
+    if (!silent) setLoading(true);
+    if (silent) setRefreshing(true);
+
+    setError(null);
+
+    let result: LiveRoomResponse | null = null;
+
+    // 🔥 1. SEMPRE tenta /analyze primeiro (igual Quant usa analysisData)
     try {
-      if (!silent) setLoading(true);
-      if (silent) setRefreshing(true);
+      result = await fetchAnalyzeFallback(selectedAsset, timeframe);
+    } catch {
+      result = null;
+    }
+
+    // ✅ 2. Se conseguiu analysisData → usa direto
+    if (result) {
+      setData((current) => {
+        previousDataRef.current = current;
+        return result;
+      });
 
       setError(null);
+      return;
+    }
 
-      let result: LiveRoomResponse | null = null;
-
-      // 1. Primeiro tenta a API da sala ao vivo
-      try {
-        result = await fetchLiveRoomAnalysis(selectedAsset, timeframe);
-      } catch {
-        result = null;
-      }
-
-      // 2. Se a API da sala retornar algo, usa ela
-      if (result) {
-        setData((current) => {
-          previousDataRef.current = current;
-          return result;
-        });
-
-        setError(null);
-        return;
-      }
-
-      // 3. Se não tiver live room, usa o mesmo /analyze do dashboard
-      try {
-        result = await fetchAnalyzeFallback(selectedAsset, timeframe);
-      } catch {
-        result = null;
-      }
-
-      // 4. Se /analyze retornou, monta a sala com analysisData
-      if (result) {
-        setData((current) => {
-          previousDataRef.current = current;
-          return result;
-        });
-
-        setError(null);
-        return;
-      }
-
-    // 5. Último fallback: WIN/WDO com B3 local
+    // 🔥 3. Se for WIN/WDO → tenta B3 (igual Quant)
     if (isB3Symbol(selectedAsset)) {
       result = buildB3LiveRoomData(selectedAsset, b3Feed as B3Feed | null);
     }
@@ -788,7 +770,7 @@ export default function LiveRoomPage() {
       return;
     }
 
-    throw new Error("A Sala ao Vivo não encontrou dados para este ativo.");
+    throw new Error("Sem dados disponíveis para este ativo.");
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Erro ao carregar análise ao vivo.";
@@ -800,7 +782,7 @@ export default function LiveRoomPage() {
   }
 }
 
-  async function handleEnterRoom(nextAsset: string) {
+  function handleEnterRoom(nextAsset: string) {
     stopPremiumVoice();
     previousDataRef.current = null;
     setLastSpeechReason("Troca de ativo");
@@ -811,7 +793,10 @@ export default function LiveRoomPage() {
 
     setAsset(nextAsset);
 
-    await loadAnalysis(nextAsset, false);
+    // 🔥 força execução imediata (igual dashboard)
+    setTimeout(() => {
+      loadAnalysis(nextAsset, false);
+    }, 0);
   }
 
   function stopPremiumVoice() {
