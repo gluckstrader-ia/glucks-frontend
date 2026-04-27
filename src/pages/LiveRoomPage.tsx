@@ -1,28 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { fetchLiveRoomVoice } from "../lib/liveRoomApi";
 import type { LiveRoomResponse } from "../lib/liveRoomApi";
 import LiveRoomChart from "../components/live-room/LiveRoomChart";
-import { useB3MarketData } from "../hooks/useB3MarketData";
 import { getStoredToken } from "../lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 const ASSETS = [
-  {
-    symbol: "WIN",
-    label: "Mini Índice",
-    market: "Futuros BR",
-    apiAsset: "WIN",
-    apiType: "future_br",
-  },
-  {
-    symbol: "WDO",
-    label: "Mini Dólar",
-    market: "Futuros BR",
-    apiAsset: "WDO",
-    apiType: "future_br",
-  },
   {
     symbol: "EURUSD",
     label: "Euro/Dólar",
@@ -37,44 +22,9 @@ const ASSETS = [
     apiAsset: "XAUUSD",
     apiType: "forex",
   },
-  {
-    symbol: "BTCUSD",
-    label: "Bitcoin",
-    market: "Cripto",
-    apiAsset: "BTCUSDT",
-    apiType: "crypto",
-  },
-  {
-    symbol: "NASDAQ",
-    label: "Nasdaq",
-    market: "Índices",
-    apiAsset: "NDX",
-    apiType: "index",
-  },
-  {
-    symbol: "SPX",
-    label: "S&P 500",
-    market: "Índices",
-    apiAsset: "SPX",
-    apiType: "index",
-  },
 ] as const;
 
 type LiveAssetConfig = (typeof ASSETS)[number];
-
-type B3Feed = {
-  symbol?: string;
-  last_price?: number | null;
-  open_price?: number | null;
-  high_price?: number | null;
-  low_price?: number | null;
-  close_price?: number | null;
-  volume?: number | null;
-  bid?: number | null;
-  ask?: number | null;
-  last_trade_ts?: number | string | null;
-  source?: string;
-};
 
 function getAssetConfig(symbol: string): LiveAssetConfig {
   const upper = String(symbol || "").toUpperCase();
@@ -84,10 +34,6 @@ function getAssetConfig(symbol: string): LiveAssetConfig {
     ASSETS.find((item) => item.apiAsset === upper) ??
     ASSETS[0]
   );
-}
-
-function isB3Symbol(symbol: string) {
-  return ["WIN", "WDO"].includes(String(symbol || "").toUpperCase());
 }
 
 function formatPrice(value: number | null | undefined) {
@@ -150,10 +96,8 @@ function sanitizeForSpeech(text: string): string {
   return text
     .replace(/RSI/gi, "R S I")
     .replace(/VWAP/gi, "V W A P")
-    .replace(/WIN/gi, "uíni")
-    .replace(/WDO/gi, "dólar futuro")
-    .replace(/SPX/gi, "ésse pê xis")
-    .replace(/BTC/gi, "bitcoin")
+    .replace(/EURUSD/gi, "euro dólar")
+    .replace(/XAUUSD/gi, "ouro dólar")
     .replace(/XAU/gi, "ouro")
     .replace(/tp/gi, "alvo ")
     .replace(/_/g, " ")
@@ -161,7 +105,10 @@ function sanitizeForSpeech(text: string): string {
     .trim();
 }
 
-function numberToPtSpeech(value: number | string | null | undefined, maxDecimals = 2): string {
+function numberToPtSpeech(
+  value: number | string | null | undefined,
+  maxDecimals = 2
+): string {
   if (value == null) return "zero";
 
   const num = Number(value);
@@ -414,11 +361,7 @@ function eventToCompactItem(event: string) {
   if (normalized.includes("preço")) {
     return {
       label: "Preço atual",
-      value:
-        event
-          .replace("Preço atual:", "")
-          .replace("Preço atual monitorado:", "")
-          .trim() || "-",
+      value: event.replace("Preço atual:", "").trim() || "-",
       color: "text-amber-300",
       badge: "bg-amber-500/15 text-amber-300 border-amber-500/20",
     };
@@ -436,119 +379,6 @@ function assetCardClasses(active: boolean) {
   return active
     ? "border-emerald-500/40 bg-emerald-500/10 shadow-[0_0_0_1px_rgba(16,185,129,0.15)]"
     : "border-zinc-800 bg-zinc-950/70 hover:border-zinc-700 hover:bg-zinc-950";
-}
-
-function buildB3LiveRoomData(
-  asset: string,
-  b3Feed: B3Feed | null | undefined
-): LiveRoomResponse | null {
-  const last =
-    Number(b3Feed?.last_price) ||
-    Number(b3Feed?.close_price) ||
-    Number(b3Feed?.open_price) ||
-    Number(b3Feed?.high_price) ||
-    Number(b3Feed?.low_price) ||
-    0;
-
-  if (!last || Number.isNaN(last)) return null;
-
-  const open = Number(b3Feed?.open_price ?? last);
-  const high = Number(b3Feed?.high_price ?? last);
-  const low = Number(b3Feed?.low_price ?? last);
-  const volume = Number(b3Feed?.volume ?? 0);
-
-  const direction: LiveRoomResponse["signal"] =
-    last > open ? "buy" : last < open ? "sell" : "neutral";
-
-  const confidence =
-    last === open
-      ? 54
-      : Math.min(
-          78,
-          Math.max(
-            52,
-            Math.round((Math.abs(last - open) / Math.max(open, 1)) * 100000)
-          )
-        );
-
-  const updatedAt = b3Feed?.last_trade_ts
-    ? new Date(b3Feed.last_trade_ts).toISOString()
-    : new Date().toISOString();
-
-  const events = [
-    `Preço atual monitorado: ${formatPrice(last)}`,
-    `Confiança atual: ${confidence}%`,
-    `Direção atual: ${signalLabel(direction)}`,
-    `Volume observado: ${formatPrice(volume)}`,
-  ];
-
-  const alerts =
-    direction === "buy"
-      ? [
-          {
-            type: "strengthening",
-            priority: 1,
-            title: `${asset} sustentando força compradora`,
-            message: `Preço em ${formatPrice(last)} acima da abertura ${formatPrice(open)}.`,
-          },
-        ]
-      : direction === "sell"
-      ? [
-          {
-            type: "weakening",
-            priority: 1,
-            title: `${asset} pressionando para baixo`,
-            message: `Preço em ${formatPrice(last)} abaixo da abertura ${formatPrice(open)}.`,
-          },
-        ]
-      : [
-          {
-            type: "direction_change",
-            priority: 2,
-            title: `${asset} em equilíbrio`,
-            message: `Preço em ${formatPrice(last)} com leitura neutra no curto prazo.`,
-          },
-        ];
-
-  return {
-    asset,
-    signal: direction,
-    confidence,
-    price: last,
-    entry: last,
-    stop: low || last,
-    target_1: high || last,
-    target_2: high || last,
-    updated_at: updatedAt,
-    market_regime: "Leitura ao vivo com fallback inteligente",
-    risk_reward: "1:0.00",
-    narration_text:
-      direction === "buy"
-        ? `${asset} com pressão compradora na leitura ao vivo. Preço atual em ${formatPrice(last)}.`
-        : direction === "sell"
-        ? `${asset} com pressão vendedora na leitura ao vivo. Preço atual em ${formatPrice(last)}.`
-        : `${asset} em leitura neutra no fluxo ao vivo. Preço atual em ${formatPrice(last)}.`,
-    alerts,
-    events,
-    scenario_memory: {
-      previous_signal: "neutral",
-      current_signal: direction,
-      evolution_label:
-        direction === "buy"
-          ? "Fluxo fortaleceu o lado comprador"
-          : direction === "sell"
-          ? "Fluxo fortaleceu o lado vendedor"
-          : "Sem deslocamento dominante",
-      confidence_delta: 0,
-    },
-    state_flags: {
-      trend_up: direction === "buy",
-      trend_down: direction === "sell",
-      lateralized: direction === "neutral",
-      above_vwap: direction === "buy",
-      exhaustion: false,
-    },
-  } as unknown as LiveRoomResponse;
 }
 
 function buildLiveRoomFromAnalyzeData(
@@ -648,7 +478,9 @@ function buildLiveRoomFromAnalyzeData(
     narration_text:
       finalSignal?.verdict ??
       payload?.summary?.text ??
-      `${selectedAsset}: leitura ao vivo gerada pela IA. Direção: ${signalLabel(direction)}. Confiança: ${Math.round(confidence)}%.`,
+      `${selectedAsset}: leitura ao vivo gerada pela IA. Direção: ${signalLabel(
+        direction
+      )}. Confiança: ${Math.round(confidence)}%.`,
     alerts,
     events,
     scenario_memory: {
@@ -708,27 +540,8 @@ async function fetchAnalyzeFallback(
 
 export default function LiveRoomPage() {
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const dashboardState = location.state as
-    | {
-        asset?: string;
-        timeframe?: string;
-        analysisData?: any;
-        b3Data?: any;
-        isB3Future?: boolean;
-      }
-    | undefined;
-
-    console.log("[LIVE ROOM STATE]", dashboardState);
-    console.log("[LIVE ROOM STATE ASSET]", dashboardState?.asset);
-    console.log("[LIVE ROOM STATE ANALYSIS]", dashboardState?.analysisData);
-    console.log("[LIVE ROOM STATE B3]", dashboardState?.b3Data);
-    console.log("[LIVE ROOM STATE IS B3]", dashboardState?.isB3Future);
-
-  const [asset, setAsset] = useState(
-    dashboardState?.asset ?? "WIN"
-  );
+  const [asset, setAsset] = useState("EURUSD");
   const [data, setData] = useState<LiveRoomResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -744,98 +557,31 @@ export default function LiveRoomPage() {
   const audioUrlRef = useRef<string | null>(null);
   const speechJobRef = useRef(0);
 
-  const isB3Asset = useMemo(() => isB3Symbol(asset), [asset]);
-  const { data: b3Feed } = useB3MarketData(isB3Asset ? asset : "");
-
   async function loadAnalysis(selectedAsset: string, silent = false) {
-  try {
-    if (!silent) setLoading(true);
-    if (silent) setRefreshing(true);
-
-    setError(null);
-
-    const stateAsset = dashboardState?.asset ?? selectedAsset;
-
-    if (dashboardState?.analysisData) {
-      const result = buildLiveRoomFromAnalyzeData(
-      stateAsset,
-      dashboardState.analysisData
-    );
-
-    if (result) {
-      setData((current) => {
-        previousDataRef.current = current;
-        return result;
-      });
-
-      setError(null);
-      return;
-    }
-  }
-
-  if (dashboardState?.isB3Future && dashboardState?.b3Data) {
-    const result = buildB3LiveRoomData(
-      stateAsset,
-      dashboardState.b3Data
-    );
-
-    if (result) {
-      setData((current) => {
-        previousDataRef.current = current;
-        return result;
-      });
-
-      setError(null);
-      return;
-    }
-  }
-
-    let result: LiveRoomResponse | null = null;
-
-    // 🔥 1. SEMPRE tenta /analyze primeiro (igual Quant usa analysisData)
     try {
-      result = await fetchAnalyzeFallback(selectedAsset, timeframe);
-    } catch {
-      result = null;
-    }
+      if (!silent) setLoading(true);
+      if (silent) setRefreshing(true);
 
-    // ✅ 2. Se conseguiu analysisData → usa direto
-    if (result) {
+      setError(null);
+
+      const result = await fetchAnalyzeFallback(selectedAsset, timeframe);
+
       setData((current) => {
         previousDataRef.current = current;
         return result;
       });
 
       setError(null);
-      return;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erro ao carregar análise ao vivo.";
+
+      setError(message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-
-    // 🔥 3. Se for WIN/WDO → tenta B3 (igual Quant)
-    if (isB3Symbol(selectedAsset)) {
-      result = buildB3LiveRoomData(selectedAsset, b3Feed as B3Feed | null);
-    }
-
-    if (result) {
-      setData((current) => {
-        previousDataRef.current = current;
-        return result;
-      });
-
-      setError(null);
-      return;
-    }
-
-    throw new Error("Sem dados disponíveis para este ativo.");
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Erro ao carregar análise ao vivo.";
-
-    setError(message);
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
   }
-}
 
   function handleEnterRoom(nextAsset: string) {
     stopPremiumVoice();
@@ -846,12 +592,12 @@ export default function LiveRoomPage() {
     setData(null);
     setLoading(true);
 
-    setAsset(nextAsset);
-
-    // 🔥 força execução imediata (igual dashboard)
-    setTimeout(() => {
+    if (asset === nextAsset) {
       loadAnalysis(nextAsset, false);
-    }, 0);
+      return;
+    }
+
+    setAsset(nextAsset);
   }
 
   function stopPremiumVoice() {
@@ -924,15 +670,13 @@ export default function LiveRoomPage() {
 
   useEffect(() => {
     loadAnalysis(asset, false);
-  }, [asset]);
 
-  useEffect(() => {
     const interval = window.setInterval(() => {
       loadAnalysis(asset, true);
-    }, 5000);
+    }, 15000);
 
     return () => window.clearInterval(interval);
-  }, [asset, b3Feed]);
+  }, [asset]);
 
   useEffect(() => {
     if (!voiceEnabled || !data) return;
@@ -950,12 +694,6 @@ export default function LiveRoomPage() {
   }, [voiceEnabled]);
 
   useEffect(() => {
-    stopPremiumVoice();
-    previousDataRef.current = null;
-    setLastSpeechReason("Troca de ativo");
-  }, [asset]);
-
-  useEffect(() => {
     return () => {
       stopPremiumVoice();
     };
@@ -964,41 +702,15 @@ export default function LiveRoomPage() {
   const pageStatus = useMemo(() => {
     if (loading) return "Carregando Sala ao Vivo IA...";
     if (error) return "Erro na conexão com a Sala ao Vivo IA";
-    if (refreshing) return "Atualizando leitura em tempo real...";
+    if (refreshing) return "Atualizando leitura automaticamente...";
 
-    return isB3Asset
-      ? "Conectado com fallback inteligente"
-      : "Conectado em tempo real";
-  }, [loading, error, refreshing, isB3Asset]);
+    return "Conectado em tempo real";
+  }, [loading, error, refreshing]);
 
   const topAlert = data?.alerts?.[0] || null;
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
-
-      <div className="mb-4 rounded-2xl border border-cyan-500/30 bg-cyan-950/20 p-4 text-xs text-cyan-200">
-        <div className="mb-2 font-bold text-cyan-300">
-          DEBUG LIVE ROOM STATE
-        </div>
-
-        <pre className="whitespace-pre-wrap break-all">
-          {JSON.stringify(
-            {
-              asset,
-              dashboardStateAsset: dashboardState?.asset,
-              hasAnalysisData: !!dashboardState?.analysisData,
-              hasB3Data: !!dashboardState?.b3Data,
-              isB3Future: dashboardState?.isB3Future,
-              data,
-              loading,
-              error,
-            },
-          null,
-          2
-        )}
-      </pre>
-    </div>
-
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-6 rounded-3xl border border-emerald-500/20 bg-white/5 p-5 shadow-2xl backdrop-blur">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -1206,6 +918,7 @@ export default function LiveRoomPage() {
                   <h2 className="text-lg font-bold text-white">
                     Gráfico ao vivo
                   </h2>
+
                   <p className="text-sm text-zinc-400">
                     Acompanhamento visual do ativo com contexto para a leitura da IA.
                   </p>
