@@ -4029,20 +4029,24 @@ const resolvedAssetType =
 
   const tvSymbol = getTradingViewSymbol(assetCategory, resolvedAsset);
 
+  const isB3Future =
+  resolvedAssetType === "future_br" &&
+  ["WIN", "WDO"].includes(String(resolvedAsset).toUpperCase());
+
   const {
     data: quantData,
     loading: quantLoading,
     error: quantError,
     refetch: refetchQuant,
-  }  = useQuantDashboard({
+  } = useQuantDashboard({
     asset: resolvedAsset,
     assetType: resolvedAssetType,
     timeframe: tf,
     token,
-    enabled: !!token,
+    enabled: !!token && (!isB3Future || !!b3Data?.last_price),
     b3Data,
   });
-
+  
   function handleLogout() {
     clearAuth();
     navigate("/login");

@@ -1,75 +1,84 @@
-import { useCallback, useEffect, useState } from "react";
-import type { QuantDashboardData } from "../components/dashboard/QuantDashboardCard";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
-type B3QuantInput = {
+export type QuantDashboardData = {
+  score: number;
+  signal: string;
+  shortTrend: string;
+  midTrend: string;
+  roc: number;
+  rsi: number;
+  pressure: number;
+  atr: number;
+  relativeVolatility: number;
+  relativeVolume: number;
+  adx: number;
+  updatedAt: string;
+};
+
+type B3Data = {
   last_price?: number | null;
   open_price?: number | null;
   high_price?: number | null;
   low_price?: number | null;
+  close_price?: number | null;
   volume?: number | null;
-  last_trade_ts?: number | null;
+  bid?: number | null;
+  ask?: number | null;
+  last_trade_ts?: number | string | null;
 };
 
-function normalizeSignal(score: number): QuantDashboardData["signal"] {
-  if (score >= 55) return "COMPRA FORTE";
-  if (score >= 20) return "COMPRA";
-  if (score <= -55) return "VENDA FORTE";
-  if (score <= -20) return "VENDA";
-  return "NEUTRO";
-}
+function buildB3Quant(data: B3Data): QuantDashboardData | null {
+  const price = Number(data.last_price ?? 0);
+  if (!price) return null;
 
-function normalizeTrend(
-  value: number
-): QuantDashboardData["shortTrend"] {
-  if (value >= 0.8) return "FORTE ALTISTA";
-  if (value >= 0.2) return "ALTISTA";
-  if (value <= -0.8) return "FORTE BAIXISTA";
-  if (value <= -0.2) return "BAIXISTA";
-  return "NEUTRO";
-}
+  const open = Number(data.open_price ?? price);
+  const high = Number(data.high_price ?? price);
+  const low = Number(data.low_price ?? price);
+  const close = Number(data.close_price ?? price);
+  const volume = Number(data.volume ?? 0);
 
-function buildB3QuantFromLiveData(payload: B3QuantInput): QuantDashboardData | null {
-  const last = Number(payload.last_price ?? 0);
+  const range = Math.max(high - low, 1);
+  const body = close - open;
+  const delta = price - open;
 
-  if (!last || Number.isNaN(last)) {
-    return null;
-  }
+  const directional = Math.max(-1, Math.min(1, delta / range));
+  const bodyForce = Math.max(-1, Math.min(1, body / range));
 
-  const open = Number(payload.open_price ?? last);
-  const high = Number(payload.high_price ?? last);
-  const low = Number(payload.low_price ?? last);
-  const volume = Number(payload.volume ?? 0);
+  const scoreRaw =
+    directional * 70 +
+    bodyForce * 20;
 
-  const delta = last - open;
-  const range = Math.max(Math.abs(high - low), 1);
-  const pressure = last > 0 ? ((last - open) / last) * 100 : 0;
-
-  const directionalStrength = Math.max(-1, Math.min(1, delta / range));
-  const score = Math.max(-100, Math.min(100, directionalStrength * 100));
-
-  const rsiApprox = Math.max(0, Math.min(100, 50 + directionalStrength * 35));
-  const rocApprox = open > 0 ? ((last / open) - 1) * 100 : 0;
-  const atrApprox = Math.abs(high - low);
-  const relativeVolatilityApprox = open > 0 ? atrApprox / open : 0;
-  const relativeVolumeApprox = volume > 0 ? 1 : 0;
+  const score = Math.max(-100, Math.min(100, scoreRaw));
 
   return {
-    score: Number(score.toFixed(2)),
-    signal: normalizeSignal(score),
-    shortTrend: normalizeTrend(directionalStrength),
-    midTrend: normalizeTrend(directionalStrength * 0.8),
-    roc: Number(rocApprox.toFixed(3)),
-    rsi: Number(rsiApprox.toFixed(2)),
-    pressure: Number(pressure.toFixed(3)),
-    atr: Number(atrApprox.toFixed(6)),
-    relativeVolatility: Number(relativeVolatilityApprox.toFixed(3)),
-    relativeVolume: Number(relativeVolumeApprox.toFixed(2)),
-    adx: Number(Math.min(50, Math.abs(directionalStrength) * 40).toFixed(2)),
-    updatedAt: payload.last_trade_ts
-      ? new Date(payload.last_trade_ts).toISOString()
-      : new Date().toISOString(),
+    score,
+    signal:
+      score > 30 ? "COMPRA" :
+      score < -30 ? "VENDA" :
+      "NEUTRO",
+
+    shortTrend:
+      directional > 0.5 ? "FORTE ALTISTA" :
+      directional > 0 ? "ALTISTA" :
+      directional < -0.5 ? "FORTE BAIXISTA" :
+      directional < 0 ? "BAIXISTA" :
+      "NEUTRO",
+
+    midTrend:
+      directional > 0 ? "ALTISTA" :
+      directional < 0 ? "BAIXISTA" :
+      "NEUTRO",
+
+    roc: open > 0 ? ((price / open) - 1) * 100 : 0,
+    rsi: 50 + directional * 30,
+    pressure: (price - open) / price * 100,
+    atr: high - low,
+    relativeVolatility: (high - low) / price,
+    relativeVolume: volume > 0 ? volume / 1000 : 0,
+    adx: Math.abs(directional) * 50,
+    updatedAt: new Date().toISOString(),
   };
 }
 
@@ -86,43 +95,49 @@ export function useQuantDashboard({
   timeframe: string;
   token?: string | null;
   enabled: boolean;
-  b3Data?: B3QuantInput | null;
+  b3Data?: B3Data | null;
 }) {
   const [data, setData] = useState<QuantDashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const upperAsset = useMemo(() => asset.toUpperCase(), [asset]);
+
+  const isB3 = useMemo(() => {
+    return assetType === "future_br" && ["WIN", "WDO"].includes(upperAsset);
+  }, [assetType, upperAsset]);
+
+  // 🔥 Atualização automática B3
+  useEffect(() => {
+    if (!enabled || !isB3) return;
+    if (!b3Data?.last_price) return;
+
+    const quant = buildB3Quant(b3Data);
+
+    if (quant) {
+      setData(quant);
+      setError("");
+      setLoading(false);
+    }
+  }, [b3Data, isB3, enabled]);
+
   const fetchQuant = useCallback(async () => {
-    if (!enabled || !asset || !assetType || !timeframe) return;
-
-    const upperAsset = asset.toUpperCase();
-
-    // Mais robusto: WIN/WDO entram no fluxo B3 independentemente do assetType
-    const isB3Future = upperAsset === "WIN" || upperAsset === "WDO";
+    if (!enabled) return;
 
     try {
       setLoading(true);
       setError("");
 
-      if (isB3Future) {
-        const mapped = buildB3QuantFromLiveData(b3Data || {});
-
-        if (mapped) {
-          setData(mapped);
-          setError("");
-        } else {
-          // mantém último snapshot se existir
-          setError("");
-        }
-
+      // 🔥 Se for WIN/WDO → usa B3
+      if (isB3) {
+        const quant = buildB3Quant(b3Data || {});
+        if (quant) setData(quant);
+        setLoading(false);
         return;
       }
 
-      if (!token) {
-        throw new Error("Token ausente para carregar o Dashboard Quant.");
-      }
-
-      const response = await fetch(`${API_URL}/quant/live`, {
+      // 🔥 fluxo normal (não mexido)
+      const res = await fetch(`${API_URL}/quant/live`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -135,45 +150,22 @@ export function useQuantDashboard({
         }),
       });
 
-      const payload = await response.json();
+      const json = await res.json();
 
-      if (!response.ok) {
-        throw new Error(
-          payload?.detail || "Erro ao carregar o Dashboard Quant."
-        );
-      }
+      if (!res.ok) throw new Error(json.detail);
 
-      setData({
-        score: Number(payload.score ?? 0),
-        signal: payload.signal ?? "NEUTRO",
-        shortTrend: payload.short_trend ?? "NEUTRO",
-        midTrend: payload.mid_trend ?? "NEUTRO",
-        roc: Number(payload.roc ?? 0),
-        rsi: Number(payload.rsi ?? 0),
-        pressure: Number(payload.pressure ?? 0),
-        atr: Number(payload.atr ?? 0),
-        relativeVolatility: Number(payload.relative_volatility ?? 0),
-        relativeVolume: Number(payload.relative_volume ?? 0),
-        adx: Number(payload.adx ?? 0),
-        updatedAt: payload.updated_at,
-      });
-      setError("");
-    } catch (err: any) {
+      setData(json);
+    } catch (e: any) {
+      setError(e.message);
       setData(null);
-      setError(err?.message || "Erro ao carregar o Dashboard Quant.");
     } finally {
       setLoading(false);
     }
-  }, [enabled, token, asset, assetType, timeframe, b3Data]);
+  }, [asset, assetType, timeframe, token, enabled, isB3, b3Data]);
 
   useEffect(() => {
     fetchQuant();
   }, [fetchQuant]);
 
-  return {
-    data,
-    loading,
-    error,
-    refetch: fetchQuant,
-  };
+  return { data, loading, error, refetch: fetchQuant };
 }
