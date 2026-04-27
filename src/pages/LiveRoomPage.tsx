@@ -737,41 +737,68 @@ export default function LiveRoomPage() {
 
       let result: LiveRoomResponse | null = null;
 
-      // 1. WIN/WDO tentam B3 local primeiro, se existir
-      if (isB3Symbol(selectedAsset)) {
-        result = buildB3LiveRoomData(selectedAsset, b3Feed as B3Feed | null);
+      // 1. Primeiro tenta a API da sala ao vivo
+      try {
+        result = await fetchLiveRoomAnalysis(selectedAsset, timeframe);
+      } catch {
+        result = null;
       }
 
-      // 2. Tenta API própria da sala ao vivo
-      if (!result) {
-        try {
-          result = await fetchLiveRoomAnalysis(selectedAsset, timeframe);
-        } catch {
-          result = null;
-        }
+      // 2. Se a API da sala retornar algo, usa ela
+      if (result) {
+        setData((current) => {
+          previousDataRef.current = current;
+          return result;
+        });
+
+        setError(null);
+        return;
       }
 
-      // 3. Fallback final: usa /analyze com mapeamento online
-      if (!result) {
+      // 3. Se não tiver live room, usa o mesmo /analyze do dashboard
+      try {
         result = await fetchAnalyzeFallback(selectedAsset, timeframe);
+      } catch {
+        result = null;
       }
 
+      // 4. Se /analyze retornou, monta a sala com analysisData
+      if (result) {
+        setData((current) => {
+          previousDataRef.current = current;
+          return result;
+        });
+
+        setError(null);
+        return;
+      }
+
+    // 5. Último fallback: WIN/WDO com B3 local
+    if (isB3Symbol(selectedAsset)) {
+      result = buildB3LiveRoomData(selectedAsset, b3Feed as B3Feed | null);
+    }
+
+    if (result) {
       setData((current) => {
         previousDataRef.current = current;
         return result;
       });
 
       setError(null);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Erro ao carregar análise ao vivo.";
-
-      setError(message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+      return;
     }
+
+    throw new Error("A Sala ao Vivo não encontrou dados para este ativo.");
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Erro ao carregar análise ao vivo.";
+
+    setError(message);
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
   }
+}
 
   async function handleEnterRoom(nextAsset: string) {
     stopPremiumVoice();
