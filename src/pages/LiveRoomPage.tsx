@@ -1,19 +1,66 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { fetchLiveRoomAnalysis, fetchLiveRoomVoice } from "../lib/liveRoomApi";
 import type { LiveRoomResponse } from "../lib/liveRoomApi";
 import LiveRoomChart from "../components/live-room/LiveRoomChart";
 import { useB3MarketData } from "../hooks/useB3MarketData";
-import { useNavigate } from "react-router-dom";
+import { getStoredToken } from "../lib/auth";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 const ASSETS = [
-  { symbol: "WIN", label: "Mini Índice", market: "Futuros BR" },
-  { symbol: "WDO", label: "Mini Dólar", market: "Futuros BR" },
-  { symbol: "EURUSD", label: "Euro/Dólar", market: "Forex" },
-  { symbol: "XAUUSD", label: "Ouro", market: "Commodities" },
-  { symbol: "BTCUSD", label: "Bitcoin", market: "Cripto" },
-  { symbol: "NASDAQ", label: "Nasdaq", market: "Índices" },
-  { symbol: "SPX", label: "S&P 500", market: "Índices" },
-];
+  {
+    symbol: "WIN",
+    label: "Mini Índice",
+    market: "Futuros BR",
+    apiAsset: "WIN",
+    apiType: "future_br",
+  },
+  {
+    symbol: "WDO",
+    label: "Mini Dólar",
+    market: "Futuros BR",
+    apiAsset: "WDO",
+    apiType: "future_br",
+  },
+  {
+    symbol: "EURUSD",
+    label: "Euro/Dólar",
+    market: "Forex",
+    apiAsset: "EURUSD",
+    apiType: "forex",
+  },
+  {
+    symbol: "XAUUSD",
+    label: "Ouro",
+    market: "Commodities",
+    apiAsset: "XAUUSD",
+    apiType: "forex",
+  },
+  {
+    symbol: "BTCUSD",
+    label: "Bitcoin",
+    market: "Cripto",
+    apiAsset: "BTCUSDT",
+    apiType: "crypto",
+  },
+  {
+    symbol: "NASDAQ",
+    label: "Nasdaq",
+    market: "Índices",
+    apiAsset: "NDX",
+    apiType: "index",
+  },
+  {
+    symbol: "SPX",
+    label: "S&P 500",
+    market: "Índices",
+    apiAsset: "SPX",
+    apiType: "index",
+  },
+] as const;
+
+type LiveAssetConfig = (typeof ASSETS)[number];
 
 type B3Feed = {
   symbol?: string;
@@ -25,25 +72,39 @@ type B3Feed = {
   volume?: number | null;
   bid?: number | null;
   ask?: number | null;
-  last_trade_ts?: number | null;
+  last_trade_ts?: number | string | null;
   source?: string;
 };
 
+function getAssetConfig(symbol: string): LiveAssetConfig {
+  const upper = String(symbol || "").toUpperCase();
+
+  return (
+    ASSETS.find((item) => item.symbol === upper) ??
+    ASSETS.find((item) => item.apiAsset === upper) ??
+    ASSETS[0]
+  );
+}
+
 function isB3Symbol(symbol: string) {
-  return ["WIN", "WDO"].includes(String(symbol).toUpperCase());
+  return ["WIN", "WDO"].includes(String(symbol || "").toUpperCase());
 }
 
 function formatPrice(value: number | null | undefined) {
-  if (value == null || Number.isNaN(value)) return "-";
+  if (value == null || Number.isNaN(Number(value))) return "-";
+
   return new Intl.NumberFormat("pt-BR", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 5,
-  }).format(value);
+  }).format(Number(value));
 }
 
-function formatDate(value: string) {
+function formatDate(value?: string | null) {
   if (!value) return "-";
+
   const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
   return date.toLocaleString("pt-BR");
 }
 
@@ -75,6 +136,16 @@ function signalClasses(signal: LiveRoomResponse["signal"]) {
   }
 }
 
+function normalizeDirectionToLive(direction?: string): LiveRoomResponse["signal"] {
+  const value = String(direction || "").toUpperCase();
+
+  if (["COMPRA", "BUY", "ALTA", "BULLISH"].includes(value)) return "buy";
+  if (["VENDA", "SELL", "BAIXA", "BEARISH"].includes(value)) return "sell";
+  if (["NEUTRO", "NEUTRAL"].includes(value)) return "neutral";
+
+  return "wait";
+}
+
 function sanitizeForSpeech(text: string): string {
   return text
     .replace(/RSI/gi, "R S I")
@@ -98,7 +169,6 @@ function numberToPtSpeech(value: number | string | null | undefined, maxDecimals
 
   const fixed = num.toFixed(maxDecimals);
   const [intPartRaw, decPartRaw] = fixed.split(".");
-
   const intPart = String(Number(intPartRaw));
   const decPart = decPartRaw?.replace(/0+$/, "");
 
@@ -112,13 +182,8 @@ function priceToSpeech(value: number | null | undefined): string {
 
   const abs = Math.abs(value);
 
-  if (abs >= 1000) {
-    return numberToPtSpeech(value, 0);
-  }
-
-  if (abs >= 1) {
-    return numberToPtSpeech(value, 2);
-  }
+  if (abs >= 1000) return numberToPtSpeech(value, 0);
+  if (abs >= 1) return numberToPtSpeech(value, 2);
 
   return numberToPtSpeech(value, 5);
 }
@@ -135,9 +200,7 @@ function percentToSpeech(value: number | string | null | undefined): string {
 function rrToSpeech(value: string | number | null | undefined): string {
   if (value == null) return "não definido";
 
-  const text = String(value);
-
-  return text
+  return String(value)
     .replace("1:", "um para ")
     .replace(":", " para ")
     .replace(".", " vírgula ");
@@ -197,18 +260,11 @@ function buildSpokenSummary(data: LiveRoomResponse): string {
   );
 }
 
-type SpeakDecision = {
-  shouldSpeak: boolean;
-  reason: string;
-};
-
 function shouldSpeakUpdate(
   previous: LiveRoomResponse | null,
   next: LiveRoomResponse
-): SpeakDecision {
-  if (!previous) {
-    return { shouldSpeak: true, reason: "primeira leitura" };
-  }
+) {
+  if (!previous) return { shouldSpeak: true, reason: "primeira leitura" };
 
   if (previous.asset !== next.asset) {
     return { shouldSpeak: true, reason: "troca de ativo" };
@@ -233,6 +289,7 @@ function shouldSpeakUpdate(
 
   const prevEvents = JSON.stringify(previous.events || []);
   const nextEvents = JSON.stringify(next.events || []);
+
   if (prevEvents !== nextEvents) {
     return { shouldSpeak: true, reason: "mudança de eventos" };
   }
@@ -244,49 +301,42 @@ function alertStyles(type: string) {
   switch (type) {
     case "entry_alert":
       return {
-        accent: "bg-emerald-400",
         badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/20",
         iconWrap: "bg-emerald-500/10 text-emerald-300",
         title: "text-emerald-300",
       };
     case "stop_threat":
       return {
-        accent: "bg-red-400",
         badge: "bg-red-500/15 text-red-300 border-red-500/20",
         iconWrap: "bg-red-500/10 text-red-300",
         title: "text-red-300",
       };
     case "target_near":
       return {
-        accent: "bg-lime-400",
         badge: "bg-lime-500/15 text-lime-300 border-lime-500/20",
         iconWrap: "bg-lime-500/10 text-lime-300",
         title: "text-lime-300",
       };
     case "direction_change":
       return {
-        accent: "bg-sky-400",
         badge: "bg-sky-500/15 text-sky-300 border-sky-500/20",
         iconWrap: "bg-sky-500/10 text-sky-300",
         title: "text-sky-300",
       };
     case "strengthening":
       return {
-        accent: "bg-violet-400",
         badge: "bg-violet-500/15 text-violet-300 border-violet-500/20",
         iconWrap: "bg-violet-500/10 text-violet-300",
         title: "text-violet-300",
       };
     case "weakening":
       return {
-        accent: "bg-amber-400",
         badge: "bg-amber-500/15 text-amber-300 border-amber-500/20",
         iconWrap: "bg-amber-500/10 text-amber-300",
         title: "text-amber-300",
       };
     default:
       return {
-        accent: "bg-zinc-500",
         badge: "bg-zinc-500/15 text-zinc-300 border-zinc-500/20",
         iconWrap: "bg-zinc-500/10 text-zinc-300",
         title: "text-zinc-200",
@@ -331,15 +381,6 @@ function eventToCompactItem(event: string) {
       value: "agora",
       color: "text-red-300",
       badge: "bg-red-500/15 text-red-300 border-red-500/20",
-    };
-  }
-
-  if (normalized.includes("evolução")) {
-    return {
-      label: event,
-      value: "cenário",
-      color: "text-sky-300",
-      badge: "bg-sky-500/15 text-sky-300 border-sky-500/20",
     };
   }
 
@@ -416,7 +457,7 @@ function buildB3LiveRoomData(
   const low = Number(b3Feed?.low_price ?? last);
   const volume = Number(b3Feed?.volume ?? 0);
 
-  const direction =
+  const direction: LiveRoomResponse["signal"] =
     last > open ? "buy" : last < open ? "sell" : "neutral";
 
   const confidence =
@@ -437,7 +478,7 @@ function buildB3LiveRoomData(
   const events = [
     `Preço atual monitorado: ${formatPrice(last)}`,
     `Confiança atual: ${confidence}%`,
-    `Direção atual: ${signalLabel(direction as LiveRoomResponse["signal"])}`,
+    `Direção atual: ${signalLabel(direction)}`,
     `Volume observado: ${formatPrice(volume)}`,
   ];
 
@@ -510,8 +551,164 @@ function buildB3LiveRoomData(
   } as unknown as LiveRoomResponse;
 }
 
+function buildLiveRoomFromAnalyzeData(
+  selectedAsset: string,
+  payload: any
+): LiveRoomResponse | null {
+  if (!payload) return null;
+
+  const finalSignal = payload?.final_signal ?? {};
+  const direction = normalizeDirectionToLive(
+    finalSignal?.direction ?? payload?.direction
+  );
+
+  const confidence = Number(
+    finalSignal?.confidence ?? payload?.confidence ?? payload?.score ?? 50
+  );
+
+  const price = Number(
+    finalSignal?.entry ??
+      payload?.entry ??
+      payload?.price ??
+      payload?.close ??
+      payload?.technical?.ema9 ??
+      0
+  );
+
+  const entry = Number(finalSignal?.entry ?? payload?.entry ?? price);
+  const stop = Number(finalSignal?.stop ?? payload?.stop ?? entry);
+  const target1 = Number(finalSignal?.target ?? payload?.target ?? entry);
+
+  const target2 =
+    Number(payload?.scenarios?.buy?.targets?.[1]?.price) ||
+    Number(payload?.scenarios?.sell?.targets?.[1]?.price) ||
+    target1;
+
+  const riskReward = Number(
+    finalSignal?.risk_reward ?? payload?.risk_reward ?? 0
+  );
+
+  const trendLabel =
+    payload?.technical?.trend_bias ??
+    payload?.summary?.trend_label ??
+    finalSignal?.direction ??
+    "Neutro";
+
+  const justification = Array.isArray(finalSignal?.justification)
+    ? finalSignal.justification
+    : [];
+
+  const events = [
+    `Direção atual: ${signalLabel(direction)}`,
+    `Confiança atual: ${Math.round(confidence)}%`,
+    `Tendência: ${trendLabel}`,
+    justification[0] ? `Confluência: ${justification[0]}` : "Leitura gerada pela IA",
+  ];
+
+  const alerts =
+    direction === "buy"
+      ? [
+          {
+            type: "entry_alert",
+            priority: 2,
+            title: `${selectedAsset} com viés comprador`,
+            message: `A IA aponta compra com confiança de ${Math.round(confidence)}%.`,
+          },
+        ]
+      : direction === "sell"
+      ? [
+          {
+            type: "entry_alert",
+            priority: 2,
+            title: `${selectedAsset} com viés vendedor`,
+            message: `A IA aponta venda com confiança de ${Math.round(confidence)}%.`,
+          },
+        ]
+      : [
+          {
+            type: "direction_change",
+            priority: 3,
+            title: `${selectedAsset} sem direção dominante`,
+            message: "A leitura atual está neutra ou aguardando confirmação.",
+          },
+        ];
+
+  return {
+    asset: selectedAsset,
+    signal: direction,
+    confidence: Math.round(confidence),
+    price,
+    entry,
+    stop,
+    target_1: target1,
+    target_2: target2,
+    updated_at: new Date().toISOString(),
+    market_regime: String(trendLabel),
+    risk_reward: riskReward > 0 ? `1:${riskReward.toFixed(2)}` : "1:0.00",
+    narration_text:
+      finalSignal?.verdict ??
+      payload?.summary?.text ??
+      `${selectedAsset}: leitura ao vivo gerada pela IA. Direção: ${signalLabel(direction)}. Confiança: ${Math.round(confidence)}%.`,
+    alerts,
+    events,
+    scenario_memory: {
+      previous_signal: "neutral",
+      current_signal: direction,
+      evolution_label: "Leitura atualizada pela IA",
+      confidence_delta: 0,
+    },
+    state_flags: {
+      trend_up: direction === "buy",
+      trend_down: direction === "sell",
+      lateralized: direction === "neutral",
+      above_vwap: direction === "buy",
+      exhaustion: false,
+    },
+  } as unknown as LiveRoomResponse;
+}
+
+async function fetchAnalyzeFallback(
+  selectedAsset: string,
+  timeframe: string
+): Promise<LiveRoomResponse> {
+  const config = getAssetConfig(selectedAsset);
+  const token = getStoredToken();
+
+  const response = await fetch(`${API_URL}/analyze`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      asset: config.apiAsset,
+      asset_type: config.apiType,
+      timeframe,
+    }),
+  });
+
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      typeof payload?.detail === "string"
+        ? payload.detail
+        : "Erro ao gerar leitura pela IA."
+    );
+  }
+
+  const mapped = buildLiveRoomFromAnalyzeData(selectedAsset, payload);
+
+  if (!mapped) {
+    throw new Error("A IA não retornou dados suficientes para a sala ao vivo.");
+  }
+
+  return mapped;
+}
+
 export default function LiveRoomPage() {
   const navigate = useNavigate();
+
   const [asset, setAsset] = useState("WIN");
   const [data, setData] = useState<LiveRoomResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -522,6 +719,7 @@ export default function LiveRoomPage() {
   const [lastSpeechReason, setLastSpeechReason] = useState("Nenhuma fala ainda");
 
   const timeframe = "5m";
+
   const previousDataRef = useRef<LiveRoomResponse | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
@@ -537,26 +735,31 @@ export default function LiveRoomPage() {
 
       setError(null);
 
-      const result = await fetchLiveRoomAnalysis(selectedAsset, timeframe);
+      let result: LiveRoomResponse | null = null;
+
+      if (isB3Symbol(selectedAsset)) {
+        result = buildB3LiveRoomData(selectedAsset, b3Feed as B3Feed | null);
+      }
+
+      if (!result) {
+        try {
+          result = await fetchLiveRoomAnalysis(selectedAsset, timeframe);
+        } catch {
+          result = null;
+        }
+      }
+
+      if (!result) {
+        result = await fetchAnalyzeFallback(selectedAsset, timeframe);
+      }
 
       setData((current) => {
         previousDataRef.current = current;
         return result;
       });
+
+      setError(null);
     } catch (err) {
-      const fallback = isB3Symbol(selectedAsset)
-        ? buildB3LiveRoomData(selectedAsset, b3Feed as B3Feed | null)
-        : null;
-
-      if (fallback) {
-        setData((current) => {
-          previousDataRef.current = current;
-          return fallback;
-        });
-        setError(null);
-        return;
-      }
-
       const message =
         err instanceof Error ? err.message : "Erro ao carregar análise ao vivo.";
 
@@ -573,10 +776,10 @@ export default function LiveRoomPage() {
     setLastSpeechReason("Troca de ativo");
     setError(null);
     setRefreshing(false);
+    setData(null);
+    setLoading(true);
 
     if (asset !== nextAsset) {
-      setData(null);
-      setLoading(true);
       setAsset(nextAsset);
       return;
     }
@@ -620,6 +823,7 @@ export default function LiveRoomPage() {
       stopPremiumVoice();
 
       audioUrlRef.current = audioUrl;
+
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
 
@@ -628,6 +832,7 @@ export default function LiveRoomPage() {
           URL.revokeObjectURL(audioUrlRef.current);
           audioUrlRef.current = null;
         }
+
         audioRef.current = null;
         setVoiceBusy(false);
       };
@@ -637,6 +842,7 @@ export default function LiveRoomPage() {
           URL.revokeObjectURL(audioUrlRef.current);
           audioUrlRef.current = null;
         }
+
         audioRef.current = null;
         setVoiceBusy(false);
       };
@@ -654,33 +860,12 @@ export default function LiveRoomPage() {
   }, [asset]);
 
   useEffect(() => {
-    if (isB3Asset) return;
-
     const interval = window.setInterval(() => {
       loadAnalysis(asset, true);
-    }, 3000);
+    }, 5000);
 
     return () => window.clearInterval(interval);
-  }, [asset, isB3Asset]);
-
-  useEffect(() => {
-    if (!isB3Asset) return;
-
-    const fallback = buildB3LiveRoomData(asset, b3Feed as B3Feed | null);
-    if (!fallback) {
-      setLoading(true);
-      return;
-    }
-
-    setError(null);
-    setLoading(false);
-    setRefreshing(false);
-
-    setData((current) => {
-      previousDataRef.current = current;
-      return fallback;
-    });
-  }, [asset, isB3Asset, b3Feed]);
+  }, [asset, b3Feed]);
 
   useEffect(() => {
     if (!voiceEnabled || !data) return;
@@ -713,7 +898,10 @@ export default function LiveRoomPage() {
     if (loading) return "Carregando Sala ao Vivo IA...";
     if (error) return "Erro na conexão com a Sala ao Vivo IA";
     if (refreshing) return "Atualizando leitura em tempo real...";
-    return isB3Asset ? "Conectado ao fluxo B3 em tempo real" : "Conectado em tempo real";
+
+    return isB3Asset
+      ? "Conectado com fallback inteligente"
+      : "Conectado em tempo real";
   }, [loading, error, refreshing, isB3Asset]);
 
   const topAlert = data?.alerts?.[0] || null;
@@ -727,17 +915,20 @@ export default function LiveRoomPage() {
               <div className="mb-2 inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
                 Gluck’s Trader IA
               </div>
+
               <h1 className="text-2xl font-black sm:text-3xl">
                 Sala ao Vivo IA
               </h1>
+
               <p className="mt-2 max-w-3xl text-sm text-zinc-300 sm:text-base">
-                Análise contínua do ativo com leitura de cenário, direção
-                provável, entrada, stop, alvo e eventos recentes.
+                Análise contínua do ativo com leitura de cenário, direção provável,
+                entrada, stop, alvo e eventos recentes.
               </p>
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <button
+                type="button"
                 onClick={() => navigate("/dashboard")}
                 className="rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm font-semibold text-zinc-200 transition hover:border-emerald-500/40 hover:text-white"
               >
@@ -745,6 +936,7 @@ export default function LiveRoomPage() {
               </button>
 
               <button
+                type="button"
                 onClick={() => loadAnalysis(asset, false)}
                 className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20 hover:text-white"
               >
@@ -752,6 +944,7 @@ export default function LiveRoomPage() {
               </button>
 
               <button
+                type="button"
                 onClick={() => setVoiceEnabled((prev) => !prev)}
                 className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
                   voiceEnabled
@@ -768,26 +961,32 @@ export default function LiveRoomPage() {
             <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-200">
               Sala ativa: <strong className="text-white">{asset}</strong>
             </span>
+
             <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-300">
               Timeframe: <strong className="text-white">{timeframe}</strong>
             </span>
+
             <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-300">
               Status: <strong className="text-white">{pageStatus}</strong>
             </span>
+
             <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-300">
               Voz:{" "}
               <strong className="text-white">
                 {voiceEnabled ? "Premium ativa" : "Desativada"}
               </strong>
             </span>
+
             <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-300">
               Áudio:{" "}
               <strong className="text-white">
                 {voiceBusy ? "Falando" : "Em espera"}
               </strong>
             </span>
+
             <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-300">
-              Última fala: <strong className="text-white">{lastSpeechReason}</strong>
+              Última fala:{" "}
+              <strong className="text-white">{lastSpeechReason}</strong>
             </span>
           </div>
 
@@ -796,6 +995,7 @@ export default function LiveRoomPage() {
               <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-zinc-400">
                 Salas por ativo
               </h2>
+
               <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300">
                 clique no card para iniciar
               </span>
@@ -823,14 +1023,16 @@ export default function LiveRoomPage() {
                         <div className="text-sm font-black text-white">
                           {item.symbol}
                         </div>
-                        <div className="text-xs text-zinc-400">{item.label}</div>
+                        <div className="text-xs text-zinc-400">
+                          {item.label}
+                        </div>
                       </div>
 
                       <span
                         className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${
                           active
                             ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
-                            : "border-zinc-700 bg-zinc-900 text-zinc-300"
+                            : "border-zinc-700 bg-zinc-900 text-zinc-300 group-hover:border-emerald-500/30 group-hover:text-emerald-300"
                         }`}
                       >
                         {active ? "AO VIVO" : "INICIAR"}
@@ -845,6 +1047,7 @@ export default function LiveRoomPage() {
                       <span className="text-xs font-medium text-zinc-300">
                         {currentSignal}
                       </span>
+
                       <span className="rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[11px] font-semibold text-zinc-200">
                         {currentConfidence}
                       </span>
@@ -872,9 +1075,15 @@ export default function LiveRoomPage() {
                   <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
                     Alerta principal
                   </div>
-                  <h2 className={`text-xl font-black ${alertStyles(topAlert.type).title}`}>
+
+                  <h2
+                    className={`text-xl font-black ${
+                      alertStyles(topAlert.type).title
+                    }`}
+                  >
                     {topAlert.title}
                   </h2>
+
                   <p className="mt-1 text-sm leading-6 text-zinc-300">
                     {topAlert.message}
                   </p>
@@ -903,7 +1112,9 @@ export default function LiveRoomPage() {
             <div className="rounded-3xl border border-zinc-800 bg-white/5 p-4 shadow-2xl backdrop-blur">
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-white">Gráfico ao vivo</h2>
+                  <h2 className="text-lg font-bold text-white">
+                    Gráfico ao vivo
+                  </h2>
                   <p className="text-sm text-zinc-400">
                     Acompanhamento visual do ativo com contexto para a leitura da IA.
                   </p>
@@ -920,6 +1131,7 @@ export default function LiveRoomPage() {
             <div className="rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl backdrop-blur">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-bold">Painel do ativo</h2>
+
                 <span className="text-xs text-zinc-400">
                   Última atualização:{" "}
                   <strong className="text-zinc-200">
@@ -929,47 +1141,17 @@ export default function LiveRoomPage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Preço atual
-                  </div>
-                  <div className="mt-2 text-2xl font-black text-white">
-                    {data ? formatPrice(data.price) : "-"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Confiança
-                  </div>
-                  <div className="mt-2 text-2xl font-black text-white">
-                    {data ? `${data.confidence}%` : "-"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Regime
-                  </div>
-                  <div className="mt-2 text-lg font-bold text-white">
-                    {data?.market_regime || "-"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Risco/Retorno
-                  </div>
-                  <div className="mt-2 text-lg font-bold text-white">
-                    {data?.risk_reward ?? "-"}
-                  </div>
-                </div>
+                <InfoCard title="Preço atual" value={data ? formatPrice(data.price) : "-"} />
+                <InfoCard title="Confiança" value={data ? `${data.confidence}%` : "-"} />
+                <InfoCard title="Regime" value={data?.market_regime || "-"} />
+                <InfoCard title="Risco/Retorno" value={data?.risk_reward ?? "-"} />
               </div>
             </div>
 
             <div className="rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl backdrop-blur">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-bold">Leitura ao vivo</h2>
+
                 <span
                   className={`rounded-full border px-3 py-1 text-xs font-bold ${
                     data
@@ -992,41 +1174,10 @@ export default function LiveRoomPage() {
               <h2 className="mb-4 text-lg font-bold">Operação sugerida</h2>
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Entrada
-                  </div>
-                  <div className="mt-2 text-xl font-black text-white">
-                    {data ? formatPrice(data.entry) : "-"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Stop
-                  </div>
-                  <div className="mt-2 text-xl font-black text-white">
-                    {data ? formatPrice(data.stop) : "-"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Alvo 1
-                  </div>
-                  <div className="mt-2 text-xl font-black text-white">
-                    {data ? formatPrice(data.target_1) : "-"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Alvo 2
-                  </div>
-                  <div className="mt-2 text-xl font-black text-white">
-                    {data ? formatPrice(data.target_2) : "-"}
-                  </div>
-                </div>
+                <InfoCard title="Entrada" value={data ? formatPrice(data.entry) : "-"} />
+                <InfoCard title="Stop" value={data ? formatPrice(data.stop) : "-"} />
+                <InfoCard title="Alvo 1" value={data ? formatPrice(data.target_1) : "-"} />
+                <InfoCard title="Alvo 2" value={data ? formatPrice(data.target_2) : "-"} />
               </div>
             </div>
           </div>
@@ -1035,143 +1186,43 @@ export default function LiveRoomPage() {
             <div className="rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl backdrop-blur">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-bold">Alertas fortes</h2>
+
                 <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
                   prioridade
                 </span>
               </div>
 
               <div className="space-y-3">
-                {data?.alerts?.length ? (
-                  data.alerts.map((alert, index) => {
+                {(data?.alerts ?? []).length > 0 ? (
+                  data?.alerts?.map((alert, index) => {
                     const styles = alertStyles(alert.type);
 
                     return (
                       <div
-                        key={`${alert.type}-${index}`}
-                        className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 px-4 py-3"
+                        key={`${alert.title}-${index}`}
+                        className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4"
                       >
-                        <div className={`absolute left-0 top-0 h-full w-1 ${styles.accent}`} />
-
                         <div className="flex items-start gap-3">
                           <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${styles.iconWrap}`}
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-bold ${styles.iconWrap}`}
                           >
                             {alertIcon(alert.type)}
                           </div>
 
                           <div className="min-w-0 flex-1">
-                            <div className="mb-1 flex items-center justify-between gap-2">
-                              <h3
-                                className={`text-sm font-bold uppercase tracking-wide ${styles.title}`}
-                              >
-                                {alert.title}
-                              </h3>
-
-                              <span
-                                className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${styles.badge}`}
-                              >
-                                P{alert.priority}
-                              </span>
+                            <div className={`font-bold ${styles.title}`}>
+                              {alert.title}
                             </div>
 
-                            <p className="text-sm leading-6 text-zinc-300">
+                            <p className="mt-1 text-sm leading-6 text-zinc-300">
                               {alert.message}
                             </p>
                           </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 text-sm text-zinc-400">
-                    Nenhum alerta disponível.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl backdrop-blur">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold">Evolução do cenário</h2>
-                <span className="rounded-full border border-sky-500/20 bg-sky-500/10 px-3 py-1 text-xs text-sky-300">
-                  memória da IA
-                </span>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Cenário anterior
-                  </div>
-                  <div className="mt-2 text-lg font-bold text-white">
-                    {data?.scenario_memory?.previous_signal
-                      ? signalLabel(data.scenario_memory.previous_signal)
-                      : "Inicial"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Cenário atual
-                  </div>
-                  <div className="mt-2 text-lg font-bold text-white">
-                    {data?.scenario_memory?.current_signal
-                      ? signalLabel(data.scenario_memory.current_signal)
-                      : "-"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Evolução
-                  </div>
-                  <div className="mt-2 text-base font-semibold text-sky-300">
-                    {data?.scenario_memory?.evolution_label || "-"}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-                  <div className="text-xs uppercase tracking-wide text-zinc-400">
-                    Delta de confiança
-                  </div>
-                  <div className="mt-2 text-base font-semibold text-white">
-                    {typeof data?.scenario_memory?.confidence_delta === "number"
-                      ? `${data.scenario_memory.confidence_delta > 0 ? "+" : ""}${data.scenario_memory.confidence_delta}`
-                      : "-"}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl backdrop-blur">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold">Eventos recentes</h2>
-                <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300">
-                  {data?.events?.length || 0} eventos
-                </span>
-              </div>
-
-              <div className="space-y-2.5">
-                {data?.events?.length ? (
-                  data.events.map((event, index) => {
-                    const item = eventToCompactItem(event);
-
-                    return (
-                      <div
-                        key={`${event}-${index}`}
-                        className="group rounded-2xl border border-zinc-800 bg-zinc-950/70 px-3 py-3 transition hover:border-zinc-700 hover:bg-zinc-950"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className={`truncate text-sm font-semibold ${item.color}`}>
-                              {item.label}
-                            </div>
-                          </div>
 
                           <span
-                            className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${item.badge}`}
+                            className={`rounded-full border px-2 py-1 text-[11px] font-bold ${styles.badge}`}
                           >
-                            {item.value}
+                            P{alert.priority}
                           </span>
                         </div>
                       </div>
@@ -1179,88 +1230,139 @@ export default function LiveRoomPage() {
                   })
                 ) : (
                   <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 text-sm text-zinc-400">
-                    Nenhum evento recente disponível.
+                    Nenhum alerta forte no momento.
                   </div>
                 )}
               </div>
             </div>
 
             <div className="rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl backdrop-blur">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold">Estado técnico</h2>
-                <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300">
-                  leitura atual
-                </span>
-              </div>
+              <h2 className="mb-4 text-lg font-bold">Eventos recentes</h2>
 
-              <div className="space-y-2.5">
-                {[
-                  {
-                    label: "Tendência de alta",
-                    active: data?.state_flags?.trend_up,
-                    yesClass:
-                      "bg-emerald-500/15 text-emerald-300 border-emerald-500/20",
-                    noClass: "bg-zinc-500/15 text-zinc-300 border-zinc-500/20",
-                  },
-                  {
-                    label: "Tendência de baixa",
-                    active: data?.state_flags?.trend_down,
-                    yesClass: "bg-red-500/15 text-red-300 border-red-500/20",
-                    noClass: "bg-zinc-500/15 text-zinc-300 border-zinc-500/20",
-                  },
-                  {
-                    label: "Mercado lateralizado",
-                    active: data?.state_flags?.lateralized,
-                    yesClass:
-                      "bg-yellow-500/15 text-yellow-300 border-yellow-500/20",
-                    noClass: "bg-zinc-500/15 text-zinc-300 border-zinc-500/20",
-                  },
-                  {
-                    label: "Acima da VWAP",
-                    active: data?.state_flags?.above_vwap,
-                    yesClass: "bg-cyan-500/15 text-cyan-300 border-cyan-500/20",
-                    noClass: "bg-zinc-500/15 text-zinc-300 border-zinc-500/20",
-                  },
-                  {
-                    label: "Exaustão detectada",
-                    active: data?.state_flags?.exhaustion,
-                    yesClass:
-                      "bg-amber-500/15 text-amber-300 border-amber-500/20",
-                    noClass: "bg-zinc-500/15 text-zinc-300 border-zinc-500/20",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-800 bg-zinc-950/70 px-4 py-3"
-                  >
-                    <span className="text-sm font-medium text-zinc-200">
-                      {item.label}
-                    </span>
+              <div className="space-y-3">
+                {(data?.events ?? []).length > 0 ? (
+                  data?.events?.map((event, index) => {
+                    const compact = eventToCompactItem(event);
 
-                    <span
-                      className={`rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide ${
-                        item.active ? item.yesClass : item.noClass
-                      }`}
-                    >
-                      {item.active ? "Sim" : "Não"}
-                    </span>
+                    return (
+                      <div
+                        key={`${event}-${index}`}
+                        className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-sm text-zinc-400">
+                              {compact.label}
+                            </div>
+
+                            <div className={`mt-1 font-bold ${compact.color}`}>
+                              {compact.value}
+                            </div>
+                          </div>
+
+                          <span
+                            className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${compact.badge}`}
+                          >
+                            evento
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 text-sm text-zinc-400">
+                    Nenhum evento recente.
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
-            <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-5 shadow-2xl">
-              <h2 className="mb-3 text-lg font-bold text-emerald-300">
-                Observação importante
-              </h2>
-              <p className="text-sm leading-6 text-emerald-100/90">
-                A Sala ao Vivo IA entrega leitura probabilística e sugestão de
-                cenário operacional. Não representa recomendação de investimento.
-              </p>
+            <div className="rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl backdrop-blur">
+              <h2 className="mb-4 text-lg font-bold">Memória do cenário</h2>
+
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
+                <div className="text-sm text-zinc-400">Evolução</div>
+
+                <div className="mt-2 text-lg font-bold text-white">
+                  {data?.scenario_memory?.evolution_label ?? "-"}
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <InfoCard
+                    title="Sinal anterior"
+                    value={
+                      data?.scenario_memory?.previous_signal
+                        ? signalLabel(data.scenario_memory.previous_signal)
+                        : "-"
+                    }
+                  />
+
+                  <InfoCard
+                    title="Sinal atual"
+                    value={
+                      data?.scenario_memory?.current_signal
+                        ? signalLabel(data.scenario_memory.current_signal)
+                        : "-"
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl backdrop-blur">
+              <h2 className="mb-4 text-lg font-bold">Flags do mercado</h2>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Flag label="Tendência alta" active={!!data?.state_flags?.trend_up} />
+                <Flag label="Tendência baixa" active={!!data?.state_flags?.trend_down} />
+                <Flag label="Lateralizado" active={!!data?.state_flags?.lateralized} />
+                <Flag label="Acima VWAP" active={!!data?.state_flags?.above_vwap} />
+                <Flag label="Exaustão" active={!!data?.state_flags?.exhaustion} />
+              </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function InfoCard({
+  title,
+  value,
+}: {
+  title: string;
+  value: string | number;
+}) {
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
+      <div className="text-xs uppercase tracking-wide text-zinc-400">
+        {title}
+      </div>
+
+      <div className="mt-2 text-lg font-black text-white break-words">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function Flag({
+  label,
+  active,
+}: {
+  label: string;
+  active: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl border p-3 text-sm ${
+        active
+          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+          : "border-zinc-800 bg-zinc-950/70 text-zinc-500"
+      }`}
+    >
+      {active ? "●" : "○"} {label}
     </div>
   );
 }
