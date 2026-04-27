@@ -401,7 +401,14 @@ function buildB3LiveRoomData(
   asset: string,
   b3Feed: B3Feed | null | undefined
 ): LiveRoomResponse | null {
-  const last = Number(b3Feed?.last_price ?? 0);
+  const last =
+    Number(b3Feed?.last_price) ||
+    Number(b3Feed?.close_price) ||
+    Number(b3Feed?.open_price) ||
+    Number(b3Feed?.high_price) ||
+    Number(b3Feed?.low_price) ||
+    0;
+
   if (!last || Number.isNaN(last)) return null;
 
   const open = Number(b3Feed?.open_price ?? last);
@@ -414,7 +421,7 @@ function buildB3LiveRoomData(
 
   const confidence =
     last === open
-      ? 55
+      ? 54
       : Math.min(
           78,
           Math.max(
@@ -462,7 +469,7 @@ function buildB3LiveRoomData(
           },
         ];
 
-  const payload = {
+  return {
     asset,
     signal: direction,
     confidence,
@@ -472,13 +479,13 @@ function buildB3LiveRoomData(
     target_1: high || last,
     target_2: high || last,
     updated_at: updatedAt,
-    market_regime: "Fluxo B3 em tempo real",
+    market_regime: "Leitura ao vivo com fallback inteligente",
     risk_reward: "1:0.00",
     narration_text:
       direction === "buy"
-        ? `${asset} com pressão compradora no fluxo ao vivo. Preço atual em ${formatPrice(last)}.`
+        ? `${asset} com pressão compradora na leitura ao vivo. Preço atual em ${formatPrice(last)}.`
         : direction === "sell"
-        ? `${asset} com pressão vendedora no fluxo ao vivo. Preço atual em ${formatPrice(last)}.`
+        ? `${asset} com pressão vendedora na leitura ao vivo. Preço atual em ${formatPrice(last)}.`
         : `${asset} em leitura neutra no fluxo ao vivo. Preço atual em ${formatPrice(last)}.`,
     alerts,
     events,
@@ -500,9 +507,7 @@ function buildB3LiveRoomData(
       above_vwap: direction === "buy",
       exhaustion: false,
     },
-  };
-
-  return payload as unknown as LiveRoomResponse;
+  } as unknown as LiveRoomResponse;
 }
 
 export default function LiveRoomPage() {
@@ -526,13 +531,6 @@ export default function LiveRoomPage() {
   const { data: b3Feed } = useB3MarketData(isB3Asset ? asset : "");
 
   async function loadAnalysis(selectedAsset: string, silent = false) {
-    if (isB3Symbol(selectedAsset)) {
-      if (!silent) setLoading(false);
-      if (silent) setRefreshing(false);
-      setError(null);
-      return;
-    }
-
     try {
       if (!silent) setLoading(true);
       if (silent) setRefreshing(true);
@@ -540,18 +538,50 @@ export default function LiveRoomPage() {
       setError(null);
 
       const result = await fetchLiveRoomAnalysis(selectedAsset, timeframe);
+
       setData((current) => {
         previousDataRef.current = current;
         return result;
       });
     } catch (err) {
+      const fallback = isB3Symbol(selectedAsset)
+        ? buildB3LiveRoomData(selectedAsset, b3Feed as B3Feed | null)
+        : null;
+
+      if (fallback) {
+        setData((current) => {
+          previousDataRef.current = current;
+          return fallback;
+        });
+        setError(null);
+        return;
+      }
+
       const message =
         err instanceof Error ? err.message : "Erro ao carregar análise ao vivo.";
+
       setError(message);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
+  }
+
+  function handleEnterRoom(nextAsset: string) {
+    stopPremiumVoice();
+    previousDataRef.current = null;
+    setLastSpeechReason("Troca de ativo");
+    setError(null);
+    setRefreshing(false);
+
+    if (asset !== nextAsset) {
+      setData(null);
+      setLoading(true);
+      setAsset(nextAsset);
+      return;
+    }
+
+    loadAnalysis(nextAsset, false);
   }
 
   function stopPremiumVoice() {
@@ -718,7 +748,7 @@ export default function LiveRoomPage() {
                 onClick={() => loadAnalysis(asset, false)}
                 className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20 hover:text-white"
               >
-                Iniciar Sala
+                Atualizar leitura
               </button>
 
               <button
@@ -767,7 +797,7 @@ export default function LiveRoomPage() {
                 Salas por ativo
               </h2>
               <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-300">
-                clique para trocar
+                clique no card para iniciar
               </span>
             </div>
 
@@ -782,8 +812,9 @@ export default function LiveRoomPage() {
                 return (
                   <button
                     key={item.symbol}
-                    onClick={() => setAsset(item.symbol)}
-                    className={`rounded-2xl border p-4 text-left transition ${assetCardClasses(
+                    type="button"
+                    onClick={() => handleEnterRoom(item.symbol)}
+                    className={`group cursor-pointer rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:scale-[1.01] ${assetCardClasses(
                       active
                     )}`}
                   >
@@ -802,7 +833,7 @@ export default function LiveRoomPage() {
                             : "border-zinc-700 bg-zinc-900 text-zinc-300"
                         }`}
                       >
-                        {active ? "AO VIVO" : "ABRIR"}
+                        {active ? "AO VIVO" : "INICIAR"}
                       </span>
                     </div>
 
