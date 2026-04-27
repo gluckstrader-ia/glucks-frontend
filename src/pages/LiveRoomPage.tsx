@@ -720,6 +720,12 @@ export default function LiveRoomPage() {
       }
     | undefined;
 
+    console.log("[LIVE ROOM STATE]", dashboardState);
+    console.log("[LIVE ROOM STATE ASSET]", dashboardState?.asset);
+    console.log("[LIVE ROOM STATE ANALYSIS]", dashboardState?.analysisData);
+    console.log("[LIVE ROOM STATE B3]", dashboardState?.b3Data);
+    console.log("[LIVE ROOM STATE IS B3]", dashboardState?.isB3Future);
+
   const [asset, setAsset] = useState(
     dashboardState?.asset ?? "WIN"
   );
@@ -969,6 +975,30 @@ export default function LiveRoomPage() {
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
+
+      <div className="mb-4 rounded-2xl border border-cyan-500/30 bg-cyan-950/20 p-4 text-xs text-cyan-200">
+        <div className="mb-2 font-bold text-cyan-300">
+          DEBUG LIVE ROOM STATE
+        </div>
+
+        <pre className="whitespace-pre-wrap break-all">
+          {JSON.stringify(
+            {
+              asset,
+              dashboardStateAsset: dashboardState?.asset,
+              hasAnalysisData: !!dashboardState?.analysisData,
+              hasB3Data: !!dashboardState?.b3Data,
+              isB3Future: dashboardState?.isB3Future,
+              data,
+              loading,
+              error,
+            },
+          null,
+          2
+        )}
+      </pre>
+    </div>
+
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-6 rounded-3xl border border-emerald-500/20 bg-white/5 p-5 shadow-2xl backdrop-blur">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
