@@ -737,10 +737,12 @@ export default function LiveRoomPage() {
 
       let result: LiveRoomResponse | null = null;
 
+      // 1. WIN/WDO tentam B3 local primeiro, se existir
       if (isB3Symbol(selectedAsset)) {
         result = buildB3LiveRoomData(selectedAsset, b3Feed as B3Feed | null);
       }
 
+      // 2. Tenta API própria da sala ao vivo
       if (!result) {
         try {
           result = await fetchLiveRoomAnalysis(selectedAsset, timeframe);
@@ -749,6 +751,7 @@ export default function LiveRoomPage() {
         }
       }
 
+      // 3. Fallback final: usa /analyze com mapeamento online
       if (!result) {
         result = await fetchAnalyzeFallback(selectedAsset, timeframe);
       }
@@ -770,7 +773,7 @@ export default function LiveRoomPage() {
     }
   }
 
-  function handleEnterRoom(nextAsset: string) {
+  async function handleEnterRoom(nextAsset: string) {
     stopPremiumVoice();
     previousDataRef.current = null;
     setLastSpeechReason("Troca de ativo");
@@ -779,12 +782,9 @@ export default function LiveRoomPage() {
     setData(null);
     setLoading(true);
 
-    if (asset !== nextAsset) {
-      setAsset(nextAsset);
-      return;
-    }
+    setAsset(nextAsset);
 
-    loadAnalysis(nextAsset, false);
+    await loadAnalysis(nextAsset, false);
   }
 
   function stopPremiumVoice() {
