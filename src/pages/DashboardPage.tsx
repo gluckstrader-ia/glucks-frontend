@@ -4385,22 +4385,6 @@ const resolvedAssetType =
                   data={quantData}
                   loading={quantLoading}
                 />
-
-                <div className="mt-3 rounded-2xl border border-cyan-500/30 bg-cyan-950/20 p-3 text-xs text-cyan-200">
-                  <pre className="whitespace-pre-wrap break-all">
-                    {JSON.stringify(
-                      {
-                        isB3Future,
-                        b3Data,
-                        quantData,
-                        quantLoading,
-                        quantError,
-                      },
-                      null,
-                      2
-                    )}
-                  </pre>
-                </div>
               </div>
 
               {/* LATERAL DIREITA */}
