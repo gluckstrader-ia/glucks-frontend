@@ -1,11 +1,11 @@
-type TrendLabel =
+export type TrendLabel =
   | "FORTE ALTISTA"
   | "ALTISTA"
   | "NEUTRO"
   | "BAIXISTA"
   | "FORTE BAIXISTA";
 
-type SignalLabel =
+export type SignalLabel =
   | "COMPRA FORTE"
   | "COMPRA"
   | "NEUTRO"
