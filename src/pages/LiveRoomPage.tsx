@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { fetchLiveRoomVoice } from "../lib/liveRoomApi";
 import type { LiveRoomResponse } from "../lib/liveRoomApi";
 import LiveRoomChart from "../components/live-room/LiveRoomChart";
@@ -708,8 +708,21 @@ async function fetchAnalyzeFallback(
 
 export default function LiveRoomPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [asset, setAsset] = useState("WIN");
+  const dashboardState = location.state as
+    | {
+        asset?: string;
+        timeframe?: string;
+        analysisData?: any;
+        b3Data?: any;
+        isB3Future?: boolean;
+      }
+    | undefined;
+
+  const [asset, setAsset] = useState(
+    dashboardState?.asset ?? "WIN"
+  );
   const [data, setData] = useState<LiveRoomResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -734,6 +747,42 @@ export default function LiveRoomPage() {
     if (silent) setRefreshing(true);
 
     setError(null);
+
+    const stateAsset = dashboardState?.asset ?? selectedAsset;
+
+    if (dashboardState?.analysisData) {
+      const result = buildLiveRoomFromAnalyzeData(
+      stateAsset,
+      dashboardState.analysisData
+    );
+
+    if (result) {
+      setData((current) => {
+        previousDataRef.current = current;
+        return result;
+      });
+
+      setError(null);
+      return;
+    }
+  }
+
+  if (dashboardState?.isB3Future && dashboardState?.b3Data) {
+    const result = buildB3LiveRoomData(
+      stateAsset,
+      dashboardState.b3Data
+    );
+
+    if (result) {
+      setData((current) => {
+        previousDataRef.current = current;
+        return result;
+      });
+
+      setError(null);
+      return;
+    }
+  }
 
     let result: LiveRoomResponse | null = null;
 
