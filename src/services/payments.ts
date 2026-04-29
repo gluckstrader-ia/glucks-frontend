@@ -10,11 +10,20 @@ export async function createCheckout(plan: string, token: string) {
     body: JSON.stringify({ plan }),
   });
 
+  const text = await response.text();
+
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Erro API:", errorText);
-    throw new Error("Erro ao criar pagamento");
+    console.error("Erro status:", response.status);
+    console.error("Erro resposta completa:", text);
+
+    // tenta converter em JSON
+    try {
+      const json = JSON.parse(text);
+      throw new Error(json?.detail || text);
+    } catch {
+      throw new Error(text || "Erro ao criar pagamento");
+    }
   }
 
-  return response.json();
+  return text ? JSON.parse(text) : {};
 }
