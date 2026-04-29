@@ -1,213 +1,208 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { BrainCircuit } from "lucide-react";
-import { Card, CardContent } from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { saveAuth } from "../lib/auth";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [addressNumber, setAddressNumber] = useState("");
   const [partnerCode, setPartnerCode] = useState("");
-  const [loadingAuth, setLoadingAuth] = useState(false);
-  const [authError, setAuthError] = useState("");
 
-  useEffect(() => {
-    const ref = (searchParams.get("ref") || "").trim();
-    if (ref) {
-      setPartnerCode(ref.toUpperCase());
-    }
-  }, [searchParams]);
+  const [error, setError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const selectedPlan = useMemo(() => {
-    const plan = (searchParams.get("plan") || "mensal").toLowerCase();
-    if (["mensal", "trimestral", "semestral"].includes(plan)) {
-      return plan;
-    }
-    return "mensal";
-  }, [searchParams]);
+  // =========================
+  // FORMATAR TELEFONE
+  // =========================
+  const onlyNumbers = (value: string) => value.replace(/\D/g, "");
 
-  const planMeta = useMemo(() => {
-    if (selectedPlan === "trimestral") {
-      return {
-        label: "Trimestral",
-        price: "R$ 497",
-        description: "Melhor custo-benefício para acesso contínuo à plataforma.",
-      };
-    }
+  const formatPhone = (value: string) => {
+    const numbers = onlyNumbers(value).slice(0, 11);
 
-    if (selectedPlan === "semestral") {
-      return {
-        label: "Semestral",
-        price: "R$ 897",
-        description: "Maior economia para quem quer consistência no longo prazo.",
-      };
-    }
+    if (numbers.length <= 2) return numbers;
 
-    return {
-      label: "Mensal",
-      price: "R$ 197",
-      description: "Ideal para começar agora com acesso completo à plataforma.",
-    };
-  }, [selectedPlan]);
+    if (numbers.length <= 6)
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
 
-  async function handleRegister() {
-    if (!name || !email || !password) {
-      setAuthError("Preencha todos os campos obrigatórios.");
+    if (numbers.length <= 10)
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
+
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
+  };
+
+  // =========================
+  // VALIDAR TELEFONE
+  // =========================
+  const isValidPhone = (value: string) => {
+    const phone = onlyNumbers(value);
+
+    if (![10, 11].includes(phone.length)) return false;
+
+    if (/^(\d)\1+$/.test(phone)) return false;
+
+    const fakeNumbers = [
+      "0000000000",
+      "9999999999",
+      "00000000000",
+      "99999999999",
+      "1234567890",
+      "12345678901",
+    ];
+
+    if (fakeNumbers.includes(phone)) return false;
+
+    if (phone.length === 11 && phone[2] !== "9") return false;
+
+    return true;
+  };
+
+  // =========================
+  // SUBMIT
+  // =========================
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setError("");
+    setPhoneError("");
+
+    if (!name.trim()) return setError("Informe seu nome");
+    if (!email.trim()) return setError("Informe seu email");
+    if (!password.trim()) return setError("Informe sua senha");
+
+    if (!isValidPhone(phone)) {
+      setPhoneError("Digite um WhatsApp válido com DDD");
       return;
     }
 
     try {
-      setLoadingAuth(true);
-      setAuthError("");
+      setLoading(true);
+
+      const payload = {
+        name,
+        email,
+        password,
+        phone: onlyNumbers(phone),
+        address_number: addressNumber || null,
+        referred_by_code: partnerCode || null,
+      };
 
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          referred_by_code: partnerCode.trim() || null,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || "Falha no cadastro");
+        throw new Error(data.detail || "Erro ao cadastrar");
       }
 
-      // 🔥 CORREÇÃO AQUI
-      saveAuth(data);
+      localStorage.setItem("glucks_token", data.access_token);
+      localStorage.setItem("glucks_user", JSON.stringify(data.user));
 
-      navigate(`/premium?plan=${selectedPlan}`);
-    } catch (error: any) {
-      setAuthError(error.message || "Erro ao criar conta");
+      navigate("/home-premium");
+    } catch (err: any) {
+      setError(err.message || "Erro ao cadastrar");
     } finally {
-      setLoadingAuth(false);
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 flex items-center justify-center p-6">
-      <div className="w-full max-w-5xl grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <Card className="bg-zinc-900 border-zinc-800">
-          <CardContent className="p-8 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <BrainCircuit size={22} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">
-                  Criar conta
-                </h1>
-                <p className="text-zinc-400 text-sm">
-                  Cadastre-se para continuar o processo de assinatura.
-                </p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-md bg-zinc-900 p-8 rounded-2xl border border-white/10"
+      >
+        <h1 className="text-2xl font-bold text-white mb-6">
+          Criar Conta
+        </h1>
 
-            <div className="flex flex-col gap-4">
-              <Input
-                placeholder="Nome"
-                value={name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setName(e.target.value)
-                }
-                className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
-              />
+        {/* NOME */}
+        <input
+          type="text"
+          placeholder="Nome"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full mb-4 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+        />
 
-              <Input
-                placeholder="Email"
-                value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setEmail(e.target.value)
-                }
-                className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
-              />
+        {/* EMAIL */}
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full mb-4 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+        />
 
-              <Input
-                type="password"
-                placeholder="Senha"
-                value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setPassword(e.target.value)
-                }
-                className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
-              />
+        {/* SENHA */}
+        <input
+          type="password"
+          placeholder="Senha"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full mb-4 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+        />
 
-              <Input
-                placeholder="Código do parceiro (opcional)"
-                value={partnerCode}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setPartnerCode(e.target.value.toUpperCase())
-                }
-                className="bg-zinc-950 border-zinc-700 text-white placeholder:text-zinc-500"
-              />
-            </div>
+        {/* TELEFONE */}
+        <input
+          type="text"
+          placeholder="WhatsApp (11) 99999-9999"
+          value={phone}
+          onChange={(e) => setPhone(formatPhone(e.target.value))}
+          className={`w-full mb-2 px-4 py-3 rounded-xl text-white ${
+            phoneError
+              ? "border-red-500 bg-red-500/10"
+              : "border border-white/10 bg-white/5"
+          }`}
+        />
 
-            {authError && (
-              <div className="rounded-xl border border-red-900/40 bg-red-950/20 p-3 text-sm text-red-400">
-                {authError}
-              </div>
-            )}
+        {phoneError && (
+          <p className="text-red-400 text-sm mb-3">{phoneError}</p>
+        )}
 
-            <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-              onClick={handleRegister}
-              disabled={loadingAuth}
-            >
-              {loadingAuth ? "Criando conta..." : "Criar conta e continuar"}
-            </Button>
+        {/* NÚMERO */}
+        <input
+          type="text"
+          placeholder="Número (ex: 120)"
+          value={addressNumber}
+          onChange={(e) => setAddressNumber(e.target.value)}
+          className="w-full mb-4 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+        />
 
-            <div className="text-center text-sm text-zinc-400">
-              Já tem conta?{" "}
-              <Link
-                to="/login"
-                className="text-emerald-400 hover:text-emerald-300"
-              >
-                Entrar
-              </Link>
-            </div>
+        {/* CÓDIGO PARCEIRO */}
+        <input
+          type="text"
+          placeholder="Código de parceiro (opcional)"
+          value={partnerCode}
+          onChange={(e) => setPartnerCode(e.target.value)}
+          className="w-full mb-4 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
+        />
 
-            <div className="text-center text-sm text-zinc-400">
-              Quer ser parceiro?{" "}
-              <Link
-                to="/cadastro-parceiro"
-                className="text-emerald-400 hover:text-emerald-300"
-              >
-                Cadastre-se como parceiro
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        {/* ERRO */}
+        {error && (
+          <p className="text-red-400 text-sm mb-4">{error}</p>
+        )}
 
-        {/* Lado direito mantido */}
-        <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-900 p-8">
-          <h2 className="text-2xl font-bold text-white">
-            Plano {planMeta.label}
-          </h2>
-          <p className="text-zinc-400 mt-2">{planMeta.description}</p>
-
-          <div className="mt-6 text-4xl font-black text-emerald-400">
-            {planMeta.price}
-          </div>
-
-          <p className="text-sm text-zinc-500 mt-2">
-            Após criar sua conta, você continuará para finalizar a assinatura.
-          </p>
-        </div>
-      </div>
+        {/* BOTÃO */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold transition"
+        >
+          {loading ? "Criando..." : "Criar Conta"}
+        </button>
+      </form>
     </div>
   );
 }
