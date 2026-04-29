@@ -1,25 +1,30 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { clearAuth, getStoredUser } from "../lib/auth";
+import { createCheckout } from "../services/payments";
 
-const PAGSEGURO_LINKS = {
-  mensal: "https://gluckstrader.sualojaonline.app/item/18992808/glucks-trader-ia-mensal",
-  trimestral: "https://gluckstrader.sualojaonline.app/item/18992822/glucks-trader-ia-trimestral",
-  semestral: "https://gluckstrader.sualojaonline.app/item/18992836/glucks-trader-ia-semestral",
-} as const;
+type PlanKey = "mensal" | "trimestral" | "semestral";
+type ApiPlanKey = "monthly" | "quarterly" | "semiannual";
 
-type PlanKey = keyof typeof PAGSEGURO_LINKS;
+const PLAN_TO_API: Record<PlanKey, ApiPlanKey> = {
+  mensal: "monthly",
+  trimestral: "quarterly",
+  semestral: "semiannual",
+};
 
 export default function PremiumPage() {
   const navigate = useNavigate();
   const user = getStoredUser();
   const [searchParams] = useSearchParams();
+  const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
 
   const highlightPlan = useMemo(() => {
     const plan = (searchParams.get("plan") || "").toLowerCase();
+
     if (plan === "mensal" || plan === "trimestral" || plan === "semestral") {
       return plan as PlanKey;
     }
+
     return "mensal" as PlanKey;
   }, [searchParams]);
 
@@ -28,15 +33,33 @@ export default function PremiumPage() {
     navigate("/login");
   }
 
-  function handlePlanRedirect(plan: PlanKey) {
-    const url = PAGSEGURO_LINKS[plan];
+  async function handleCheckout(plan: PlanKey) {
+    try {
+      const token = localStorage.getItem("glucks_token");
 
-    if (!url || url.includes("COLE_AQUI")) {
-      alert(`O link do plano ${plan} ainda não foi configurado.`);
-      return;
+      if (!token) {
+        alert("Você precisa estar logado para assinar.");
+        navigate("/login");
+        return;
+      }
+
+      setLoadingPlan(plan);
+
+      const apiPlan = PLAN_TO_API[plan];
+      const data = await createCheckout(apiPlan, token);
+
+      if (data?.checkout_url) {
+        window.location.href = data.checkout_url;
+        return;
+      }
+
+      alert("Erro ao gerar o link de pagamento.");
+    } catch (error) {
+      console.error("Erro ao iniciar pagamento:", error);
+      alert("Erro ao iniciar pagamento. Tente novamente.");
+    } finally {
+      setLoadingPlan(null);
     }
-
-    window.location.href = url;
   }
 
   const plans = [
@@ -45,7 +68,8 @@ export default function PremiumPage() {
       title: "Plano Mensal",
       price: "R$ 197",
       period: "/mês",
-      description: "Ideal para começar agora e testar toda a experiência da plataforma.",
+      description:
+        "Ideal para começar agora e testar toda a experiência da plataforma.",
       features: [
         "Acesso à plataforma",
         "Dashboard de análise",
@@ -58,7 +82,8 @@ export default function PremiumPage() {
       title: "Plano Trimestral",
       price: "R$ 497",
       period: "/3 meses",
-      description: "Mais estabilidade e melhor custo-benefício para operar com consistência.",
+      description:
+        "Mais estabilidade e melhor custo-benefício para operar com consistência.",
       features: [
         "Tudo do plano mensal",
         "Melhor custo-benefício",
@@ -72,7 +97,8 @@ export default function PremiumPage() {
       title: "Plano Semestral",
       price: "R$ 897",
       period: "/6 meses",
-      description: "Para quem quer acompanhamento por mais tempo e foco em performance.",
+      description:
+        "Para quem quer acompanhamento por mais tempo e foco em performance.",
       features: [
         "Tudo do plano trimestral",
         "Maior economia",
@@ -98,6 +124,7 @@ export default function PremiumPage() {
                 className="h-6 w-6 object-contain"
               />
             </div>
+
             <div className="bg-gradient-to-r from-green-400 via-emerald-400 to-green-600 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
               Gluck&apos;s Trader IA
             </div>
@@ -144,6 +171,7 @@ export default function PremiumPage() {
         <section className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3">
           {plans.map((plan) => {
             const isHighlighted = highlightPlan === plan.id;
+            const isLoading = loadingPlan === plan.id;
 
             return (
               <div
@@ -175,7 +203,10 @@ export default function PremiumPage() {
 
                 <div className="mt-6 space-y-3">
                   {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3 text-zinc-200">
+                    <div
+                      key={feature}
+                      className="flex items-center gap-3 text-zinc-200"
+                    >
                       <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-400" />
                       <span>{feature}</span>
                     </div>
@@ -184,14 +215,15 @@ export default function PremiumPage() {
 
                 <button
                   type="button"
-                  onClick={() => handlePlanRedirect(plan.id)}
-                  className={`mt-8 w-full rounded-2xl px-5 py-4 text-base font-semibold transition ${
+                  onClick={() => handleCheckout(plan.id)}
+                  disabled={!!loadingPlan}
+                  className={`mt-8 w-full rounded-2xl px-5 py-4 text-base font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                     isHighlighted
                       ? "bg-green-500 text-black hover:bg-green-400"
                       : "bg-zinc-100 text-black hover:bg-white"
                   }`}
                 >
-                  Assinar agora
+                  {isLoading ? "Gerando pagamento..." : "Assinar agora"}
                 </button>
               </div>
             );
