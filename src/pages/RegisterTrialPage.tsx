@@ -46,7 +46,6 @@ export default function RegisterTrialPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [addressNumber, setAddressNumber] = useState("");
   const [partnerCode, setPartnerCode] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -130,7 +129,6 @@ export default function RegisterTrialPage() {
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
     const cleanPhone = onlyNumbers(phone);
-    const trimmedAddressNumber = addressNumber.trim();
     const trimmedPartnerCode = partnerCode.trim().toUpperCase();
 
     if (!trimmedName || !trimmedEmail || !trimmedPassword || !cleanPhone) {
@@ -162,7 +160,6 @@ export default function RegisterTrialPage() {
           email: trimmedEmail,
           password: trimmedPassword,
           phone: cleanPhone,
-          address_number: trimmedAddressNumber || null,
           referred_by_code: trimmedPartnerCode || null,
         }),
       });
@@ -307,21 +304,6 @@ export default function RegisterTrialPage() {
                       setPhone(formatPhone(event.target.value))
                     }
                     placeholder="(51) 99988-7766"
-                    className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-zinc-200">
-                    Número
-                  </label>
-                  <input
-                    type="text"
-                    value={addressNumber}
-                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                      setAddressNumber(event.target.value)
-                    }
-                    placeholder="Ex: 120"
                     className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
                   />
                 </div>

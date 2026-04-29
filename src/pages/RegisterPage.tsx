@@ -10,7 +10,6 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [addressNumber, setAddressNumber] = useState("");
   const [partnerCode, setPartnerCode] = useState("");
 
   const [error, setError] = useState("");
@@ -88,7 +87,6 @@ export default function RegisterPage() {
         email,
         password,
         phone: onlyNumbers(phone),
-        address_number: addressNumber || null,
         referred_by_code: partnerCode || null,
       };
 
@@ -170,15 +168,6 @@ export default function RegisterPage() {
         {phoneError && (
           <p className="text-red-400 text-sm mb-3">{phoneError}</p>
         )}
-
-        {/* NÚMERO */}
-        <input
-          type="text"
-          placeholder="Número (ex: 120)"
-          value={addressNumber}
-          onChange={(e) => setAddressNumber(e.target.value)}
-          className="w-full mb-4 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white"
-        />
 
         {/* CÓDIGO PARCEIRO */}
         <input
