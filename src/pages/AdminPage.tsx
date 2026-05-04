@@ -42,6 +42,9 @@ type UserItem = {
   is_partner?: boolean;
   partner_code?: string | null;
   partner_status?: string | null;
+  referred_by_user_id?: number | null;
+  referred_by_code?: string | null;
+  affiliate_code?: string | null;
   plan: string;
   plan_status: string;
   access_expires_at?: string | null;
@@ -450,7 +453,10 @@ export default function AdminPage() {
       const matchesSearch =
         !normalizedSearch ||
         user.name?.toLowerCase().includes(normalizedSearch) ||
-        user.email?.toLowerCase().includes(normalizedSearch);
+        user.email?.toLowerCase().includes(normalizedSearch) ||
+        (user.referred_by_code || "").toLowerCase().includes(normalizedSearch) ||
+        (user.affiliate_code || "").toLowerCase().includes(normalizedSearch) ||
+        (user.partner_code || "").toLowerCase().includes(normalizedSearch);
 
       if (!matchesSearch) return false;
 
@@ -751,12 +757,13 @@ export default function AdminPage() {
           <div className="space-y-6">
             <SectionShell title="Gestão de usuários" icon={<Users className="h-4 w-4" />}>
               <div className="overflow-x-auto">
-                <table className="min-w-[1200px] w-full text-left text-sm">
+                <table className="min-w-[1320px] w-full text-left text-sm">
                   <thead className="border-b border-white/10 bg-black/25 text-zinc-400">
                     <tr>
                       <th className="px-5 py-4">Usuário</th>
                       <th className="px-5 py-4">Plano</th>
                       <th className="px-5 py-4">Status</th>
+                      <th className="px-5 py-4">Afiliado</th>
                       <th className="px-5 py-4">Expiração</th>
                       <th className="px-5 py-4">Perfil</th>
                       <th className="px-5 py-4">Criado em</th>
@@ -767,7 +774,7 @@ export default function AdminPage() {
                   <tbody>
                     {filteredUsers.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-6 py-14 text-center text-zinc-500">
+                        <td colSpan={8} className="px-6 py-14 text-center text-zinc-500">
                           Nenhum usuário encontrado.
                         </td>
                       </tr>
@@ -800,6 +807,10 @@ export default function AdminPage() {
 
                             <td className="px-5 py-5">
                               <StatusBadge user={user} />
+                            </td>
+
+                            <td className="px-5 py-5">
+                              <AffiliateCodeBadge user={user} />
                             </td>
 
                             <td className="px-5 py-5 text-zinc-300">
@@ -1327,6 +1338,30 @@ function ProfileBadge({
       {label}
     </span>
   );
+}
+
+function AffiliateCodeBadge({ user }: { user: UserItem }) {
+  const affiliateCode = user.referred_by_code || user.affiliate_code;
+
+  if (user.is_partner) {
+    return (
+      <div className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
+        <BadgeDollarSign className="h-3.5 w-3.5" />
+        <span>AFILIADO</span>
+      </div>
+    );
+  }
+
+  if (affiliateCode) {
+    return (
+      <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+        <ArrowRightLeft className="h-3.5 w-3.5" />
+        <span>{affiliateCode}</span>
+      </div>
+    );
+  }
+
+  return <span className="text-zinc-500">—</span>;
 }
 
 function StatusBadge({ user }: { user: UserItem }) {
