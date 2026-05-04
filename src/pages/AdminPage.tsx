@@ -26,7 +26,7 @@ import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
-// Endpoints de afiliados: mantidos isolados para fácil ajuste se necessário
+// Endpoints de afiliados: isolados para fácil ajuste se necessário
 const AFFILIATES_LIST_ENDPOINT = `${API_URL}/admin/affiliates`;
 const AFFILIATE_DETAIL_ENDPOINT = (id: number) => `${API_URL}/admin/affiliates/${id}`;
 const AFFILIATE_TOGGLE_STATUS_ENDPOINT = (id: number) =>
