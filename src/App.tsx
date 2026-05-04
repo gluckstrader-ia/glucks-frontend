@@ -19,6 +19,7 @@ import PartnerRegisterPage from "./pages/PartnerRegisterPage";
 import PartnerDashboardPage from "./pages/PartnerDashboardPage";
 import PartnerRoute from "./routes/PartnerRoute";
 import LiveRoomPage from "./pages/LiveRoomPage";
+import AffiliateLoginPage from "./pages/AffiliateLoginPage";
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/cadastro" element={<RegisterPage />} />
           <Route path="/cadastro-parceiro" element={<PartnerRegisterPage />} />
+          <Route path="/affiliate-login" element={<AffiliateLoginPage />} />
         </Route>
 
         <Route path="/parceiros" element={<AffiliateLandingPage />} />
