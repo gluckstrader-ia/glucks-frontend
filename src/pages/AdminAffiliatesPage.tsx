@@ -42,9 +42,9 @@ export default function AdminAffiliatesPage() {
   async function createAffiliate(e: any) {
     e.preventDefault();
 
-    setLoading(true);
-
     try {
+      setLoading(true);
+
       await fetch(`${API_URL}/admin/affiliates/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -69,9 +69,9 @@ export default function AdminAffiliatesPage() {
   async function createCommission(e: any) {
     e.preventDefault();
 
-    setLoading(true);
-
     try {
+      setLoading(true);
+
       await fetch(`${API_URL}/admin/affiliates/commissions/manual`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,8 +130,11 @@ export default function AdminAffiliatesPage() {
             className="p-3 bg-black border border-zinc-700 rounded"
           />
 
-          <button className="bg-emerald-500 p-3 rounded text-black font-bold">
-            Criar
+          <button
+            disabled={loading}
+            className="bg-emerald-500 p-3 rounded text-black font-bold disabled:opacity-60"
+          >
+            {loading ? "Criando..." : "Criar Afiliado"}
           </button>
         </form>
       </div>
@@ -188,8 +191,11 @@ export default function AdminAffiliatesPage() {
             className="p-3 bg-black border border-zinc-700 rounded"
           />
 
-          <button className="bg-emerald-500 p-3 rounded text-black font-bold">
-            Lançar
+          <button
+            disabled={loading}
+            className="bg-emerald-500 p-3 rounded text-black font-bold disabled:opacity-60"
+          >
+            {loading ? "Lançando..." : "Lançar Comissão"}
           </button>
         </form>
       </div>
