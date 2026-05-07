@@ -24,6 +24,7 @@ import {
 const plans = [
   {
     name: "Mensal",
+    checkoutPlan: "monthly",
     price: "R$ 197",
     period: "/mês",
     highlight: false,
@@ -37,6 +38,7 @@ const plans = [
   },
   {
     name: "Trimestral",
+    checkoutPlan: "quarterly",
     price: "R$ 497",
     period: "/3 meses",
     highlight: true,
@@ -51,6 +53,7 @@ const plans = [
   },
   {
     name: "Semestral",
+    checkoutPlan: "semiannual",
     price: "R$ 897",
     period: "/6 meses",
     highlight: false,
@@ -225,9 +228,60 @@ function MobileMenu({
   );
 }
 
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const scrollToPlans = () => {
+    const section = document.getElementById("planos");
+    if (!section) return;
+
+    section.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  const handlePlanCheckout = async (planId: string) => {
+    try {
+      setLoadingPlan(planId);
+
+      const token = localStorage.getItem("glucks_token") || localStorage.getItem("token");
+
+      const response = await fetch(`${API_URL}/payments/create-checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({ plan: planId }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message = data?.detail || data?.message || "Não foi possível iniciar o checkout.";
+        throw new Error(message);
+      }
+
+      const checkoutUrl = data?.checkout_url || data?.payment_url || data?.url;
+
+      if (!checkoutUrl) {
+        throw new Error("Checkout criado, mas a URL de pagamento não foi retornada.");
+      }
+
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error("Erro ao iniciar checkout:", error);
+      alert(error instanceof Error ? error.message : "Erro ao iniciar checkout.");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -497,19 +551,21 @@ export default function LandingPage() {
 
   {/* BOTÕES */}
   <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-    <a
-      href="/cadastro"
-      className="inline-flex items-center justify-center rounded-full bg-emerald-400 px-6 py-3 text-sm font-bold text-black transition hover:scale-[1.02] hover:bg-emerald-300 hover:shadow-[0_0_25px_rgba(52,211,153,0.45)]"
+    <button
+      type="button"
+      onClick={scrollToPlans}
+      className="inline-flex items-center justify-center rounded-full bg-emerald-400 px-7 py-3 text-sm font-black uppercase tracking-wide text-black shadow-[0_0_30px_rgba(52,211,153,0.55)] transition hover:scale-[1.03] hover:bg-emerald-300 hover:shadow-[0_0_50px_rgba(52,211,153,0.85)]"
     >
-      Testar grátis agora
-    </a>
+      Contratar agora
+    </button>
 
-    <a
-      href="/premium"
-      className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-white transition hover:border-emerald-400/40 hover:bg-emerald-500/10"
+    <button
+      type="button"
+      onClick={scrollToPlans}
+      className="inline-flex items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-6 py-3 text-sm font-bold text-emerald-300 transition hover:border-emerald-300/60 hover:bg-emerald-500/20 hover:text-white"
     >
       Ver planos
-    </a>
+    </button>
   </div>
 </div>
     </div>
@@ -535,20 +591,22 @@ export default function LandingPage() {
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:gap-4">
-              <a
-                href="/cadastro?plan=trimestral"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-4 text-center text-sm font-bold text-black transition hover:bg-emerald-400 sm:px-6 sm:text-base"
+              <button
+                type="button"
+                onClick={scrollToPlans}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-5 py-4 text-center text-sm font-black uppercase tracking-wide text-black shadow-[0_0_35px_rgba(52,211,153,0.55)] transition hover:scale-[1.03] hover:bg-emerald-300 hover:shadow-[0_0_55px_rgba(52,211,153,0.9)] sm:px-6 sm:text-base"
               >
-                Quero acessar agora
+                Contratar agora
                 <ArrowRight className="h-5 w-5" />
-              </a>
+              </button>
 
-              <a
-                href="#planos"
-                className="rounded-2xl border border-white/10 px-5 py-4 text-center text-sm font-semibold text-white transition hover:border-white/20 hover:bg-white/5 sm:px-6 sm:text-base"
+              <button
+                type="button"
+                onClick={scrollToPlans}
+                className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-4 text-center text-sm font-bold text-emerald-300 transition hover:border-emerald-300/60 hover:bg-emerald-500/20 hover:text-white sm:px-6 sm:text-base"
               >
                 Ver planos
-              </a>
+              </button>
             </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3 sm:gap-4">
@@ -1007,12 +1065,7 @@ export default function LandingPage() {
 
           <div className="grid gap-4 lg:grid-cols-3 sm:gap-6">
             {plans.map((plan) => {
-              const planSlug =
-                plan.name === "Mensal"
-                  ? "mensal"
-                  : plan.name === "Trimestral"
-                  ? "trimestral"
-                  : "semestral";
+              const isLoading = loadingPlan === plan.checkoutPlan;
 
               return (
                 <div
@@ -1050,16 +1103,18 @@ export default function LandingPage() {
                     ))}
                   </div>
 
-                  <a
-                    href={`/cadastro?plan=${planSlug}`}
-                    className={`mt-8 block rounded-2xl px-5 py-4 text-center text-sm font-bold transition sm:text-base ${
+                  <button
+                    type="button"
+                    onClick={() => handlePlanCheckout(plan.checkoutPlan)}
+                    disabled={isLoading}
+                    className={`mt-8 block w-full rounded-2xl px-5 py-4 text-center text-sm font-black uppercase tracking-wide transition sm:text-base ${
                       plan.highlight
-                        ? "bg-emerald-500 text-black hover:bg-emerald-400"
-                        : "border border-white/10 text-white hover:border-white/20 hover:bg-white/5"
-                    }`}
+                        ? "bg-emerald-400 text-black shadow-[0_0_35px_rgba(52,211,153,0.55)] hover:scale-[1.02] hover:bg-emerald-300 hover:shadow-[0_0_55px_rgba(52,211,153,0.9)]"
+                        : "border border-emerald-400/30 bg-emerald-500/10 text-emerald-300 shadow-[0_0_22px_rgba(52,211,153,0.18)] hover:scale-[1.02] hover:border-emerald-300/60 hover:bg-emerald-500/20 hover:text-white"
+                    } disabled:cursor-not-allowed disabled:opacity-70`}
                   >
-                    {plan.cta}
-                  </a>
+                    {isLoading ? "Abrindo checkout..." : plan.cta}
+                  </button>
                 </div>
               );
             })}
@@ -1112,12 +1167,13 @@ export default function LandingPage() {
             </p>
 
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
-              <a
-                href="/cadastro?plan=trimestral"
-                className="rounded-2xl bg-emerald-500 px-6 py-4 text-sm font-bold text-black transition hover:bg-emerald-400 sm:text-base"
+              <button
+                type="button"
+                onClick={scrollToPlans}
+                className="rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black uppercase tracking-wide text-black shadow-[0_0_35px_rgba(52,211,153,0.55)] transition hover:scale-[1.03] hover:bg-emerald-300 hover:shadow-[0_0_55px_rgba(52,211,153,0.9)] sm:text-base"
               >
-                Criar minha conta
-              </a>
+                Ver planos e contratar
+              </button>
 
               <a
                 href="/login"
