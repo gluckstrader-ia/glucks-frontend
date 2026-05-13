@@ -13,8 +13,7 @@ import {
   Clock,
   ExternalLink,
   CheckCircle2,
-  Flame,
-  TrendingUp,
+  Brain,
   ArrowRight,
 } from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
@@ -554,32 +553,46 @@ function MarketIntelligenceHub() {
       description: "Entenda confiança, direção, entrada, stop e alvos.",
       duration: "8 min",
       youtubeId: "S0hCGYcEEa8",
-      thumbnail:
-        "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
+      thumbnail: "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
     },
     {
       title: "Gestão de risco antes da entrada",
       description: "Como validar uma operação sem aumentar exposição.",
       duration: "11 min",
       youtubeId: "S0hCGYcEEa8",
-      thumbnail:
-        "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
+      thumbnail: "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
     },
     {
       title: "Como usar calendário econômico no day trade",
       description: "Veja quais eventos evitar antes de operar.",
       duration: "9 min",
       youtubeId: "S0hCGYcEEa8",
-      thumbnail:
-        "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
+      thumbnail: "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
     },
   ];
 
-  const expectations = [
-    "Monitorar eventos de alto impacto antes de qualquer entrada.",
-    "Evitar operar no impulso após notícias fortes.",
-    "Priorizar operações com confluência entre tendência, região e gestão.",
-    "Aguardar confirmação do preço antes de aumentar agressividade.",
+  const marketVideos = [
+    {
+      title: "Expectativas do Mercado para Hoje",
+      description: "Cenário do dia, pontos de atenção e possíveis impactos.",
+      duration: "7 min",
+      youtubeId: "S0hCGYcEEa8",
+      thumbnail: "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
+    },
+    {
+      title: "Análise dos principais ativos",
+      description: "Leitura rápida dos ativos mais importantes do dia.",
+      duration: "10 min",
+      youtubeId: "S0hCGYcEEa8",
+      thumbnail: "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
+    },
+    {
+      title: "Pontos de risco antes de operar",
+      description: "Eventos, notícias e regiões que exigem atenção.",
+      duration: "6 min",
+      youtubeId: "S0hCGYcEEa8",
+      thumbnail: "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
+    },
   ];
 
   const [selectedVideo, setSelectedVideo] = useState<null | {
@@ -628,7 +641,6 @@ function MarketIntelligenceHub() {
                     <h3 className="text-lg font-black text-white">
                       Calendário Econômico
                     </h3>
-
                     <p className="text-sm text-zinc-400">
                       Eventos macroeconômicos que podem impactar o mercado hoje.
                     </p>
@@ -663,9 +675,8 @@ function MarketIntelligenceHub() {
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-400">
-                  O calendário é carregado por widget externo. Caso não
-                  apareça, verifique bloqueadores de anúncio ou instabilidade do
-                  provedor.
+                  O calendário é carregado por widget externo. Caso não apareça,
+                  verifique bloqueadores de anúncio ou instabilidade do provedor.
                 </div>
               </div>
             </section>
@@ -681,7 +692,6 @@ function MarketIntelligenceHub() {
                     <h3 className="text-lg font-black text-white">
                       Vídeos Educacionais
                     </h3>
-
                     <p className="text-sm text-zinc-400">
                       Conteúdos rápidos para melhorar sua leitura operacional.
                     </p>
@@ -746,45 +756,95 @@ function MarketIntelligenceHub() {
 
                   <div>
                     <h3 className="text-lg font-black text-white">
-                      Expectativas do Dia
+                      Expectativas do Mercado
                     </h3>
 
                     <p className="text-sm text-zinc-400">
-                      Pontos de atenção para operar com mais clareza.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mb-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <TrendingUp className="mb-3 h-5 w-5 text-cyan-300" />
-                    <p className="text-xs text-zinc-500">Viés</p>
-                    <p className="mt-1 font-black text-white">
-                      Aguardar confirmação
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <Flame className="mb-3 h-5 w-5 text-amber-300" />
-                    <p className="text-xs text-zinc-500">Risco</p>
-                    <p className="mt-1 font-black text-white">
-                      Atenção a notícias
+                      Vídeos rápidos com visão operacional e cenário do dia.
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  {expectations.map((item) => (
-                    <div
-                      key={item}
-                      className="flex gap-3 rounded-2xl border border-white/10 bg-black/30 p-4"
+                  {marketVideos.map((video, index) => (
+                    <button
+                      key={`market-${video.title}`}
+                      type="button"
+                      onClick={() =>
+                        setSelectedVideo({
+                          title: video.title,
+                          youtubeId: video.youtubeId,
+                        })
+                      }
+                      className="group grid w-full grid-cols-[96px_1fr_auto] items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left transition hover:border-cyan-400/40 hover:bg-cyan-400/[0.05]"
                     >
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
-                      <p className="text-sm leading-6 text-zinc-300">
-                        {item}
-                      </p>
-                    </div>
+                      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black">
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          className="h-16 w-24 object-cover transition duration-300 group-hover:scale-105"
+                        />
+
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/35">
+                          <PlayCircle className="h-8 w-8 text-cyan-300 drop-shadow" />
+                        </div>
+
+                        <div className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-lg bg-black/80 text-xs font-black text-cyan-300">
+                          {index + 1}
+                        </div>
+                      </div>
+
+                      <div className="min-w-0">
+                        <h4 className="line-clamp-2 font-bold leading-snug text-white group-hover:text-cyan-200">
+                          {video.title}
+                        </h4>
+
+                        <p className="mt-1 line-clamp-2 text-sm leading-5 text-zinc-400">
+                          {video.description}
+                        </p>
+
+                        <div className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-zinc-500">
+                          <Clock className="h-3.5 w-3.5" />
+                          {video.duration}
+                        </div>
+                      </div>
+
+                      <ArrowRight className="h-4 w-4 shrink-0 text-zinc-500 transition group-hover:translate-x-1 group-hover:text-cyan-300" />
+                    </button>
                   ))}
+                </div>
+
+                <div className="mt-5 rounded-2xl border border-cyan-400/10 bg-cyan-400/[0.04] p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-xl bg-cyan-400/10 p-2 text-cyan-300">
+                      <Brain className="h-5 w-5" />
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold text-white">
+                        Resumo operacional da IA
+                      </h4>
+
+                      <p className="mt-2 text-sm leading-6 text-zinc-300">
+                        Antes de operar, combine calendário econômico, tendência
+                        do ativo, região de preço e gestão de risco.
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedVideo({
+                            title: "Resumo operacional da IA",
+                            youtubeId: "S0hCGYcEEa8",
+                          })
+                        }
+                        className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 transition hover:bg-cyan-400/20 hover:text-white"
+                      >
+                        <PlayCircle className="h-4 w-4" />
+                        Assistir análise
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </section>
             </aside>
