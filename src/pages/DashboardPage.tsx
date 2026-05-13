@@ -4017,7 +4017,7 @@ function GaugeMeter({
           <path
             d="M 30 130 A 100 100 0 0 1 230 130"
             fill="none"
-            stroke="rgba(255,0,55,0.95)"
+            stroke="rgba(255, 0, 0, 0.95)"
             strokeWidth="18"
             strokeLinecap="round"
           />
@@ -4033,7 +4033,7 @@ function GaugeMeter({
           <path
             d="M 130 30 A 100 100 0 0 1 230 130"
             fill="none"
-            stroke="rgba(0,255,170,0.95)"
+            stroke="rgba(4, 197, 52, 0.95)"
             strokeWidth="18"
             strokeLinecap="round"
           />
