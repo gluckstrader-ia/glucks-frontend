@@ -13,7 +13,6 @@ import {
   Clock,
   ExternalLink,
   CheckCircle2,
-  Brain,
   ArrowRight,
 } from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
@@ -629,9 +628,9 @@ function MarketIntelligenceHub() {
             </a>
           </div>
 
-          <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+          <div className="space-y-5">
             <section className="overflow-hidden rounded-[1.75rem] border border-cyan-400/20 bg-[#080b12]/90 shadow-2xl shadow-cyan-500/10">
-              <div className="flex flex-col gap-4 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-300">
                     <CalendarDays className="h-6 w-6" />
@@ -641,8 +640,10 @@ function MarketIntelligenceHub() {
                     <h3 className="text-lg font-black text-white">
                       Calendário Econômico
                     </h3>
+
                     <p className="text-sm text-zinc-400">
-                      Eventos macroeconômicos que podem impactar o mercado hoje.
+                      Acompanhe eventos macroeconômicos importantes antes de
+                      operar.
                     </p>
                   </div>
                 </div>
@@ -651,37 +652,15 @@ function MarketIntelligenceHub() {
                   href="https://br.investing.com/economic-calendar/"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:text-white"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-5 py-3 text-sm font-bold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-400/20 hover:text-white"
                 >
-                  Abrir Investing
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  Abrir Calendário no Investing
+                  <ExternalLink className="h-4 w-4" />
                 </a>
-              </div>
-
-              <div className="p-4">
-                <div className="relative overflow-hidden rounded-2xl border border-cyan-400/20 bg-[#05070b] shadow-inner shadow-cyan-500/10">
-                  <div className="absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-[#05070b] to-transparent pointer-events-none" />
-
-                  <iframe
-                    title="Calendário Econômico Investing"
-                    src="https://sslecal2.investing.com?ecoDayBackground=%2305070b&defaultFont=%23f4f4f5&innerBorderColor=%23111827&borderColor=%23111827&ecoDayFontColor=%23ffffff&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone,timeselector,filters&countries=5,32,37,72,22,17,39,14,48,10,35,6,43,21,38,12,4,36,110,11,26,25,178,9,30,33,23,34,92,102,57,94,204,97,68,96,103,111,42,109,188,7,105,172,20,60,87,44,193,89,45,125,145,53,61,55,59,95,85,54,58,63&calType=week&timeZone=12&lang=12"
-                    className="block h-[620px] w-full border-0 bg-[#05070b]"
-                    style={{
-                      marginTop: "-8px",
-                      filter: "contrast(1.08) brightness(0.95)",
-                    }}
-                    loading="lazy"
-                  />
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-400">
-                  O calendário é carregado por widget externo. Caso não apareça,
-                  verifique bloqueadores de anúncio ou instabilidade do provedor.
-                </div>
               </div>
             </section>
 
-            <aside className="grid gap-5">
+            <div className="grid gap-5 xl:grid-cols-2">
               <section className="rounded-[1.75rem] border border-emerald-400/20 bg-[#080b12]/90 p-5 shadow-2xl shadow-emerald-500/10">
                 <div className="mb-5 flex items-center gap-3">
                   <div className="rounded-2xl bg-emerald-400/10 p-3 text-emerald-300">
@@ -692,6 +671,7 @@ function MarketIntelligenceHub() {
                     <h3 className="text-lg font-black text-white">
                       Vídeos Educacionais
                     </h3>
+
                     <p className="text-sm text-zinc-400">
                       Conteúdos rápidos para melhorar sua leitura operacional.
                     </p>
@@ -699,7 +679,7 @@ function MarketIntelligenceHub() {
                 </div>
 
                 <div className="space-y-3">
-                  {videos.map((video, index) => (
+                  {videos.map((video) => (
                     <button
                       key={video.title}
                       type="button"
@@ -720,10 +700,6 @@ function MarketIntelligenceHub() {
 
                         <div className="absolute inset-0 flex items-center justify-center bg-black/35">
                           <PlayCircle className="h-8 w-8 text-emerald-300 drop-shadow" />
-                        </div>
-
-                        <div className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-lg bg-black/80 text-xs font-black text-emerald-300">
-                          {index + 1}
                         </div>
                       </div>
 
@@ -760,15 +736,15 @@ function MarketIntelligenceHub() {
                     </h3>
 
                     <p className="text-sm text-zinc-400">
-                      Vídeos rápidos com visão operacional e cenário do dia.
+                      Cenário operacional, análise e visão do dia.
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  {marketVideos.map((video, index) => (
+                  {marketVideos.map((video) => (
                     <button
-                      key={`market-${video.title}`}
+                      key={video.title}
                       type="button"
                       onClick={() =>
                         setSelectedVideo({
@@ -787,10 +763,6 @@ function MarketIntelligenceHub() {
 
                         <div className="absolute inset-0 flex items-center justify-center bg-black/35">
                           <PlayCircle className="h-8 w-8 text-cyan-300 drop-shadow" />
-                        </div>
-
-                        <div className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-lg bg-black/80 text-xs font-black text-cyan-300">
-                          {index + 1}
                         </div>
                       </div>
 
@@ -813,41 +785,8 @@ function MarketIntelligenceHub() {
                     </button>
                   ))}
                 </div>
-
-                <div className="mt-5 rounded-2xl border border-cyan-400/10 bg-cyan-400/[0.04] p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-xl bg-cyan-400/10 p-2 text-cyan-300">
-                      <Brain className="h-5 w-5" />
-                    </div>
-
-                    <div>
-                      <h4 className="font-bold text-white">
-                        Resumo operacional da IA
-                      </h4>
-
-                      <p className="mt-2 text-sm leading-6 text-zinc-300">
-                        Antes de operar, combine calendário econômico, tendência
-                        do ativo, região de preço e gestão de risco.
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSelectedVideo({
-                            title: "Resumo operacional da IA",
-                            youtubeId: "S0hCGYcEEa8",
-                          })
-                        }
-                        className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 transition hover:bg-cyan-400/20 hover:text-white"
-                      >
-                        <PlayCircle className="h-4 w-4" />
-                        Assistir análise
-                      </button>
-                    </div>
-                  </div>
-                </div>
               </section>
-            </aside>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -884,7 +823,6 @@ function MarketIntelligenceHub() {
     </>
   );
 }
-
 type B3MarketData = {
   symbol?: string;
   last_price?: number | null;
