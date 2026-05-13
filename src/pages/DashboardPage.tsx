@@ -65,6 +65,12 @@ type AnalysisData = {
       exponential?: number | null;
       exponential_action?: string;
     }[];
+
+    technical_indicators?: {
+      name?: string;
+      value?: number | null;
+      action?: string;
+    }[];
   };
 
   harmonics?: {
@@ -4390,6 +4396,66 @@ function TechnicalOverviewPanel({
           })}
         </div>
       </div>
+
+      <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-5">
+  <div className="mb-4 flex items-center justify-between">
+    <div>
+      <h4 className="text-xl font-black text-white">
+        Indicadores Técnicos
+      </h4>
+
+      <p className="mt-1 text-sm text-zinc-400">
+        Leitura dos principais indicadores retornados pela IA.
+      </p>
+    </div>
+
+    <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-300">
+      Osciladores
+    </div>
+  </div>
+
+  <div className="overflow-hidden rounded-2xl border border-white/10">
+    <div className="grid grid-cols-[1.4fr_1fr_1fr] bg-white/[0.04] px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
+      <div>Nome</div>
+      <div className="text-center">Valor</div>
+      <div className="text-right">Ação</div>
+    </div>
+
+    {(tech.technical_indicators ?? []).map((indicator) => {
+      const action = indicator.action ?? "—";
+
+      const actionClass =
+        action === "Compra"
+          ? "text-emerald-300"
+          : action === "Venda"
+          ? "text-red-300"
+          : action === "Sobrecompra" || action === "Mais Volatilidade"
+          ? "text-amber-300"
+          : "text-zinc-400";
+
+      return (
+        <div
+          key={indicator.name}
+          className="grid grid-cols-[1.4fr_1fr_1fr] items-center border-t border-white/10 px-4 py-3 text-sm"
+        >
+          <div className="font-black text-white">
+            {indicator.name}
+          </div>
+
+          <div className="text-center font-semibold text-zinc-200">
+            {typeof indicator.value === "number"
+              ? indicator.value.toFixed(4)
+              : "—"}
+          </div>
+
+          <div className={`text-right font-black ${actionClass}`}>
+            {action}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+</div>
 
       <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-5">
         <div className="flex items-start gap-3">
