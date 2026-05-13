@@ -4202,22 +4202,34 @@ function TechnicalOverviewPanel({
       </div>
 
       <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-5">
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-cyan-300" />
+  <div className="flex items-start gap-3">
+    <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-cyan-300" />
 
-          <div>
-            <h4 className="font-black text-white">
-              Leitura operacional da IA
-            </h4>
+    <div>
+      <h4 className="font-black text-white">
+        Leitura operacional da IA
+      </h4>
 
-            <p className="mt-2 text-sm leading-6 text-zinc-300">
-              O painel atual trabalha com os dados técnicos já retornados pelo backend.
-              A estrutura está pronta para evoluir futuramente com lista completa de
-              indicadores como RSI, MACD, ADX, STOCH, CCI, ATR e múltiplas médias móveis.
-            </p>
-          </div>
-        </div>
-      </div>
+      <p className="mt-2 text-sm leading-6 text-zinc-300">
+        {generalValue >= 75
+          ? `A leitura técnica de ${asset} mostra forte predominância compradora. Os indicadores e médias móveis estão alinhados para compra, sugerindo continuidade de força compradora enquanto o preço respeitar os principais níveis técnicos.`
+          : generalValue >= 60
+          ? `A leitura técnica de ${asset} apresenta viés comprador, mas ainda exige confirmação. O cenário favorece compras seletivas, principalmente se houver rompimento ou defesa de região importante.`
+          : generalValue <= 25
+          ? `A leitura técnica de ${asset} mostra forte predominância vendedora. O conjunto de indicadores aponta pressão de baixa relevante, favorecendo operações vendidas enquanto não houver recuperação consistente.`
+          : generalValue <= 40
+          ? `A leitura técnica de ${asset} apresenta viés vendedor. O mercado demonstra pressão de baixa, mas ainda é importante aguardar confirmação antes de aumentar exposição.`
+          : `A leitura técnica de ${asset} está neutra. O mercado ainda não apresenta dominância clara entre compradores e vendedores, então o ideal é aguardar confirmação antes de operar.`}
+      </p>
+
+      <p className="mt-3 text-sm leading-6 text-zinc-400">
+        Indicadores técnicos: <span className="font-bold text-white">{getLabel(indicatorValue)}</span>.{" "}
+        Médias móveis: <span className="font-bold text-white">{getLabel(movingAverageValue)}</span>.{" "}
+        Viés informado pelo backend: <span className="font-bold text-cyan-300">{trendBias}</span>.
+      </p>
+    </div>
+  </div>
+</div>
     </div>
   );
 }
