@@ -8,14 +8,13 @@ import {
   BarChart3,
   CalendarDays,
   PlayCircle,
+  X,
   Target,
   Clock,
   ExternalLink,
   CheckCircle2,
   Flame,
   TrendingUp,
-  Brain,
-  BookOpen,
   ArrowRight,
 } from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
@@ -554,19 +553,25 @@ function MarketIntelligenceHub() {
       title: "Como interpretar o Sinal Final da IA",
       description: "Entenda confiança, direção, entrada, stop e alvos.",
       duration: "8 min",
-      url: "https://www.youtube.com/@gluckstraderia",
+      youtubeId: "S0hCGYcEEa8",
+      thumbnail:
+        "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
     },
     {
       title: "Gestão de risco antes da entrada",
       description: "Como validar uma operação sem aumentar exposição.",
       duration: "11 min",
-      url: "https://www.youtube.com/@gluckstraderia",
+      youtubeId: "S0hCGYcEEa8",
+      thumbnail:
+        "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
     },
     {
       title: "Como usar calendário econômico no day trade",
       description: "Veja quais eventos evitar antes de operar.",
       duration: "9 min",
-      url: "https://www.youtube.com/@gluckstraderia",
+      youtubeId: "S0hCGYcEEa8",
+      thumbnail:
+        "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
     },
   ];
 
@@ -577,212 +582,246 @@ function MarketIntelligenceHub() {
     "Aguardar confirmação do preço antes de aumentar agressividade.",
   ];
 
+  const [selectedVideo, setSelectedVideo] = useState<null | {
+    title: string;
+    youtubeId: string;
+  }>(null);
+
   return (
-    <Card className="overflow-hidden border-zinc-800 bg-zinc-950/80 shadow-2xl shadow-cyan-500/5 xl:col-span-5">
-      <CardContent className="space-y-6 p-4 md:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-300">
-              Central do Trader
-            </p>
+    <>
+      <Card className="overflow-hidden border-zinc-800 bg-zinc-950/80 shadow-2xl shadow-cyan-500/5 xl:col-span-5">
+        <CardContent className="space-y-6 p-4 md:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-300">
+                Central do Trader
+              </p>
 
-            <h2 className="mt-2 text-2xl font-black text-white md:text-3xl">
-              Calendário, educação e expectativas do dia
-            </h2>
+              <h2 className="mt-2 text-2xl font-black text-white md:text-3xl">
+                Calendário, educação e expectativas do dia
+              </h2>
 
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
-              Uma área mais estratégica para acompanhar eventos econômicos,
-              conteúdos importantes e pontos de atenção antes de operar.
-            </p>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+                Uma área mais estratégica para acompanhar eventos econômicos,
+                conteúdos importantes e pontos de atenção antes de operar.
+              </p>
+            </div>
+
+            <a
+              href="/status"
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-xs font-bold text-emerald-200 transition hover:border-emerald-300/50 hover:text-white"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Status do Sistema
+            </a>
           </div>
 
-          <a
-            href="/status"
-            className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-xs font-bold text-emerald-200 transition hover:border-emerald-300/50 hover:text-white"
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            Status do Sistema
-          </a>
-        </div>
+          <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+            <section className="overflow-hidden rounded-[1.75rem] border border-cyan-400/20 bg-[#080b12]/90 shadow-2xl shadow-cyan-500/10">
+              <div className="flex flex-col gap-4 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-300">
+                    <CalendarDays className="h-6 w-6" />
+                  </div>
 
-        <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
-          <section className="overflow-hidden rounded-[1.75rem] border border-cyan-400/20 bg-[#080b12]/90 shadow-2xl shadow-cyan-500/10">
-            <div className="flex flex-col gap-4 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-300">
-                  <CalendarDays className="h-6 w-6" />
+                  <div>
+                    <h3 className="text-lg font-black text-white">
+                      Calendário Econômico
+                    </h3>
+
+                    <p className="text-sm text-zinc-400">
+                      Eventos macroeconômicos que podem impactar o mercado hoje.
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className="text-lg font-black text-white">
-                    Calendário Econômico
-                  </h3>
-                  <p className="text-sm text-zinc-400">
-                    Eventos macroeconômicos que podem impactar o mercado hoje.
-                  </p>
-                </div>
+                <a
+                  href="https://br.investing.com/economic-calendar/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:text-white"
+                >
+                  Abrir Investing
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
               </div>
 
-              <a
-                href="https://br.investing.com/economic-calendar/"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:text-white"
-              >
-                Abrir Investing
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </div>
+              <div className="p-4">
+                <div className="relative overflow-hidden rounded-2xl border border-cyan-400/20 bg-[#05070b] shadow-inner shadow-cyan-500/10">
+                  <div className="absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-[#05070b] to-transparent pointer-events-none" />
 
-            <div className="p-4">
-              <div className="overflow-hidden rounded-2xl border border-white/10 bg-black">
-                <iframe
-                  title="Calendário Econômico Investing"
-                  src="https://sslecal2.investing.com?ecoDayBackground=%23080b12&defaultFont=%23d4d4d8&innerBorderColor=%2327272a&borderColor=%2327272a&ecoDayFontColor=%23ffffff&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone,timeselector,filters&countries=5,32,37,72,22,17,39,14,48,10,35,6,43,21,38,12,4,36,110,11,26,25,178,9,30,33,23,34,92,102,57,94,204,97,68,96,103,111,42,109,188,7,105,172,20,60,87,44,193,89,45,125,145,53,61,55,59,95,85,54,58,63&calType=week&timeZone=12&lang=12"
-                  className="h-[560px] w-full border-0"
-                  loading="lazy"
-                />
-              </div>
-
-              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-400">
-                O calendário é carregado por widget externo. Caso não apareça,
-                verifique bloqueadores de anúncio ou instabilidade do provedor.
-              </div>
-            </div>
-          </section>
-
-          <aside className="grid gap-5">
-            <section className="rounded-[1.75rem] border border-emerald-400/20 bg-[#080b12]/90 p-5 shadow-2xl shadow-emerald-500/10">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-2xl bg-emerald-400/10 p-3 text-emerald-300">
-                  <PlayCircle className="h-6 w-6" />
+                  <iframe
+                    title="Calendário Econômico Investing"
+                    src="https://sslecal2.investing.com?ecoDayBackground=%2305070b&defaultFont=%23f4f4f5&innerBorderColor=%23111827&borderColor=%23111827&ecoDayFontColor=%23ffffff&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone,timeselector,filters&countries=5,32,37,72,22,17,39,14,48,10,35,6,43,21,38,12,4,36,110,11,26,25,178,9,30,33,23,34,92,102,57,94,204,97,68,96,103,111,42,109,188,7,105,172,20,60,87,44,193,89,45,125,145,53,61,55,59,95,85,54,58,63&calType=week&timeZone=12&lang=12"
+                    className="block h-[620px] w-full border-0 bg-[#05070b]"
+                    style={{
+                      marginTop: "-8px",
+                      filter: "contrast(1.08) brightness(0.95)",
+                    }}
+                    loading="lazy"
+                  />
                 </div>
 
-                <div>
-                  <h3 className="text-lg font-black text-white">
-                    Vídeos Educacionais
-                  </h3>
-                  <p className="text-sm text-zinc-400">
-                    Conteúdos rápidos para melhorar sua leitura operacional.
-                  </p>
+                <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-400">
+                  O calendário é carregado por widget externo. Caso não
+                  apareça, verifique bloqueadores de anúncio ou instabilidade do
+                  provedor.
                 </div>
               </div>
+            </section>
 
-              <div className="space-y-3">
-                {videos.map((video, index) => (
-                  <a
-                    key={video.title}
-                    href={video.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="group block rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-emerald-400/40 hover:bg-emerald-400/[0.05]"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-black/60 text-sm font-black text-emerald-300">
-                          {index + 1}
+            <aside className="grid gap-5">
+              <section className="rounded-[1.75rem] border border-emerald-400/20 bg-[#080b12]/90 p-5 shadow-2xl shadow-emerald-500/10">
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="rounded-2xl bg-emerald-400/10 p-3 text-emerald-300">
+                    <PlayCircle className="h-6 w-6" />
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-black text-white">
+                      Vídeos Educacionais
+                    </h3>
+
+                    <p className="text-sm text-zinc-400">
+                      Conteúdos rápidos para melhorar sua leitura operacional.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {videos.map((video, index) => (
+                    <button
+                      key={video.title}
+                      type="button"
+                      onClick={() =>
+                        setSelectedVideo({
+                          title: video.title,
+                          youtubeId: video.youtubeId,
+                        })
+                      }
+                      className="group grid w-full grid-cols-[96px_1fr_auto] items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left transition hover:border-emerald-400/40 hover:bg-emerald-400/[0.05]"
+                    >
+                      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black">
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          className="h-16 w-24 object-cover transition duration-300 group-hover:scale-105"
+                        />
+
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/35">
+                          <PlayCircle className="h-8 w-8 text-emerald-300 drop-shadow" />
                         </div>
 
-                        <div>
-                          <h4 className="font-bold leading-snug text-white group-hover:text-emerald-200">
-                            {video.title}
-                          </h4>
-
-                          <p className="mt-1 text-sm leading-5 text-zinc-400">
-                            {video.description}
-                          </p>
-
-                          <div className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-zinc-500">
-                            <Clock className="h-3.5 w-3.5" />
-                            {video.duration}
-                          </div>
+                        <div className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-lg bg-black/80 text-xs font-black text-emerald-300">
+                          {index + 1}
                         </div>
                       </div>
 
-                      <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-zinc-500 transition group-hover:translate-x-1 group-hover:text-emerald-300" />
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </section>
+                      <div className="min-w-0">
+                        <h4 className="line-clamp-2 font-bold leading-snug text-white group-hover:text-emerald-200">
+                          {video.title}
+                        </h4>
 
-            <section className="rounded-[1.75rem] border border-cyan-400/20 bg-[#080b12]/90 p-5 shadow-2xl shadow-cyan-500/10">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-300">
-                  <Target className="h-6 w-6" />
+                        <p className="mt-1 line-clamp-2 text-sm leading-5 text-zinc-400">
+                          {video.description}
+                        </p>
+
+                        <div className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-zinc-500">
+                          <Clock className="h-3.5 w-3.5" />
+                          {video.duration}
+                        </div>
+                      </div>
+
+                      <ArrowRight className="h-4 w-4 shrink-0 text-zinc-500 transition group-hover:translate-x-1 group-hover:text-emerald-300" />
+                    </button>
+                  ))}
                 </div>
+              </section>
 
-                <div>
-                  <h3 className="text-lg font-black text-white">
-                    Expectativas do Dia
-                  </h3>
-                  <p className="text-sm text-zinc-400">
-                    Pontos de atenção para operar com mais clareza.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mb-4 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <TrendingUp className="mb-3 h-5 w-5 text-cyan-300" />
-                  <p className="text-xs text-zinc-500">Viés</p>
-                  <p className="mt-1 font-black text-white">
-                    Aguardar confirmação
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <Flame className="mb-3 h-5 w-5 text-amber-300" />
-                  <p className="text-xs text-zinc-500">Risco</p>
-                  <p className="mt-1 font-black text-white">
-                    Atenção a notícias
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {expectations.map((item) => (
-                  <div
-                    key={item}
-                    className="flex gap-3 rounded-2xl border border-white/10 bg-black/30 p-4"
-                  >
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
-                    <p className="text-sm leading-6 text-zinc-300">{item}</p>
+              <section className="rounded-[1.75rem] border border-cyan-400/20 bg-[#080b12]/90 p-5 shadow-2xl shadow-cyan-500/10">
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-300">
+                    <Target className="h-6 w-6" />
                   </div>
-                ))}
-              </div>
-            </section>
 
-            <section className="rounded-[1.75rem] border border-white/10 bg-gradient-to-br from-cyan-500/10 via-white/[0.03] to-emerald-500/10 p-5">
-              <div className="flex items-start gap-3">
-                <div className="rounded-2xl bg-white/10 p-3 text-cyan-300">
-                  <Brain className="h-6 w-6" />
+                  <div>
+                    <h3 className="text-lg font-black text-white">
+                      Expectativas do Dia
+                    </h3>
+
+                    <p className="text-sm text-zinc-400">
+                      Pontos de atenção para operar com mais clareza.
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className="font-black text-white">Dica Gluck&apos;s IA</h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-300">
-                    Antes de operar, combine calendário econômico, tendência do
-                    ativo, região de preço e gestão de risco. A melhor entrada
-                    não é a mais rápida, é a mais bem confirmada.
-                  </p>
+                <div className="mb-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <TrendingUp className="mb-3 h-5 w-5 text-cyan-300" />
+                    <p className="text-xs text-zinc-500">Viés</p>
+                    <p className="mt-1 font-black text-white">
+                      Aguardar confirmação
+                    </p>
+                  </div>
 
-                  <a
-                    href="https://www.youtube.com/@gluckstrader"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 transition hover:bg-cyan-400/20 hover:text-white"
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    Ver conteúdos
-                  </a>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <Flame className="mb-3 h-5 w-5 text-amber-300" />
+                    <p className="text-xs text-zinc-500">Risco</p>
+                    <p className="mt-1 font-black text-white">
+                      Atenção a notícias
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </section>
-          </aside>
+
+                <div className="space-y-3">
+                  {expectations.map((item) => (
+                    <div
+                      key={item}
+                      className="flex gap-3 rounded-2xl border border-white/10 bg-black/30 p-4"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
+                      <p className="text-sm leading-6 text-zinc-300">
+                        {item}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </aside>
+          </div>
+        </CardContent>
+      </Card>
+
+      {selectedVideo && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md">
+          <div className="relative w-full max-w-4xl overflow-hidden rounded-[2rem] border border-emerald-400/20 bg-zinc-950 shadow-2xl shadow-emerald-500/20">
+            <div className="flex items-center justify-between border-b border-white/10 p-4">
+              <h3 className="pr-10 text-lg font-black text-white">
+                {selectedVideo.title}
+              </h3>
+
+              <button
+                type="button"
+                onClick={() => setSelectedVideo(null)}
+                className="rounded-xl border border-white/10 bg-white/[0.03] p-2 text-zinc-400 transition hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="aspect-video bg-black">
+              <iframe
+                className="h-full w-full"
+                src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0`}
+                title={selectedVideo.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </>
   );
 }
 
@@ -4090,7 +4129,7 @@ const resolvedAssetType =
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex">
       <FloatingCommunityChat token={token} userName={user?.name} />
-      
+
       {loading && (
         <AiThinkingOverlay
           progress={progress}
