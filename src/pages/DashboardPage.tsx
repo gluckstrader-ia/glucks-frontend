@@ -3989,10 +3989,10 @@ function GaugeMeter({
 
   const labelClass =
     safe >= 60
-      ? "bg-emerald-400/10 text-emerald-300 border-emerald-400/20"
+      ? "bg-emerald-400/15 text-emerald-200 border border-emerald-300/40 shadow-[0_0_25px_rgba(0,255,170,0.22)]"
       : safe <= 40
-      ? "bg-red-400/10 text-red-300 border-red-400/20"
-      : "bg-zinc-400/10 text-zinc-300 border-zinc-400/20";
+      ? "bg-red-500/15 text-red-200 border border-red-400/40 shadow-[0_0_25px_rgba(255,0,80,0.22)]"
+      : "bg-zinc-300/10 text-zinc-100 border border-zinc-400/30 shadow-[0_0_20px_rgba(255,255,255,0.08)]";
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(180deg,rgba(9,13,24,0.98),rgba(0,0,0,0.96))] p-5 shadow-2xl">
@@ -4009,48 +4009,53 @@ function GaugeMeter({
         </span>
       </div>
 
-      <div className="relative z-10 mx-auto mt-5 h-[150px] w-[260px] max-w-full">
+      <div className="relative z-10 mx-auto mt-5 h-[155px] w-[260px] max-w-full">
         <svg
-          viewBox="0 0 260 150"
+          viewBox="0 0 260 160"
           className="h-full w-full drop-shadow-[0_0_18px_rgba(0,255,170,0.12)]"
         >
+          {/* VENDA */}
           <path
-            d="M 30 130 A 100 100 0 0 1 230 130"
+            d="M 35 130 A 95 95 0 0 1 94 42"
             fill="none"
-            stroke="rgba(255, 0, 0, 0.95)"
-            strokeWidth="18"
+            stroke="rgba(221, 3, 3, 0.95)"
+            strokeWidth="16"
             strokeLinecap="round"
           />
 
+          {/* NEUTRO */}
           <path
-            d="M 65 57 A 100 100 0 0 1 195 57"
+            d="M 98 40 A 95 95 0 0 1 162 40"
             fill="none"
             stroke="rgba(220,220,220,0.9)"
-            strokeWidth="18"
+            strokeWidth="16"
             strokeLinecap="round"
           />
 
+          {/* COMPRA */}
           <path
-            d="M 130 30 A 100 100 0 0 1 230 130"
+            d="M 166 42 A 95 95 0 0 1 225 130"
             fill="none"
-            stroke="rgba(4, 197, 52, 0.95)"
-            strokeWidth="18"
+            stroke="rgba(2, 179, 11, 0.95)"
+            strokeWidth="16"
             strokeLinecap="round"
           />
 
+          {/* sombra interna */}
           <path
-            d="M 30 130 A 100 100 0 0 1 230 130"
+            d="M 35 130 A 95 95 0 0 1 225 130"
             fill="none"
-            stroke="rgba(220,220,220,0.9)"
+            stroke="rgba(255,255,255,0.08)"
             strokeWidth="2"
           />
 
+          {/* ponteiro */}
           <line
             x1="130"
             y1="130"
             x2="130"
-            y2="52"
-            stroke="rgba(226,232,240,0.85)"
+            y2="55"
+            stroke="rgba(226,232,240,0.9)"
             strokeWidth="3"
             strokeLinecap="round"
             transform={`rotate(${angle} 130 130)`}
@@ -4059,20 +4064,22 @@ function GaugeMeter({
           <circle cx="130" cy="130" r="7" fill="rgba(226,232,240,0.95)" />
         </svg>
 
-        <div className="pointer-events-none absolute left-2 top-[72px] text-xs font-bold text-red-300">
+        <div className="pointer-events-none absolute left-[16px] top-[116px] text-xs font-black text-red-300">
           Venda
         </div>
 
-        <div className="pointer-events-none absolute left-1/2 top-1 -translate-x-1/2 text-xs font-bold text-zinc-400">
+        <div className="pointer-events-none absolute left-1/2 top-[15px] -translate-x-1/2 text-xs font-black text-zinc-300">
           Neutro
         </div>
 
-        <div className="pointer-events-none absolute right-2 top-[72px] text-xs font-bold text-emerald-300">
+        <div className="pointer-events-none absolute right-[14px] top-[116px] text-xs font-black text-emerald-300">
           Compra
         </div>
       </div>
 
-      <div className={`relative z-10 mx-auto mt-1 w-fit rounded-full border px-5 py-2 text-sm font-black ${labelClass}`}>
+      <div
+        className={`relative z-10 mx-auto mt-1 w-fit rounded-full px-5 py-2 text-sm font-black ${labelClass}`}
+      >
         {label}
       </div>
     </div>
