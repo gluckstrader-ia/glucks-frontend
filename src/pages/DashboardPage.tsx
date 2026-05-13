@@ -4024,6 +4024,242 @@ function AiThinkingOverlay({
   );
 }
 
+function TechnicalOverviewPanel({
+  asset,
+  tf,
+  analysisData,
+}: {
+  asset: string;
+  tf: string;
+  analysisData: AnalysisData | null;
+}) {
+  const tech = analysisData?.technical;
+  const assetType = analysisData?.asset_type ?? "forex";
+
+  if (!analysisData || !tech) {
+    return (
+      <div className="flex min-h-[640px] items-center justify-center rounded-2xl border border-zinc-800 bg-black p-8 text-center">
+        <div>
+          <Brain className="mx-auto h-12 w-12 text-cyan-300" />
+          <h3 className="mt-4 text-2xl font-black text-white">
+            Painel Técnico IA
+          </h3>
+          <p className="mt-2 max-w-md text-sm leading-6 text-zinc-400">
+            Clique em “Gerar Análise” para carregar os indicadores técnicos,
+            tendência, médias, força do mercado, suportes e resistências.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const score = tech.score ?? 0;
+  const buySignals = tech.buy_signals ?? 0;
+  const sellSignals = tech.sell_signals ?? 0;
+  const neutralSignals = tech.neutral_signals ?? 0;
+  const totalSignals = buySignals + sellSignals + neutralSignals;
+
+  const buyPct = totalSignals > 0 ? Math.round((buySignals / totalSignals) * 100) : 0;
+  const sellPct = totalSignals > 0 ? Math.round((sellSignals / totalSignals) * 100) : 0;
+  const neutralPct = totalSignals > 0 ? Math.round((neutralSignals / totalSignals) * 100) : 0;
+
+  const bias = tech.trend_bias ?? "NEUTRO";
+  const emaTrend = tech.ema_trend ?? "Indefinido";
+  const rsi = tech.rsi ?? null;
+  const ema9 = tech.ema9 ?? null;
+  const ema21 = tech.ema21 ?? null;
+
+  const supports = tech.supports ?? [];
+  const resistances = tech.resistances ?? [];
+
+  const biasUpper = bias.toUpperCase();
+
+  const biasColor =
+    biasUpper.includes("ALTA") || biasUpper.includes("COMPRA")
+      ? "text-emerald-300"
+      : biasUpper.includes("BAIXA") || biasUpper.includes("VENDA")
+      ? "text-red-300"
+      : "text-amber-300";
+
+  const scoreColor =
+    score >= 70 ? "text-emerald-300" : score <= 40 ? "text-red-300" : "text-amber-300";
+
+  const rsiLabel =
+    rsi === null
+      ? "Indisponível"
+      : rsi >= 70
+      ? "Sobrecompra"
+      : rsi <= 30
+      ? "Sobrevenda"
+      : rsi > 55
+      ? "Pressão compradora"
+      : rsi < 45
+      ? "Pressão vendedora"
+      : "Neutro";
+
+  return (
+    <div className="min-h-[640px] overflow-hidden rounded-2xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-5 shadow-2xl shadow-cyan-500/10">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
+            Painel Técnico IA
+          </p>
+          <h3 className="mt-2 text-3xl font-black text-white">
+            {asset} • {tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
+          </h3>
+          <p className="mt-2 text-sm text-zinc-400">
+            Leitura consolidada de tendência, médias, RSI, força e níveis técnicos.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-5 py-4 text-right">
+          <p className="text-xs uppercase tracking-[0.18em] text-cyan-300">
+            Score Técnico
+          </p>
+          <p className={`mt-1 text-4xl font-black ${scoreColor}`}>
+            {score}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+          <p className="text-sm text-zinc-400">Viés Técnico</p>
+          <p className={`mt-3 text-3xl font-black ${biasColor}`}>
+            {bias}
+          </p>
+          <p className="mt-2 text-sm text-zinc-500">
+            Tendência EMA: <span className="text-zinc-200">{emaTrend}</span>
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+          <p className="text-sm text-zinc-400">RSI</p>
+          <p className="mt-3 text-3xl font-black text-white">
+            {rsi !== null ? rsi.toFixed(2) : "—"}
+          </p>
+          <p className="mt-2 text-sm text-cyan-300">{rsiLabel}</p>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+          <p className="text-sm text-zinc-400">Relação das Médias</p>
+          <p className="mt-3 text-xl font-black text-white">
+            {ema9 !== null && ema21 !== null
+              ? ema9 > ema21
+                ? "EMA 9 acima da EMA 21"
+                : ema9 < ema21
+                ? "EMA 9 abaixo da EMA 21"
+                : "Médias alinhadas"
+              : "Sem dados suficientes"}
+          </p>
+          <p className="mt-2 text-sm text-zinc-500">
+            EMA9: {ema9 !== null ? formatPrice(ema9, assetType) : "—"} • EMA21:{" "}
+            {ema21 !== null ? formatPrice(ema21, assetType) : "—"}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 md:grid-cols-3">
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-center">
+          <p className="text-sm text-red-300">Sinais de Venda</p>
+          <p className="mt-2 text-5xl font-black text-red-300">{sellSignals}</p>
+          <p className="mt-2 text-xs text-zinc-400">{sellPct}% da leitura</p>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-700 bg-zinc-900/50 p-5 text-center">
+          <p className="text-sm text-zinc-400">Sinais Neutros</p>
+          <p className="mt-2 text-5xl font-black text-white">{neutralSignals}</p>
+          <p className="mt-2 text-xs text-zinc-400">{neutralPct}% da leitura</p>
+        </div>
+
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5 text-center">
+          <p className="text-sm text-emerald-300">Sinais de Compra</p>
+          <p className="mt-2 text-5xl font-black text-emerald-300">{buySignals}</p>
+          <p className="mt-2 text-xs text-zinc-400">{buyPct}% da leitura</p>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-5">
+        <div className="mb-3 flex items-center justify-between text-sm text-zinc-400">
+          <span>Distribuição dos sinais técnicos</span>
+          <span>{sellPct}% / {neutralPct}% / {buyPct}%</span>
+        </div>
+
+        <div className="flex h-4 overflow-hidden rounded-full bg-zinc-800">
+          <div className="bg-red-500" style={{ width: `${sellPct}%` }} />
+          <div className="bg-zinc-500" style={{ width: `${neutralPct}%` }} />
+          <div className="bg-emerald-400" style={{ width: `${buyPct}%` }} />
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 xl:grid-cols-2">
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+          <h4 className="mb-4 text-xl font-black text-emerald-300">
+            Suportes
+          </h4>
+
+          <div className="space-y-3">
+            {supports.length > 0 ? (
+              supports.slice(0, 4).map((price, index) => (
+                <div
+                  key={`support-${index}`}
+                  className="flex items-center justify-between rounded-xl border border-emerald-500/10 bg-black/30 px-4 py-3"
+                >
+                  <span className="text-sm text-zinc-400">S{index + 1}</span>
+                  <span className="text-lg font-black text-white">
+                    {formatPrice(price, assetType)}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-zinc-400">Sem suportes retornados.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5">
+          <h4 className="mb-4 text-xl font-black text-red-300">
+            Resistências
+          </h4>
+
+          <div className="space-y-3">
+            {resistances.length > 0 ? (
+              resistances.slice(0, 4).map((price, index) => (
+                <div
+                  key={`resistance-${index}`}
+                  className="flex items-center justify-between rounded-xl border border-red-500/10 bg-black/30 px-4 py-3"
+                >
+                  <span className="text-sm text-zinc-400">R{index + 1}</span>
+                  <span className="text-lg font-black text-white">
+                    {formatPrice(price, assetType)}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-zinc-400">Sem resistências retornadas.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-5">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-cyan-300" />
+          <div>
+            <h4 className="font-black text-white">Leitura operacional da IA</h4>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              A leitura técnica atual aponta viés <span className={biasColor}>{bias}</span>,
+              com score técnico de <span className={scoreColor}>{score}</span>.
+              Combine essa leitura com o Sinal Final, gestão de risco, contexto SMC
+              e eventos econômicos antes de qualquer decisão operacional.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const token = getStoredToken();
@@ -4048,18 +4284,6 @@ export default function DashboardPage() {
   const { data: b3Data } = useB3MarketData(
     shouldUseB3Feed ? selectedAsset : ""
   );
-
-  const tradingViewIntervalMap: Record<string, string> = {
-    "1m": "1",
-    "5m": "5",
-    "15m": "15",
-    "30m": "30",
-    "1h": "60",
-    "4h": "240",
-    "1d": "D",
-  };
-
-  const tvInterval = tradingViewIntervalMap[tf] || "5";
 
   const tabs = [
     "Resumo",
@@ -4107,8 +4331,6 @@ const resolvedAssetType =
     assetCategory === "Futuros BR" && ["WIN", "WDO"].includes(resolvedAsset);
 
   const ANALYZE_API_URL = isLocalFutureBr ? API_URL_FUTUROS_BR : API_URL;
-
-  const tvSymbol = getTradingViewSymbol(assetCategory, resolvedAsset);
 
   const isB3Future =
   resolvedAssetType === "future_br" &&
@@ -4436,31 +4658,25 @@ const resolvedAssetType =
 
           <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_0px] gap-4 items-start">
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.9fr)_420px_340px] gap-4 items-start">
-              {/* GRÁFICO */}
+              {/* PAINEL TÉCNICO PREMIUM */}
               <div className="rounded-3xl border border-zinc-900 bg-zinc-950/80 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-white font-semibold text-lg">
-                    Gráfico do Ativo
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-white">
+                    Painel Técnico do Ativo
                   </h3>
+
                   <div className="text-sm text-zinc-400">
                     {assetCategory} • {resolvedAsset} •{" "}
                     {tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
                   </div>
                 </div>
 
-                <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-black min-h-[640px]">
-                  <iframe
-                    title="TradingView Chart"
-                    className="w-full h-[619px]"
-                    src={`https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(
-                      tvSymbol
-                    )}&interval=${encodeURIComponent(
-                      tvInterval
-                    )}&theme=dark&style=1&timezone=America/Sao_Paulo&withdateranges=1&hide_side_toolbar=0&allow_symbol_change=1`}
-                  />
-                </div>
+                <TechnicalOverviewPanel
+                  asset={resolvedAsset}
+                  tf={tf}
+                  analysisData={analysisData}
+                />
               </div>
-
               {/* DASHBOARD QUANT */}
               <div className="hidden xl:block">
                 <QuantDashboardCard
