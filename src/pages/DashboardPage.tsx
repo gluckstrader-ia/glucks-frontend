@@ -57,6 +57,14 @@ type AnalysisData = {
     ema21?: number;
     supports?: number[];
     resistances?: number[];
+
+    moving_averages?: {
+      name?: string;
+      simple?: number | null;
+      simple_action?: string;
+      exponential?: number | null;
+      exponential_action?: string;
+    }[];
   };
 
   harmonics?: {
@@ -4096,15 +4104,18 @@ function TechnicalOverviewPanel({
   analysisData: AnalysisData | null;
 }) {
   const tech = analysisData?.technical;
+  const assetType = analysisData?.asset_type ?? "forex";
 
   if (!analysisData || !tech) {
     return (
       <div className="flex h-[620px] items-center justify-center rounded-2xl border border-zinc-800 bg-black p-8 text-center">
         <div>
           <Brain className="mx-auto h-12 w-12 text-cyan-300" />
+
           <h3 className="mt-4 text-2xl font-black text-white">
             Painel Técnico IA
           </h3>
+
           <p className="mt-2 max-w-md text-sm leading-6 text-zinc-400">
             Clique em “Gerar Análise” para carregar os termômetros técnicos do ativo.
           </p>
@@ -4116,18 +4127,50 @@ function TechnicalOverviewPanel({
   const buySignals = Number(tech.buy_signals ?? 0);
   const sellSignals = Number(tech.sell_signals ?? 0);
   const neutralSignals = Number(tech.neutral_signals ?? 0);
-  const totalSignals = buySignals + sellSignals + neutralSignals;
+
+  const totalSignals =
+    buySignals + sellSignals + neutralSignals;
 
   const indicatorValue =
     totalSignals > 0
-      ? Math.round(((buySignals + neutralSignals * 0.5) / totalSignals) * 100)
+      ? Math.round(
+          ((buySignals + neutralSignals * 0.5) / totalSignals) * 100
+        )
       : 50;
 
-  const ema9 = typeof tech.ema9 === "number" ? tech.ema9 : null;
-  const ema21 = typeof tech.ema21 === "number" ? tech.ema21 : null;
+  const ema9 =
+    typeof tech.ema9 === "number" ? tech.ema9 : null;
+
+  const ema21 =
+    typeof tech.ema21 === "number" ? tech.ema21 : null;
+
+  const movingAverages = tech.moving_averages ?? [];
+
+  const maActions = movingAverages.flatMap((ma) => [
+    ma.simple_action,
+    ma.exponential_action,
+  ]);
+
+  const maBuy = maActions.filter(
+    (a) => a === "Compra"
+  ).length;
+
+  const maSell = maActions.filter(
+    (a) => a === "Venda"
+  ).length;
+
+  const maNeutral = maActions.filter(
+    (a) => a === "Neutro" || a === "—"
+  ).length;
+
+  const maTotal = maBuy + maSell + maNeutral;
 
   const movingAverageValue =
-    ema9 !== null && ema21 !== null
+    maTotal > 0
+      ? Math.round(
+          ((maBuy + maNeutral * 0.5) / maTotal) * 100
+        )
+      : ema9 !== null && ema21 !== null
       ? ema9 > ema21
         ? 70
         : ema9 < ema21
@@ -4135,7 +4178,9 @@ function TechnicalOverviewPanel({
         : 50
       : 50;
 
-  const rsi = typeof tech.rsi === "number" ? tech.rsi : null;
+  const rsi =
+    typeof tech.rsi === "number" ? tech.rsi : null;
+
   const rsiValue =
     rsi === null
       ? 50
@@ -4146,7 +4191,9 @@ function TechnicalOverviewPanel({
       : rsi;
 
   const generalValue = Math.round(
-    indicatorValue * 0.45 + movingAverageValue * 0.35 + rsiValue * 0.2
+    indicatorValue * 0.45 +
+      movingAverageValue * 0.35 +
+      rsiValue * 0.2
   );
 
   const getLabel = (value: number) => {
@@ -4157,8 +4204,11 @@ function TechnicalOverviewPanel({
     return "Neutro";
   };
 
-  const trendBias = tech.trend_bias ?? "Neutro";
-  const emaTrend = tech.ema_trend ?? "Indefinido";
+  const trendBias =
+    tech.trend_bias ?? "Neutro";
+
+  const emaTrend =
+    tech.ema_trend ?? "Indefinido";
 
   return (
     <div className="h-[620px] overflow-y-auto rounded-2xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-5 shadow-2xl shadow-cyan-500/10">
@@ -4169,11 +4219,17 @@ function TechnicalOverviewPanel({
           </p>
 
           <h3 className="mt-2 text-3xl font-black text-white">
-            {asset} • {tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
+            {asset} •{" "}
+            {tf === "5m"
+              ? "5 Minutos"
+              : tf === "1d"
+              ? "1 Dia"
+              : tf}
           </h3>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
-            Termômetros técnicos consolidados por indicadores, médias móveis e média geral da IA.
+            Termômetros técnicos consolidados por indicadores,
+            médias móveis e média geral da IA.
           </p>
         </div>
       </div>
@@ -4201,35 +4257,179 @@ function TechnicalOverviewPanel({
         />
       </div>
 
+      <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h4 className="text-xl font-black text-white">
+              Médias Móveis
+            </h4>
+
+            <p className="mt-1 text-sm text-zinc-400">
+              Leitura comparativa entre médias simples e exponenciais.
+            </p>
+          </div>
+
+          <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-300">
+            SMA / EMA
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-white/10">
+          <div className="grid grid-cols-[1fr_1.2fr_1.2fr] bg-white/[0.04] px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
+            <div>Nome</div>
+
+            <div className="text-center">
+              Simples
+            </div>
+
+            <div className="text-right">
+              Exponencial
+            </div>
+          </div>
+
+          {(movingAverages.length > 0
+            ? movingAverages
+            : [
+                {
+                  name: "MA9",
+                  simple: null,
+                  simple_action: "—",
+                  exponential: ema9,
+                  exponential_action:
+                    ema9 !== null &&
+                    ema21 !== null
+                      ? ema9 > ema21
+                        ? "Compra"
+                        : ema9 < ema21
+                        ? "Venda"
+                        : "Neutro"
+                      : "—",
+                },
+                {
+                  name: "MA21",
+                  simple: null,
+                  simple_action: "—",
+                  exponential: ema21,
+                  exponential_action:
+                    ema9 !== null &&
+                    ema21 !== null
+                      ? ema21 < ema9
+                        ? "Compra"
+                        : ema21 > ema9
+                        ? "Venda"
+                        : "Neutro"
+                      : "—",
+                },
+              ]
+          ).map((ma) => {
+            const simpleAction =
+              ma.simple_action ?? "—";
+
+            const exponentialAction =
+              ma.exponential_action ?? "—";
+
+            const simpleClass =
+              simpleAction === "Compra"
+                ? "text-emerald-300"
+                : simpleAction === "Venda"
+                ? "text-red-300"
+                : "text-zinc-400";
+
+            const exponentialClass =
+              exponentialAction === "Compra"
+                ? "text-emerald-300"
+                : exponentialAction === "Venda"
+                ? "text-red-300"
+                : "text-zinc-400";
+
+            return (
+              <div
+                key={ma.name}
+                className="grid grid-cols-[1fr_1.2fr_1.2fr] items-center border-t border-white/10 px-4 py-3 text-sm"
+              >
+                <div className="font-black text-white">
+                  {ma.name}
+                </div>
+
+                <div className="text-center">
+                  <span className="font-semibold text-zinc-200">
+                    {typeof ma.simple === "number"
+                      ? formatPrice(
+                          ma.simple,
+                          assetType
+                        )
+                      : "—"}
+                  </span>
+
+                  <span
+                    className={`ml-3 font-black ${simpleClass}`}
+                  >
+                    {simpleAction}
+                  </span>
+                </div>
+
+                <div className="text-right">
+                  <span className="font-semibold text-zinc-200">
+                    {typeof ma.exponential ===
+                    "number"
+                      ? formatPrice(
+                          ma.exponential,
+                          assetType
+                        )
+                      : "—"}
+                  </span>
+
+                  <span
+                    className={`ml-3 font-black ${exponentialClass}`}
+                  >
+                    {exponentialAction}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-5">
-  <div className="flex items-start gap-3">
-    <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-cyan-300" />
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-cyan-300" />
 
-    <div>
-      <h4 className="font-black text-white">
-        Leitura operacional da IA
-      </h4>
+          <div>
+            <h4 className="font-black text-white">
+              Leitura operacional da IA
+            </h4>
 
-      <p className="mt-2 text-sm leading-6 text-zinc-300">
-        {generalValue >= 75
-          ? `A leitura técnica de ${asset} mostra forte predominância compradora. Os indicadores e médias móveis estão alinhados para compra, sugerindo continuidade de força compradora enquanto o preço respeitar os principais níveis técnicos.`
-          : generalValue >= 60
-          ? `A leitura técnica de ${asset} apresenta viés comprador, mas ainda exige confirmação. O cenário favorece compras seletivas, principalmente se houver rompimento ou defesa de região importante.`
-          : generalValue <= 25
-          ? `A leitura técnica de ${asset} mostra forte predominância vendedora. O conjunto de indicadores aponta pressão de baixa relevante, favorecendo operações vendidas enquanto não houver recuperação consistente.`
-          : generalValue <= 40
-          ? `A leitura técnica de ${asset} apresenta viés vendedor. O mercado demonstra pressão de baixa, mas ainda é importante aguardar confirmação antes de aumentar exposição.`
-          : `A leitura técnica de ${asset} está neutra. O mercado ainda não apresenta dominância clara entre compradores e vendedores, então o ideal é aguardar confirmação antes de operar.`}
-      </p>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              {generalValue >= 75
+                ? `A leitura técnica de ${asset} mostra forte predominância compradora. Os indicadores e médias móveis estão alinhados para compra, sugerindo continuidade de força compradora enquanto o preço respeitar os principais níveis técnicos.`
+                : generalValue >= 60
+                ? `A leitura técnica de ${asset} apresenta viés comprador, mas ainda exige confirmação. O cenário favorece compras seletivas, principalmente se houver rompimento ou defesa de região importante.`
+                : generalValue <= 25
+                ? `A leitura técnica de ${asset} mostra forte predominância vendedora. O conjunto de indicadores aponta pressão de baixa relevante, favorecendo operações vendidas enquanto não houver recuperação consistente.`
+                : generalValue <= 40
+                ? `A leitura técnica de ${asset} apresenta viés vendedor. O mercado demonstra pressão de baixa, mas ainda é importante aguardar confirmação antes de aumentar exposição.`
+                : `A leitura técnica de ${asset} está neutra. O mercado ainda não apresenta dominância clara entre compradores e vendedores, então o ideal é aguardar confirmação antes de operar.`}
+            </p>
 
-      <p className="mt-3 text-sm leading-6 text-zinc-400">
-        Indicadores técnicos: <span className="font-bold text-white">{getLabel(indicatorValue)}</span>.{" "}
-        Médias móveis: <span className="font-bold text-white">{getLabel(movingAverageValue)}</span>.{" "}
-        Viés informado pelo backend: <span className="font-bold text-cyan-300">{trendBias}</span>.
-      </p>
-    </div>
-  </div>
-</div>
+            <p className="mt-3 text-sm leading-6 text-zinc-400">
+              Indicadores técnicos:{" "}
+              <span className="font-bold text-white">
+                {getLabel(indicatorValue)}
+              </span>
+              . Médias móveis:{" "}
+              <span className="font-bold text-white">
+                {getLabel(movingAverageValue)}
+              </span>
+              . Viés informado pelo backend:{" "}
+              <span className="font-bold text-cyan-300">
+                {trendBias}
+              </span>
+              .
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
