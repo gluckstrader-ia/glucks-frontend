@@ -635,27 +635,19 @@ function MarketIntelligenceHub() {
             </div>
 
             <div className="p-4">
-              <div className="p-4">
-                <div className="relative overflow-hidden rounded-2xl border border-cyan-400/20 bg-[#05070b] shadow-inner shadow-cyan-500/10">
-                  <div className="absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-[#05070b] to-transparent pointer-events-none" />
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-black">
+                <iframe
+                  title="Calendário Econômico Investing"
+                  src="https://sslecal2.investing.com?ecoDayBackground=%23080b12&defaultFont=%23d4d4d8&innerBorderColor=%2327272a&borderColor=%2327272a&ecoDayFontColor=%23ffffff&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone,timeselector,filters&countries=5,32,37,72,22,17,39,14,48,10,35,6,43,21,38,12,4,36,110,11,26,25,178,9,30,33,23,34,92,102,57,94,204,97,68,96,103,111,42,109,188,7,105,172,20,60,87,44,193,89,45,125,145,53,61,55,59,95,85,54,58,63&calType=week&timeZone=12&lang=12"
+                  className="h-[560px] w-full border-0"
+                  loading="lazy"
+                />
+              </div>
 
-                    <iframe
-                      title="Calendário Econômico Investing"
-                      src="https://sslecal2.investing.com?ecoDayBackground=%2305070b&defaultFont=%23f4f4f5&innerBorderColor=%23111827&borderColor=%23111827&ecoDayFontColor=%23ffffff&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone,timeselector,filters&countries=5,32,37,72,22,17,39,14,48,10,35,6,43,21,38,12,4,36,110,11,26,25,178,9,30,33,23,34,92,102,57,94,204,97,68,96,103,111,42,109,188,7,105,172,20,60,87,44,193,89,45,125,145,53,61,55,59,95,85,54,58,63&calType=week&timeZone=12&lang=12"
-                      className="block h-[620px] w-full border-0 bg-[#05070b]"
-                      style={{
-                        marginTop: "-8px",
-                        filter: "contrast(1.08) brightness(0.95)",
-                      }}
-                      loading="lazy"
-                    />
-                  </div>
-
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-400">
-                    O calendário é carregado por widget externo. Caso não apareça,
-                    verifique bloqueadores de anúncio ou instabilidade do provedor.
-                  </div>
-                </div>
+              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-400">
+                O calendário é carregado por widget externo. Caso não apareça,
+                verifique bloqueadores de anúncio ou instabilidade do provedor.
+              </div>
             </div>
           </section>
 
@@ -4098,7 +4090,7 @@ const resolvedAssetType =
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex">
       <FloatingCommunityChat token={token} userName={user?.name} />
-
+      
       {loading && (
         <AiThinkingOverlay
           progress={progress}
