@@ -495,57 +495,6 @@ function getDefaultAssetByCategory(category: AssetCategoryLabel) {
   return ASSET_OPTIONS[category]?.[0]?.value ?? "";
 }
 
-function getTradingViewSymbol(category: AssetCategoryLabel, asset: string) {
-  const found = ASSET_OPTIONS[category]?.find((item) => item.value === asset);
-
-  if (found?.tvSymbol) return found.tvSymbol;
-
-  if (category === "Crypto") return `BINANCE:${asset}`;
-  if (category === "Forex") return `FX:${asset}`;
-  if (category === "B3") return `BMFBOVESPA:${asset}`;
-
-  if (category === "Commodities") {
-    if (asset === "XAU") return "TVC:GOLD";
-    if (asset === "XAG") return "TVC:SILVER";
-    if (asset === "WTI") return "NYMEX:CL1!";
-    if (asset === "BRENT") return "TVC:UKOIL";
-    if (asset === "NG") return "NYMEX:NG1!";
-    if (asset === "SOJA") return "CBOT:ZS1!";
-    if (asset === "MILHO") return "CBOT:ZC1!";
-    if (asset === "CAFE") return "ICEUS:KC1!";
-    return asset;
-  }
-
-  if (category === "Futuros BR") {
-    if (asset === "WIN") return "BMFBOVESPA:WIN1!";
-    if (asset === "WDO") return "BMFBOVESPA:WDO1!";
-    return `BMFBOVESPA:${asset}`;
-  }
-
-  if (category === "Futuros US") {
-    if (asset === "MNQ") return "CME_MINI:MNQ1!";
-    if (asset === "MGC") return "COMEX_MINI:MGC1!";
-    if (asset === "ES") return "CME_MINI:ES1!";
-    if (asset === "CL") return "NYMEX:CL1!";
-    return asset;
-  }
-
-  if (category === "Ações") return `NASDAQ:${asset}`;
-
-  if (category === "Índices") {
-    if (asset === "SPX") return "SP:SPX";
-    if (asset === "IBOV") return "INDEX:IBOV";
-    if (asset === "NDX") return "FOREXCOM:NAS100";
-    if (asset === "NASDAQ") return "NASDAQ:IXIC";
-    if (asset === "DJI") return "DJ:DJI";
-    if (asset === "DAX") return "XETR:DAX";
-    if (asset === "JP225") return "INDEX:NKY";
-    return asset;
-  }
-
-  return asset;
-}
-
 function MarketIntelligenceHub() {
   const videos = [
     {
