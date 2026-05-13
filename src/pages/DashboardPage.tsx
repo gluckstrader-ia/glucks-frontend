@@ -554,6 +554,7 @@ function MarketIntelligenceHub() {
       duration: "8 min",
       youtubeId: "S0hCGYcEEa8",
       thumbnail: "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
+      badge: "Sinal Final",
     },
     {
       title: "Gestão de risco antes da entrada",
@@ -561,6 +562,7 @@ function MarketIntelligenceHub() {
       duration: "11 min",
       youtubeId: "S0hCGYcEEa8",
       thumbnail: "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
+      badge: "Gestão",
     },
     {
       title: "Como usar calendário econômico no day trade",
@@ -568,6 +570,7 @@ function MarketIntelligenceHub() {
       duration: "9 min",
       youtubeId: "S0hCGYcEEa8",
       thumbnail: "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
+      badge: "Calendário",
     },
   ];
 
@@ -665,25 +668,46 @@ function MarketIntelligenceHub() {
             </section>
 
             <div className="grid gap-5 xl:grid-cols-2">
-              <section className="rounded-[1.75rem] border border-emerald-400/20 bg-[#080b12]/90 p-5 shadow-2xl shadow-emerald-500/10">
-                <div className="mb-5 flex items-center gap-3">
-                  <div className="rounded-2xl bg-emerald-400/10 p-3 text-emerald-300">
-                    <PlayCircle className="h-6 w-6" />
+              {/* BLOCO PREMIUM VÍDEOS */}
+              <section className="relative overflow-hidden rounded-[1.75rem] border border-emerald-300/30 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.22),transparent_34%),linear-gradient(180deg,rgba(6,32,25,0.85),rgba(3,7,13,0.98))] p-5 shadow-[0_0_60px_rgba(16,185,129,0.12)]">
+                <div className="pointer-events-none absolute -left-20 top-0 h-52 w-52 rounded-full bg-emerald-400/15 blur-3xl" />
+                <div className="pointer-events-none absolute bottom-0 right-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
+
+                <div className="relative mb-5 flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-2xl border border-emerald-300/20 bg-emerald-400/15 p-3 text-emerald-200 shadow-[0_0_30px_rgba(16,185,129,0.18)]">
+                      <PlayCircle className="h-6 w-6" />
+                    </div>
+
+                    <div>
+                      <div className="mb-2 inline-flex items-center rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200">
+                        Aprendizado IA
+                      </div>
+
+                      <h3 className="text-xl font-black text-white">
+                        Vídeos Educacionais
+                      </h3>
+
+                      <p className="mt-1 text-sm text-emerald-100/70">
+                        Conteúdos estratégicos para melhorar sua leitura
+                        operacional.
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <h3 className="text-lg font-black text-white">
-                      Vídeos Educacionais
-                    </h3>
+                  <div className="hidden rounded-2xl border border-emerald-300/20 bg-black/30 px-4 py-3 text-right sm:block">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">
+                      Academy
+                    </p>
 
-                    <p className="text-sm text-zinc-400">
-                      Conteúdos rápidos para melhorar sua leitura operacional.
+                    <p className="mt-1 text-lg font-black text-white">
+                      IA Learn
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  {videos.map((video) => (
+                <div className="relative space-y-3">
+                  {videos.map((video, index) => (
                     <button
                       key={video.title}
                       type="button"
@@ -693,41 +717,83 @@ function MarketIntelligenceHub() {
                           youtubeId: video.youtubeId,
                         })
                       }
-                      className="group grid w-full grid-cols-[96px_1fr_auto] items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left transition hover:border-emerald-400/40 hover:bg-emerald-400/[0.05]"
+                      className={`group relative grid w-full grid-cols-[104px_1fr_auto] items-center gap-4 overflow-hidden rounded-2xl border p-3 text-left transition duration-300 hover:-translate-y-0.5 ${
+                        index === 1
+                          ? "border-emerald-300/45 bg-emerald-400/[0.10] shadow-[0_0_34px_rgba(16,185,129,0.18)]"
+                          : "border-white/10 bg-black/25 hover:border-emerald-300/35 hover:bg-emerald-400/[0.06]"
+                      }`}
                     >
-                      <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black">
+                      <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-300 via-cyan-300 to-transparent opacity-80" />
+
+                      {index === 1 && (
+                        <div className="absolute right-3 top-3 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-200">
+                          Destaque
+                        </div>
+                      )}
+
+                      <div className="relative overflow-hidden rounded-xl border border-emerald-300/20 bg-black">
                         <img
                           src={video.thumbnail}
                           alt={video.title}
-                          className="h-16 w-24 object-cover transition duration-300 group-hover:scale-105"
+                          className="h-[72px] w-[104px] object-cover transition duration-300 group-hover:scale-110"
                         />
 
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/35">
-                          <PlayCircle className="h-8 w-8 text-emerald-300 drop-shadow" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-300/40 bg-emerald-400/20 text-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.35)]">
+                            <PlayCircle className="h-7 w-7" />
+                          </div>
+                        </div>
+
+                        <div className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-lg bg-black/80 text-xs font-black text-emerald-200">
+                          {index + 1}
                         </div>
                       </div>
 
-                      <div className="min-w-0">
-                        <h4 className="line-clamp-2 font-bold leading-snug text-white group-hover:text-emerald-200">
+                      <div className="min-w-0 pr-6">
+                        <div className="mb-1 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-200">
+                          {video.badge}
+                        </div>
+
+                        <h4 className="line-clamp-2 font-black leading-snug text-white group-hover:text-emerald-100">
                           {video.title}
                         </h4>
 
-                        <p className="mt-1 line-clamp-2 text-sm leading-5 text-zinc-400">
+                        <p className="mt-1 line-clamp-2 text-sm leading-5 text-zinc-300">
                           {video.description}
                         </p>
 
-                        <div className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-zinc-500">
+                        <div className="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-emerald-200/70">
                           <Clock className="h-3.5 w-3.5" />
                           {video.duration}
                         </div>
                       </div>
 
-                      <ArrowRight className="h-4 w-4 shrink-0 text-zinc-500 transition group-hover:translate-x-1 group-hover:text-emerald-300" />
+                      <ArrowRight className="h-5 w-5 shrink-0 text-emerald-200/50 transition group-hover:translate-x-1 group-hover:text-emerald-200" />
                     </button>
                   ))}
                 </div>
+
+                <div className="relative mt-5 rounded-2xl border border-emerald-300/20 bg-black/25 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-xl bg-emerald-400/10 p-2 text-emerald-300">
+                      <Brain className="h-5 w-5" />
+                    </div>
+
+                    <div>
+                      <h4 className="font-black text-white">
+                        Trilha recomendada
+                      </h4>
+
+                      <p className="mt-2 text-sm leading-6 text-zinc-300">
+                        Comece pela interpretação do Sinal Final, avance para
+                        gestão de risco e finalize com calendário econômico.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </section>
 
+              {/* BLOCO EXPECTATIVAS */}
               <section className="relative overflow-hidden rounded-[1.75rem] border border-cyan-300/30 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.20),transparent_34%),linear-gradient(180deg,rgba(8,47,73,0.50),rgba(3,7,13,0.96))] p-5 shadow-2xl shadow-cyan-500/20">
                 <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-cyan-400/20 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-20 left-10 h-44 w-44 rounded-full bg-emerald-400/10 blur-3xl" />
@@ -757,6 +823,7 @@ function MarketIntelligenceHub() {
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-300">
                       Radar
                     </p>
+
                     <p className="mt-1 text-lg font-black text-white">
                       IA Live
                     </p>
@@ -828,39 +895,6 @@ function MarketIntelligenceHub() {
                       <ArrowRight className="h-5 w-5 shrink-0 text-cyan-200/50 transition group-hover:translate-x-1 group-hover:text-cyan-200" />
                     </button>
                   ))}
-                </div>
-
-                <div className="relative mt-5 rounded-2xl border border-cyan-300/20 bg-black/25 p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-xl bg-cyan-400/10 p-2 text-cyan-300">
-                      <Brain className="h-5 w-5" />
-                    </div>
-
-                    <div>
-                      <h4 className="font-black text-white">
-                        Resumo operacional da IA
-                      </h4>
-
-                      <p className="mt-2 text-sm leading-6 text-zinc-300">
-                        Antes de operar, combine calendário econômico, tendência
-                        do ativo, região de preço e gestão de risco.
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSelectedVideo({
-                            title: "Resumo operacional da IA",
-                            youtubeId: "S0hCGYcEEa8",
-                          })
-                        }
-                        className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-400/10 px-4 py-2 text-sm font-black text-cyan-200 transition hover:bg-cyan-400/20 hover:text-white"
-                      >
-                        <PlayCircle className="h-4 w-4" />
-                        Assistir análise
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </section>
             </div>
