@@ -4010,11 +4010,14 @@ function GaugeMeter({
       </div>
 
       <div className="relative z-10 mx-auto mt-5 h-[150px] w-[260px] max-w-full">
-        <svg viewBox="0 0 260 150" className="h-full w-full">
+        <svg
+          viewBox="0 0 260 150"
+          className="h-full w-full drop-shadow-[0_0_18px_rgba(0,255,170,0.12)]"
+        >
           <path
             d="M 30 130 A 100 100 0 0 1 230 130"
             fill="none"
-            stroke="rgba(239,68,68,0.28)"
+            stroke="rgba(255,0,55,0.95)"
             strokeWidth="18"
             strokeLinecap="round"
           />
@@ -4022,7 +4025,7 @@ function GaugeMeter({
           <path
             d="M 65 57 A 100 100 0 0 1 195 57"
             fill="none"
-            stroke="rgba(161,161,170,0.22)"
+            stroke="rgba(220,220,220,0.9)"
             strokeWidth="18"
             strokeLinecap="round"
           />
@@ -4030,7 +4033,7 @@ function GaugeMeter({
           <path
             d="M 130 30 A 100 100 0 0 1 230 130"
             fill="none"
-            stroke="rgba(16,185,129,0.30)"
+            stroke="rgba(0,255,170,0.95)"
             strokeWidth="18"
             strokeLinecap="round"
           />
@@ -4038,7 +4041,7 @@ function GaugeMeter({
           <path
             d="M 30 130 A 100 100 0 0 1 230 130"
             fill="none"
-            stroke="rgba(255,255,255,0.08)"
+            stroke="rgba(220,220,220,0.9)"
             strokeWidth="2"
           />
 
