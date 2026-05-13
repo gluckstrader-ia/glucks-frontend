@@ -151,7 +151,7 @@ export default function FloatingCommunityChat({
       )}
 
       {open && (
-        <section className="h-[78vh] w-[420px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.75rem] border border-cyan-400/20 bg-[#070a10]/95 shadow-2xl shadow-cyan-500/20 backdrop-blur-xl">
+        <section className="flex h-[82vh] w-[420px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[1.75rem] border border-cyan-400/20 bg-[#070a10]/95 shadow-2xl shadow-cyan-500/20 backdrop-blur-xl">
           <header className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-cyan-500/10 to-emerald-500/10 p-4">
             <div className="flex items-center gap-3">
               <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-300">
