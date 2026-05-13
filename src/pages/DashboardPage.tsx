@@ -4191,35 +4191,6 @@ function TechnicalOverviewPanel({
         />
       </div>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-red-300">
-            Pressão Vendedora
-          </p>
-          <p className="mt-2 text-3xl font-black text-red-300">
-            {sellSignals}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-zinc-700 bg-zinc-900/50 p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-zinc-400">
-            Neutralidade
-          </p>
-          <p className="mt-2 text-3xl font-black text-white">
-            {neutralSignals}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-emerald-300">
-            Pressão Compradora
-          </p>
-          <p className="mt-2 text-3xl font-black text-emerald-300">
-            {buySignals}
-          </p>
-        </div>
-      </div>
-
       <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-5">
         <div className="flex items-start gap-3">
           <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-cyan-300" />
