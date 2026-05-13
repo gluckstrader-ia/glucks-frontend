@@ -3,11 +3,26 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { BrainCircuit, BarChart3 } from "lucide-react";
+import {
+  BrainCircuit,
+  BarChart3,
+  CalendarDays,
+  PlayCircle,
+  Target,
+  Clock,
+  ExternalLink,
+  CheckCircle2,
+  Flame,
+  TrendingUp,
+  Brain,
+  BookOpen,
+  ArrowRight,
+} from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
 import { useB3MarketData } from "../hooks/useB3MarketData";
 import QuantDashboardCard from "../components/dashboard/QuantDashboardCard";
 import { useQuantDashboard } from "../hooks/useQuantDashboard";
+import FloatingCommunityChat from "../components/community/FloatingCommunityChat";
 
 
 type AnalysisModules = {
@@ -533,320 +548,239 @@ function getTradingViewSymbol(category: AssetCategoryLabel, asset: string) {
   return asset;
 }
 
-type NewsItem = {
-  title: string;
-  summary: string;
-  source: string;
-  time: string;
-  author: string;
-  highlight?: boolean;
-  url?: string;
-};
-
-type EconomicEventItem = {
-  time: string;
-  country: string;
-  event: string;
-  actual: string;
-  forecast: string;
-  previous: string;
-  color: string;
-};
-
-function NewsPanel({
-  newsTab,
-  setNewsTab,
-  token,
-}: {
-  newsTab: "news" | "events";
-  setNewsTab: (tab: "news" | "events") => void;
-  token?: string | null;
-}) {
-  const fallbackNews: NewsItem[] = [
+function MarketIntelligenceHub() {
+  const videos = [
     {
-      title:
-        "Viana diz que decisão do STF impediu análise de dados de filho de Lula na CPMI",
-      summary:
-        "Presidente da comissão afirma que suspensão de quebras de sigilo travou apuração e critica decisão de Flávio Dino.",
-      source: "infomoney.br",
-      time: "Agora há pouco",
-      author: "Marina Verenicz",
-      highlight: false,
+      title: "Como interpretar o Sinal Final da IA",
+      description: "Entenda confiança, direção, entrada, stop e alvos.",
+      duration: "8 min",
+      url: "https://www.youtube.com/@gluckstraderia",
     },
     {
-      title:
-        "Ibovespa Hoje Ao Vivo: Bolsa sobe aos 182 mil pontos com PETR4 e VALE3",
-      summary:
-        "Bolsas dos EUA avançam e ampliam recuperação em meio à turbulência do conflito no Irã.",
-      source: "infomoney.br",
-      time: "Agora há pouco",
-      author: "Felipe Alves",
-      highlight: false,
+      title: "Gestão de risco antes da entrada",
+      description: "Como validar uma operação sem aumentar exposição.",
+      duration: "11 min",
+      url: "https://www.youtube.com/@gluckstraderia",
     },
     {
-      title:
-        "Inflação transitória dos EUA completa cinco anos e ainda incomoda",
-      summary:
-        "As cicatrizes políticas, financeiras e econômicas não desaparecerão rapidamente.",
-      source: "infomoney.br",
-      time: "Agora há pouco",
-      author: "Reuters",
-      highlight: false,
-    },
-    {
-      title:
-        "Petroleiros começam a passar pelo Estreito de Ormuz, diz Casa Branca",
-      summary:
-        "Kevin Hassett reiterou a posição do governo de que a guerra com o Irã deve durar semanas, não meses.",
-      source: "infomoney.br",
-      time: "Agora há pouco",
-      author: "Reuters",
-      highlight: true,
+      title: "Como usar calendário econômico no day trade",
+      description: "Veja quais eventos evitar antes de operar.",
+      duration: "9 min",
+      url: "https://www.youtube.com/@gluckstraderia",
     },
   ];
 
-  const fallbackEvents: EconomicEventItem[] = [
-    {
-      time: "09:00",
-      country: "🇧🇷 BR",
-      event: "IPCA-15",
-      actual: "0,38%",
-      forecast: "0,34%",
-      previous: "0,29%",
-      color: "bg-red-500",
-    },
-    {
-      time: "10:45",
-      country: "🇺🇸 US",
-      event: "PMI Industrial",
-      actual: "51,2",
-      forecast: "50,8",
-      previous: "50,1",
-      color: "bg-yellow-400",
-    },
-    {
-      time: "11:00",
-      country: "🇺🇸 US",
-      event: "Vendas de Casas Novas",
-      actual: "684K",
-      forecast: "676K",
-      previous: "662K",
-      color: "bg-yellow-400",
-    },
-    {
-      time: "15:00",
-      country: "🇺🇸 US",
-      event: "Discurso do Fed",
-      actual: "—",
-      forecast: "—",
-      previous: "—",
-      color: "bg-red-500",
-    },
+  const expectations = [
+    "Monitorar eventos de alto impacto antes de qualquer entrada.",
+    "Evitar operar no impulso após notícias fortes.",
+    "Priorizar operações com confluência entre tendência, região e gestão.",
+    "Aguardar confirmação do preço antes de aumentar agressividade.",
   ];
-
-  const [newsItems, setNewsItems] = useState<NewsItem[]>(fallbackNews);
-  const [events, setEvents] = useState<EconomicEventItem[]>(fallbackEvents);
-  const [loadingNews, setLoadingNews] = useState(false);
-  const [loadingEvents, setLoadingEvents] = useState(false);
-  const [lastNewsUpdate, setLastNewsUpdate] = useState("");
-  const [lastEventsUpdate, setLastEventsUpdate] = useState("");
-
-  async function fetchNews() {
-    try {
-      setLoadingNews(true);
-
-      const response = await fetch(`${API_URL}/news`, {
-        headers: token
-          ? {
-              Authorization: `Bearer ${token}`,
-            }
-          : undefined,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao carregar notícias: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      const normalized: NewsItem[] = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.items)
-        ? data.items
-        : [];
-
-      if (normalized.length > 0) {
-        setNewsItems(normalized);
-        setLastNewsUpdate(new Date().toLocaleTimeString("pt-BR"));
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar notícias:", error);
-    } finally {
-      setLoadingNews(false);
-    }
-  }
-
-  async function fetchEvents() {
-    try {
-      setLoadingEvents(true);
-
-      const response = await fetch(`${API_URL}/economic-events`, {
-        headers: token
-          ? {
-              Authorization: `Bearer ${token}`,
-            }
-          : undefined,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao carregar eventos: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      const normalized: EconomicEventItem[] = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.items)
-        ? data.items
-        : [];
-
-      if (normalized.length > 0) {
-        setEvents(normalized);
-        setLastEventsUpdate(new Date().toLocaleTimeString("pt-BR"));
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar eventos:", error);
-    } finally {
-      setLoadingEvents(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchNews();
-    fetchEvents();
-
-    const newsInterval = setInterval(fetchNews, 5 * 60 * 1000);
-    const eventsInterval = setInterval(fetchEvents, 60 * 1000);
-
-    return () => {
-      clearInterval(newsInterval);
-      clearInterval(eventsInterval);
-    };
-  }, []);
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800 xl:col-span-5 overflow-hidden">
-      <CardContent className="p-4 md:p-6 space-y-4">
-        <div className="rounded-2xl bg-zinc-950 border border-zinc-800 p-1 flex gap-2">
-          <button
-            type="button"
-            onClick={() => setNewsTab("news")}
-            className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold border flex items-center justify-center gap-2 transition ${
-              newsTab === "news"
-                ? "bg-black text-white border-zinc-800"
-                : "text-zinc-400 border-transparent hover:text-white"
-            }`}
+    <Card className="overflow-hidden border-zinc-800 bg-zinc-950/80 shadow-2xl shadow-cyan-500/5 xl:col-span-5">
+      <CardContent className="space-y-6 p-4 md:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-cyan-300">
+              Central do Trader
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black text-white md:text-3xl">
+              Calendário, educação e expectativas do dia
+            </h2>
+
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+              Uma área mais estratégica para acompanhar eventos econômicos,
+              conteúdos importantes e pontos de atenção antes de operar.
+            </p>
+          </div>
+
+          <a
+            href="/status"
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-xs font-bold text-emerald-200 transition hover:border-emerald-300/50 hover:text-white"
           >
-            📰 Notícias ({newsItems.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setNewsTab("events")}
-            className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold border flex items-center justify-center gap-2 transition ${
-              newsTab === "events"
-                ? "bg-black text-white border-zinc-800"
-                : "text-zinc-400 border-transparent hover:text-white"
-            }`}
-          >
-            🗓️ Eventos Econômicos
-          </button>
+            <CheckCircle2 className="h-4 w-4" />
+            Status do Sistema
+          </a>
         </div>
 
-        {newsTab === "news" ? (
-          <div className="space-y-4">
-            <div className="text-xs text-zinc-500 flex items-center justify-between">
-              <span>{loadingNews ? "Atualizando notícias..." : "Notícias carregadas"}</span>
-              <span>{lastNewsUpdate ? `Última atualização: ${lastNewsUpdate}` : ""}</span>
-            </div>
+        <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+          <section className="overflow-hidden rounded-[1.75rem] border border-cyan-400/20 bg-[#080b12]/90 shadow-2xl shadow-cyan-500/10">
+            <div className="flex flex-col gap-4 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-300">
+                  <CalendarDays className="h-6 w-6" />
+                </div>
 
-            {newsItems.map((item, index) => (
-              <div
-                key={index}
-                className={`rounded-3xl border p-4 md:p-5 bg-gradient-to-r from-zinc-950 to-zinc-900/70 ${
-                  item.highlight ? "border-cyan-700/70" : "border-zinc-800"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <h3
-                      className={`font-semibold text-lg leading-snug ${
-                        item.highlight ? "text-cyan-400" : "text-white"
-                      }`}
-                    >
-                      {item.title}
-                    </h3>
-                    <p className="text-zinc-400 text-sm mt-2 leading-relaxed">
-                      {item.summary}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3 mt-4 text-sm text-zinc-400">
-                      <span className="px-3 py-1 rounded-full bg-zinc-800 text-zinc-100 font-medium">
-                        {item.source}
-                      </span>
-                      <span>◔ {item.time}</span>
-                      <span>por {item.author}</span>
-                    </div>
-                  </div>
-
-                  <div className={`text-lg shrink-0 ${item.highlight ? "text-cyan-400" : "text-zinc-500"}`}>
-                    ↗
-                  </div>
+                <div>
+                  <h3 className="text-lg font-black text-white">
+                    Calendário Econômico
+                  </h3>
+                  <p className="text-sm text-zinc-400">
+                    Eventos macroeconômicos que podem impactar o mercado hoje.
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="text-xs text-zinc-500 flex items-center justify-between">
-              <span>{loadingEvents ? "Atualizando eventos..." : "Eventos carregados"}</span>
-              <span>{lastEventsUpdate ? `Última atualização: ${lastEventsUpdate}` : ""}</span>
+
+              <a
+                href="https://br.investing.com/economic-calendar/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:text-white"
+              >
+                Abrir Investing
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
             </div>
 
-            <div className="rounded-3xl border border-zinc-800 bg-gradient-to-r from-zinc-950 to-zinc-900/70 p-4 md:p-5 overflow-x-auto">
-              <div className="min-w-[720px]">
-                <div className="grid grid-cols-12 gap-4 text-xs uppercase tracking-wide text-zinc-500 border-b border-zinc-800 pb-3 mb-3">
-                  <div className="col-span-2">Horário</div>
-                  <div className="col-span-2">País</div>
-                  <div className="col-span-4">Evento</div>
-                  <div className="col-span-1">Impacto</div>
-                  <div className="col-span-1">Atual</div>
-                  <div className="col-span-1">Prev.</div>
-                  <div className="col-span-1">Ant.</div>
+            <div className="p-4">
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-black">
+                <iframe
+                  title="Calendário Econômico Investing"
+                  src="https://sslecal2.investing.com?ecoDayBackground=%23080b12&defaultFont=%23d4d4d8&innerBorderColor=%2327272a&borderColor=%2327272a&ecoDayFontColor=%23ffffff&columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone,timeselector,filters&countries=5,32,37,72,22,17,39,14,48,10,35,6,43,21,38,12,4,36,110,11,26,25,178,9,30,33,23,34,92,102,57,94,204,97,68,96,103,111,42,109,188,7,105,172,20,60,87,44,193,89,45,125,145,53,61,55,59,95,85,54,58,63&calType=week&timeZone=12&lang=12"
+                  className="h-[560px] w-full border-0"
+                  loading="lazy"
+                />
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-zinc-400">
+                O calendário é carregado por widget externo. Caso não apareça,
+                verifique bloqueadores de anúncio ou instabilidade do provedor.
+              </div>
+            </div>
+          </section>
+
+          <aside className="grid gap-5">
+            <section className="rounded-[1.75rem] border border-emerald-400/20 bg-[#080b12]/90 p-5 shadow-2xl shadow-emerald-500/10">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="rounded-2xl bg-emerald-400/10 p-3 text-emerald-300">
+                  <PlayCircle className="h-6 w-6" />
                 </div>
 
-                {events.map((item, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-12 gap-4 items-center py-3 border-b border-zinc-900 last:border-b-0 text-sm"
+                <div>
+                  <h3 className="text-lg font-black text-white">
+                    Vídeos Educacionais
+                  </h3>
+                  <p className="text-sm text-zinc-400">
+                    Conteúdos rápidos para melhorar sua leitura operacional.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {videos.map((video, index) => (
+                  <a
+                    key={video.title}
+                    href={video.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group block rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-emerald-400/40 hover:bg-emerald-400/[0.05]"
                   >
-                    <div className="col-span-2 text-zinc-300 font-medium">
-                      {item.time}
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-black/60 text-sm font-black text-emerald-300">
+                          {index + 1}
+                        </div>
+
+                        <div>
+                          <h4 className="font-bold leading-snug text-white group-hover:text-emerald-200">
+                            {video.title}
+                          </h4>
+
+                          <p className="mt-1 text-sm leading-5 text-zinc-400">
+                            {video.description}
+                          </p>
+
+                          <div className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-zinc-500">
+                            <Clock className="h-3.5 w-3.5" />
+                            {video.duration}
+                          </div>
+                        </div>
+                      </div>
+
+                      <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-zinc-500 transition group-hover:translate-x-1 group-hover:text-emerald-300" />
                     </div>
-                    <div className="col-span-2 text-zinc-400">
-                      {item.country}
-                    </div>
-                    <div className="col-span-4 text-white">{item.event}</div>
-                    <div className="col-span-1">
-                      <span className={`inline-block h-2.5 w-2.5 rounded-full ${item.color}`} />
-                    </div>
-                    <div className="col-span-1 text-cyan-400">{item.actual}</div>
-                    <div className="col-span-1 text-zinc-300">{item.forecast}</div>
-                    <div className="col-span-1 text-zinc-500">{item.previous}</div>
+                  </a>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-[1.75rem] border border-cyan-400/20 bg-[#080b12]/90 p-5 shadow-2xl shadow-cyan-500/10">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="rounded-2xl bg-cyan-400/10 p-3 text-cyan-300">
+                  <Target className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-black text-white">
+                    Expectativas do Dia
+                  </h3>
+                  <p className="text-sm text-zinc-400">
+                    Pontos de atenção para operar com mais clareza.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-4 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <TrendingUp className="mb-3 h-5 w-5 text-cyan-300" />
+                  <p className="text-xs text-zinc-500">Viés</p>
+                  <p className="mt-1 font-black text-white">
+                    Aguardar confirmação
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <Flame className="mb-3 h-5 w-5 text-amber-300" />
+                  <p className="text-xs text-zinc-500">Risco</p>
+                  <p className="mt-1 font-black text-white">
+                    Atenção a notícias
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {expectations.map((item) => (
+                  <div
+                    key={item}
+                    className="flex gap-3 rounded-2xl border border-white/10 bg-black/30 p-4"
+                  >
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
+                    <p className="text-sm leading-6 text-zinc-300">{item}</p>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-        )}
+            </section>
+
+            <section className="rounded-[1.75rem] border border-white/10 bg-gradient-to-br from-cyan-500/10 via-white/[0.03] to-emerald-500/10 p-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-2xl bg-white/10 p-3 text-cyan-300">
+                  <Brain className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <h3 className="font-black text-white">Dica Gluck&apos;s IA</h3>
+                  <p className="mt-2 text-sm leading-6 text-zinc-300">
+                    Antes de operar, combine calendário econômico, tendência do
+                    ativo, região de preço e gestão de risco. A melhor entrada
+                    não é a mais rápida, é a mais bem confirmada.
+                  </p>
+
+                  <a
+                    href="https://www.youtube.com/@gluckstrader"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 transition hover:bg-cyan-400/20 hover:text-white"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    Ver conteúdos
+                  </a>
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
       </CardContent>
     </Card>
   );
@@ -3954,7 +3888,6 @@ export default function DashboardPage() {
   const [customAsset, setCustomAsset] = useState("");
   const [tf, setTf] = useState("5m");
   const [mainTab, setMainTab] = useState("Resumo");
-  const [newsTab, setNewsTab] = useState<"news" | "events">("news");
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [apiError, setApiError] = useState("");
   const analysisInFlightRef = useRef(false);
@@ -4156,6 +4089,8 @@ const resolvedAssetType =
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex">
+      <FloatingCommunityChat token={token} userName={user?.name} />
+      
       {loading && (
         <AiThinkingOverlay
           progress={progress}
@@ -4488,7 +4423,7 @@ const resolvedAssetType =
           {!tabs.includes(mainTab) && <PlaceholderTab label={mainTab} />}
 
           <div className="grid grid-cols-1 gap-6">
-            <NewsPanel newsTab={newsTab} setNewsTab={setNewsTab} token={token} />
+            <MarketIntelligenceHub />
           </div>
         </div>
       </main>

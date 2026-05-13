@@ -228,12 +228,10 @@ function MobileMenu({
   );
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   const scrollToPlans = () => {
     const section = document.getElementById("planos");
@@ -243,44 +241,6 @@ export default function LandingPage() {
       behavior: "smooth",
       block: "start",
     });
-  };
-
-  const handlePlanCheckout = async (planId: string) => {
-    try {
-      setLoadingPlan(planId);
-
-      const token = localStorage.getItem("glucks_token") || localStorage.getItem("token");
-
-      const response = await fetch(`${API_URL}/payments/create-checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: "include",
-        body: JSON.stringify({ plan: planId }),
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const message = data?.detail || data?.message || "Não foi possível iniciar o checkout.";
-        throw new Error(message);
-      }
-
-      const checkoutUrl = data?.checkout_url || data?.payment_url || data?.url;
-
-      if (!checkoutUrl) {
-        throw new Error("Checkout criado, mas a URL de pagamento não foi retornada.");
-      }
-
-      window.location.href = checkoutUrl;
-    } catch (error) {
-      console.error("Erro ao iniciar checkout:", error);
-      alert(error instanceof Error ? error.message : "Erro ao iniciar checkout.");
-    } finally {
-      setLoadingPlan(null);
-    }
   };
 
   return (
@@ -1047,80 +1007,98 @@ export default function LandingPage() {
       </section>
 
       <section
-        id="planos"
-        className="border-y border-white/10 bg-zinc-950/70"
-      >
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
-          <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-12">
-            <div className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-400 sm:text-sm">
-              Planos
+  id="planos"
+  className="relative overflow-hidden border-t border-white/5 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.08),transparent_45%),linear-gradient(180deg,#040404,#000)]"
+>
+  <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+    <div className="mx-auto max-w-3xl text-center">
+      <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-emerald-300">
+        <Gem className="h-4 w-4" />
+        Planos
+      </div>
+
+      <h2 className="mt-4 text-2xl font-black md:text-4xl lg:text-5xl">
+        Escolha a melhor forma de acessar a plataforma.
+      </h2>
+
+      <p className="mt-4 text-base text-zinc-400 sm:text-lg">
+        Estruture sua assinatura de acordo com seu ritmo operacional.
+      </p>
+    </div>
+
+    <div className="mt-14 grid gap-4 lg:grid-cols-3 sm:gap-6">
+      {plans.map((plan) => {
+        const planSlug =
+          plan.name === "Mensal"
+            ? "mensal"
+            : plan.name === "Trimestral"
+            ? "trimestral"
+            : "semestral";
+
+        return (
+          <div
+            key={plan.name}
+            className={`relative overflow-hidden rounded-[28px] border p-6 transition-all duration-300 sm:rounded-[32px] sm:p-8 ${
+              plan.highlight
+                ? "border-emerald-500/40 bg-[linear-gradient(180deg,rgba(5,18,11,0.95),rgba(2,2,2,0.98))] shadow-[0_0_80px_rgba(16,185,129,0.18)]"
+                : "border-white/10 bg-black/40 hover:border-emerald-500/30"
+            }`}
+          >
+            {plan.badge && (
+              <div className="absolute -top-3 left-6 rounded-full bg-emerald-500 px-4 py-1 text-xs font-black text-black shadow-[0_0_25px_rgba(16,185,129,0.55)] sm:left-8 sm:text-sm">
+                {plan.badge}
+              </div>
+            )}
+
+            <div className="text-zinc-400">
+              {plan.name}
             </div>
-            <h2 className="mt-4 text-2xl font-black md:text-4xl lg:text-5xl">
-              Escolha a melhor forma de acessar a plataforma.
-            </h2>
-            <p className="mt-4 text-base text-zinc-400 sm:text-lg">
-              Estruture sua assinatura de acordo com seu ritmo operacional.
-            </p>
-          </div>
 
-          <div className="grid gap-4 lg:grid-cols-3 sm:gap-6">
-            {plans.map((plan) => {
-              const isLoading = loadingPlan === plan.checkoutPlan;
+            <div className="mt-4 flex items-end gap-2">
+              <div className="text-4xl font-black text-white sm:text-5xl">
+                {plan.price}
+              </div>
 
-              return (
+              <div className="pb-1 text-zinc-400">
+                {plan.period}
+              </div>
+            </div>
+
+            <div className="mt-8 space-y-4">
+              {plan.features.map((feature) => (
                 <div
-                  key={plan.name}
-                  className={`relative rounded-[28px] border p-6 sm:rounded-[32px] sm:p-8 ${
-                    plan.highlight
-                      ? "border-emerald-500/40 bg-[linear-gradient(180deg,rgba(5,18,11,0.95),rgba(2,2,2,0.98))] shadow-2xl shadow-emerald-950/20"
-                      : "border-white/10 bg-black/40"
-                  }`}
+                  key={feature}
+                  className="flex items-start gap-3 text-zinc-300"
                 >
-                  {plan.badge && (
-                    <div className="absolute -top-3 left-6 rounded-full bg-emerald-500 px-4 py-1 text-xs font-bold text-black sm:left-8 sm:text-sm">
-                      {plan.badge}
-                    </div>
-                  )}
+                  <span className="mt-1 text-emerald-400">
+                    ✓
+                  </span>
 
-                  <div className="text-zinc-400">{plan.name}</div>
-
-                  <div className="mt-4 flex items-end gap-2">
-                    <div className="text-4xl font-black text-white sm:text-5xl">
-                      {plan.price}
-                    </div>
-                    <div className="pb-1 text-zinc-400">{plan.period}</div>
-                  </div>
-
-                  <div className="mt-8 space-y-3">
-                    {plan.features.map((feature) => (
-                      <div
-                        key={feature}
-                        className="flex items-start gap-3 text-zinc-300"
-                      >
-                        <span className="mt-1 text-emerald-400">✓</span>
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePlanCheckout(plan.checkoutPlan)}
-                    disabled={isLoading}
-                    className={`mt-8 block w-full rounded-2xl px-5 py-4 text-center text-sm font-black uppercase tracking-wide transition sm:text-base ${
-                      plan.highlight
-                        ? "bg-emerald-400 text-black shadow-[0_0_35px_rgba(52,211,153,0.55)] hover:scale-[1.02] hover:bg-emerald-300 hover:shadow-[0_0_55px_rgba(52,211,153,0.9)]"
-                        : "border border-emerald-400/30 bg-emerald-500/10 text-emerald-300 shadow-[0_0_22px_rgba(52,211,153,0.18)] hover:scale-[1.02] hover:border-emerald-300/60 hover:bg-emerald-500/20 hover:text-white"
-                    } disabled:cursor-not-allowed disabled:opacity-70`}
-                  >
-                    {isLoading ? "Abrindo checkout..." : plan.cta}
-                  </button>
+                  <span>{feature}</span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+
+            <a
+              href={`/cadastro?plan=${planSlug}`}
+              className={`group relative mt-10 flex w-full items-center justify-center overflow-hidden rounded-2xl px-6 py-4 text-center text-sm font-black uppercase tracking-[0.18em] transition-all duration-300 sm:text-base ${
+                plan.highlight
+                  ? "bg-emerald-400 text-black shadow-[0_0_45px_rgba(52,211,153,0.65)] hover:scale-[1.03] hover:bg-emerald-300 hover:shadow-[0_0_70px_rgba(52,211,153,0.95)]"
+                  : "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:scale-[1.02] hover:border-emerald-400 hover:bg-emerald-500/20 hover:text-white hover:shadow-[0_0_40px_rgba(52,211,153,0.45)]"
+              }`}
+            >
+              <span className="relative z-10">
+                {plan.cta}
+              </span>
+
+              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+            </a>
           </div>
-        </div>
-      </section>
+        );
+      })}
+    </div>
+  </div>
+</section>
 
       <section
         id="faq"

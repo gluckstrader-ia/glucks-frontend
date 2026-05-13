@@ -20,6 +20,7 @@ import PartnerDashboardPage from "./pages/PartnerDashboardPage";
 import PartnerRoute from "./routes/PartnerRoute";
 import LiveRoomPage from "./pages/LiveRoomPage";
 import AffiliateLoginPage from "./pages/AffiliateLoginPage";
+import StatusPage from "./pages/StatusPage";
 
 export default function App() {
   return (
@@ -56,6 +57,8 @@ export default function App() {
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/admin/afiliados" element={<AdminAffiliatesPage />} />
         </Route>
+
+        <Route path="/status" element={<StatusPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
