@@ -3977,58 +3977,99 @@ function GaugeMeter({
   title,
   value,
   label,
-  tone = "neutral",
+  subtitle,
 }: {
   title: string;
   value: number;
   label: string;
-  tone?: "buy" | "sell" | "neutral";
+  subtitle?: string;
 }) {
-  const safeValue = Math.max(0, Math.min(100, value));
+  const safe = Math.max(0, Math.min(100, value));
+  const angle = -90 + (safe / 100) * 180;
 
-  const color =
-    tone === "buy"
-      ? "from-emerald-500 to-emerald-300"
-      : tone === "sell"
-      ? "from-red-500 to-red-300"
-      : "from-yellow-400 to-zinc-300";
+  const labelClass =
+    safe >= 60
+      ? "bg-emerald-400/10 text-emerald-300 border-emerald-400/20"
+      : safe <= 40
+      ? "bg-red-400/10 text-red-300 border-red-400/20"
+      : "bg-zinc-400/10 text-zinc-300 border-zinc-400/20";
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/35 p-4 text-center">
-      <div className="mb-2 flex items-center justify-between text-xs">
-        <span className="font-semibold text-zinc-300">{title}</span>
-        <span className="text-zinc-500">{safeValue}%</span>
+    <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(180deg,rgba(9,13,24,0.98),rgba(0,0,0,0.96))] p-5 shadow-2xl">
+      <div className="absolute -right-16 -top-16 h-36 w-36 rounded-full bg-cyan-400/10 blur-3xl" />
+
+      <div className="relative z-10 flex items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-black text-white">{title}</h4>
+          {subtitle && <p className="mt-1 text-xs text-zinc-500">{subtitle}</p>}
+        </div>
+
+        <span className="text-xs font-bold text-zinc-400">
+          {safe.toFixed(0)}%
+        </span>
       </div>
 
-      <div className="relative mx-auto h-24 w-40 overflow-hidden">
-        <div className="absolute left-0 top-0 h-40 w-40 rounded-full border-[14px] border-zinc-800" />
-        <div
-          className={`absolute left-0 top-0 h-40 w-40 rounded-full border-[14px] border-transparent bg-gradient-to-r ${color}`}
-          style={{
-            clipPath: `polygon(0 50%, 100% 50%, 100% 0, 0 0)`,
-            transform: `rotate(${(safeValue / 100) * 180}deg)`,
-            opacity: 0.9,
-          }}
-        />
+      <div className="relative z-10 mx-auto mt-5 h-[150px] w-[260px] max-w-full">
+        <svg viewBox="0 0 260 150" className="h-full w-full">
+          <path
+            d="M 30 130 A 100 100 0 0 1 230 130"
+            fill="none"
+            stroke="rgba(239,68,68,0.28)"
+            strokeWidth="18"
+            strokeLinecap="round"
+          />
 
-        <div className="absolute bottom-0 left-1/2 h-[3px] w-16 origin-left -translate-x-1/2 rounded-full bg-zinc-400"
-          style={{
-            transform: `translateX(-50%) rotate(${safeValue * 1.8 - 180}deg)`,
-          }}
-        />
+          <path
+            d="M 65 57 A 100 100 0 0 1 195 57"
+            fill="none"
+            stroke="rgba(161,161,170,0.22)"
+            strokeWidth="18"
+            strokeLinecap="round"
+          />
 
-        <div className="absolute bottom-0 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-zinc-400" />
+          <path
+            d="M 130 30 A 100 100 0 0 1 230 130"
+            fill="none"
+            stroke="rgba(16,185,129,0.30)"
+            strokeWidth="18"
+            strokeLinecap="round"
+          />
+
+          <path
+            d="M 30 130 A 100 100 0 0 1 230 130"
+            fill="none"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth="2"
+          />
+
+          <line
+            x1="130"
+            y1="130"
+            x2="130"
+            y2="52"
+            stroke="rgba(226,232,240,0.85)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            transform={`rotate(${angle} 130 130)`}
+          />
+
+          <circle cx="130" cy="130" r="7" fill="rgba(226,232,240,0.95)" />
+        </svg>
+
+        <div className="pointer-events-none absolute left-2 top-[72px] text-xs font-bold text-red-300">
+          Venda
+        </div>
+
+        <div className="pointer-events-none absolute left-1/2 top-1 -translate-x-1/2 text-xs font-bold text-zinc-400">
+          Neutro
+        </div>
+
+        <div className="pointer-events-none absolute right-2 top-[72px] text-xs font-bold text-emerald-300">
+          Compra
+        </div>
       </div>
 
-      <div
-        className={`mx-auto mt-2 w-fit rounded-full px-4 py-2 text-sm font-black ${
-          tone === "buy"
-            ? "bg-emerald-500/10 text-emerald-300"
-            : tone === "sell"
-            ? "bg-red-500/10 text-red-300"
-            : "bg-yellow-500/10 text-yellow-300"
-        }`}
-      >
+      <div className={`relative z-10 mx-auto mt-1 w-fit rounded-full border px-5 py-2 text-sm font-black ${labelClass}`}>
         {label}
       </div>
     </div>
@@ -4045,7 +4086,6 @@ function TechnicalOverviewPanel({
   analysisData: AnalysisData | null;
 }) {
   const tech = analysisData?.technical;
-  const assetType = analysisData?.asset_type ?? "forex";
 
   if (!analysisData || !tech) {
     return (
@@ -4056,71 +4096,27 @@ function TechnicalOverviewPanel({
             Painel Técnico IA
           </h3>
           <p className="mt-2 max-w-md text-sm leading-6 text-zinc-400">
-            Clique em “Gerar Análise” para carregar a leitura técnica do ativo.
+            Clique em “Gerar Análise” para carregar os termômetros técnicos do ativo.
           </p>
         </div>
       </div>
     );
   }
 
-  const score = Number(tech.score ?? 0);
   const buySignals = Number(tech.buy_signals ?? 0);
   const sellSignals = Number(tech.sell_signals ?? 0);
   const neutralSignals = Number(tech.neutral_signals ?? 0);
   const totalSignals = buySignals + sellSignals + neutralSignals;
 
-  const buyPct =
-    totalSignals > 0 ? Math.round((buySignals / totalSignals) * 100) : 0;
-  const sellPct =
-    totalSignals > 0 ? Math.round((sellSignals / totalSignals) * 100) : 0;
-  const neutralPct =
-    totalSignals > 0 ? Math.round((neutralSignals / totalSignals) * 100) : 0;
+  const indicatorValue =
+    totalSignals > 0
+      ? Math.round(((buySignals + neutralSignals * 0.5) / totalSignals) * 100)
+      : 50;
 
-  const bias = tech.trend_bias ?? "NEUTRO";
-  const emaTrend = tech.ema_trend ?? "Indefinido";
-  const rsi = typeof tech.rsi === "number" ? tech.rsi : null;
   const ema9 = typeof tech.ema9 === "number" ? tech.ema9 : null;
   const ema21 = typeof tech.ema21 === "number" ? tech.ema21 : null;
 
-  const supports = tech.supports ?? [];
-  const resistances = tech.resistances ?? [];
-
-  const biasUpper = bias.toUpperCase();
-
-  const mainTone =
-    biasUpper.includes("ALTA") || biasUpper.includes("COMPRA")
-      ? "buy"
-      : biasUpper.includes("BAIXA") || biasUpper.includes("VENDA")
-      ? "sell"
-      : "neutral";
-
-  const scoreLabel =
-    score >= 70
-      ? "Compra Forte"
-      : score >= 55
-      ? "Compra"
-      : score <= 30
-      ? "Venda Forte"
-      : score <= 45
-      ? "Venda"
-      : "Neutro";
-
-  const rsiValue = rsi === null ? 50 : Math.max(0, Math.min(100, rsi));
-
-  const rsiLabel =
-    rsi === null
-      ? "Sem RSI"
-      : rsi >= 70
-      ? "Sobrecompra"
-      : rsi <= 30
-      ? "Sobrevenda"
-      : rsi > 55
-      ? "Comprador"
-      : rsi < 45
-      ? "Vendedor"
-      : "Neutro";
-
-  const maValue =
+  const movingAverageValue =
     ema9 !== null && ema21 !== null
       ? ema9 > ema21
         ? 70
@@ -4129,18 +4125,34 @@ function TechnicalOverviewPanel({
         : 50
       : 50;
 
-  const maLabel =
-    ema9 !== null && ema21 !== null
-      ? ema9 > ema21
-        ? "Compra"
-        : ema9 < ema21
-        ? "Venda"
-        : "Neutro"
-      : "Sem dados";
+  const rsi = typeof tech.rsi === "number" ? tech.rsi : null;
+  const rsiValue =
+    rsi === null
+      ? 50
+      : rsi >= 70
+      ? 35
+      : rsi <= 30
+      ? 65
+      : rsi;
+
+  const generalValue = Math.round(
+    indicatorValue * 0.45 + movingAverageValue * 0.35 + rsiValue * 0.2
+  );
+
+  const getLabel = (value: number) => {
+    if (value >= 75) return "Compra Forte";
+    if (value >= 60) return "Compra";
+    if (value <= 25) return "Venda Forte";
+    if (value <= 40) return "Venda";
+    return "Neutro";
+  };
+
+  const trendBias = tech.trend_bias ?? "Neutro";
+  const emaTrend = tech.ema_trend ?? "Indefinido";
 
   return (
     <div className="h-[620px] overflow-y-auto rounded-2xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-5 shadow-2xl shadow-cyan-500/10">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
             Painel Técnico IA
@@ -4150,138 +4162,65 @@ function TechnicalOverviewPanel({
             {asset} • {tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
           </h3>
 
-          <p className="mt-1 text-sm text-zinc-400">
-            Leitura técnica consolidada com termômetros operacionais.
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-5 py-4 text-right">
-          <p className="text-xs uppercase tracking-[0.18em] text-cyan-300">
-            Score Técnico
-          </p>
-          <p className="mt-1 text-4xl font-black text-yellow-300">
-            {score.toFixed(1)}
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
+            Termômetros técnicos consolidados por indicadores, médias móveis e média geral da IA.
           </p>
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 xl:grid-cols-3">
         <GaugeMeter
           title="Indicadores Técnicos"
-          value={score}
-          label={scoreLabel}
-          tone={mainTone}
+          value={indicatorValue}
+          label={getLabel(indicatorValue)}
+          subtitle={`${buySignals} compra • ${neutralSignals} neutro • ${sellSignals} venda`}
         />
 
         <GaugeMeter
-          title="RSI / Momentum"
-          value={rsiValue}
-          label={rsiLabel}
-          tone={rsiValue > 55 ? "buy" : rsiValue < 45 ? "sell" : "neutral"}
+          title="Resumo Geral"
+          value={generalValue}
+          label={getLabel(generalValue)}
+          subtitle={`Viés: ${trendBias}`}
         />
 
         <GaugeMeter
           title="Médias Móveis"
-          value={maValue}
-          label={maLabel}
-          tone={maValue > 55 ? "buy" : maValue < 45 ? "sell" : "neutral"}
+          value={movingAverageValue}
+          label={getLabel(movingAverageValue)}
+          subtitle={`EMA: ${emaTrend}`}
         />
       </div>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-center">
-          <p className="text-sm text-red-300">Venda</p>
-          <p className="mt-1 text-4xl font-black text-red-300">
+      <div className="mt-5 grid gap-4 md:grid-cols-3">
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-red-300">
+            Pressão Vendedora
+          </p>
+          <p className="mt-2 text-3xl font-black text-red-300">
             {sellSignals}
           </p>
-          <p className="text-xs text-zinc-400">{sellPct}%</p>
         </div>
 
-        <div className="rounded-2xl border border-zinc-700 bg-zinc-900/50 p-4 text-center">
-          <p className="text-sm text-zinc-400">Neutro</p>
-          <p className="mt-1 text-4xl font-black text-white">
+        <div className="rounded-2xl border border-zinc-700 bg-zinc-900/50 p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-zinc-400">
+            Neutralidade
+          </p>
+          <p className="mt-2 text-3xl font-black text-white">
             {neutralSignals}
           </p>
-          <p className="text-xs text-zinc-400">{neutralPct}%</p>
         </div>
 
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-center">
-          <p className="text-sm text-emerald-300">Compra</p>
-          <p className="mt-1 text-4xl font-black text-emerald-300">
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-emerald-300">
+            Pressão Compradora
+          </p>
+          <p className="mt-2 text-3xl font-black text-emerald-300">
             {buySignals}
           </p>
-          <p className="text-xs text-zinc-400">{buyPct}%</p>
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4">
-        <div className="mb-2 flex items-center justify-between text-xs text-zinc-400">
-          <span>Distribuição dos sinais</span>
-          <span>
-            {sellPct}% / {neutralPct}% / {buyPct}%
-          </span>
-        </div>
-
-        <div className="flex h-3 overflow-hidden rounded-full bg-zinc-800">
-          <div className="bg-red-500" style={{ width: `${sellPct}%` }} />
-          <div className="bg-zinc-500" style={{ width: `${neutralPct}%` }} />
-          <div className="bg-emerald-400" style={{ width: `${buyPct}%` }} />
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-          <h4 className="mb-3 text-lg font-black text-emerald-300">
-            Suportes
-          </h4>
-
-          <div className="grid gap-2">
-            {supports.length > 0 ? (
-              supports.slice(0, 3).map((price, index) => (
-                <div
-                  key={`support-${index}`}
-                  className="flex items-center justify-between rounded-xl border border-emerald-500/10 bg-black/30 px-4 py-2"
-                >
-                  <span className="text-xs text-zinc-400">S{index + 1}</span>
-                  <span className="font-black text-white">
-                    {formatPrice(price, assetType)}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-zinc-400">Sem suportes retornados.</p>
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
-          <h4 className="mb-3 text-lg font-black text-red-300">
-            Resistências
-          </h4>
-
-          <div className="grid gap-2">
-            {resistances.length > 0 ? (
-              resistances.slice(0, 3).map((price, index) => (
-                <div
-                  key={`resistance-${index}`}
-                  className="flex items-center justify-between rounded-xl border border-red-500/10 bg-black/30 px-4 py-2"
-                >
-                  <span className="text-xs text-zinc-400">R{index + 1}</span>
-                  <span className="font-black text-white">
-                    {formatPrice(price, assetType)}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-zinc-400">
-                Sem resistências retornadas.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-4">
+      <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-5">
         <div className="flex items-start gap-3">
           <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-cyan-300" />
 
@@ -4290,12 +4229,10 @@ function TechnicalOverviewPanel({
               Leitura operacional da IA
             </h4>
 
-            <p className="mt-1 text-sm leading-6 text-zinc-300">
-              Viés técnico atual:{" "}
-              <span className="font-bold text-cyan-300">{bias}</span>. EMA:
-              <span className="font-bold text-white"> {emaTrend}</span>. Use
-              esta leitura junto ao Sinal Final, SMC, gestão de risco e eventos
-              econômicos.
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              O painel atual trabalha com os dados técnicos já retornados pelo backend.
+              A estrutura está pronta para evoluir futuramente com lista completa de
+              indicadores como RSI, MACD, ADX, STOCH, CCI, ATR e múltiplas médias móveis.
             </p>
           </div>
         </div>
