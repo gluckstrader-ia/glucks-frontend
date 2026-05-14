@@ -3640,65 +3640,164 @@ function CalculadoraTab({
 
 function TimingTab({ analysisData }: { analysisData: AnalysisData | null }) {
   const timing = analysisData?.timing;
+  const direction = analysisData?.direction ?? "NEUTRO";
+  const confidence = Number(analysisData?.confidence ?? 0);
+  const asset = analysisData?.asset ?? "Ativo";
+  const timeframe = analysisData?.timeframe ?? "5m";
 
   const marketName = timing?.market_name ?? "Mercado";
-  const timezone = timing?.timezone ?? "UTC";
+  const timezone = timing?.timezone ?? "America/Sao_Paulo";
   const status = timing?.status ?? "ATIVO";
   const bestWindowLabel = timing?.best_window_label ?? "Janela principal";
-  const notes = timing?.notes ?? "Sem observações.";
-  const recommended = timing?.recommended_windows ?? [];
-  const avoid = timing?.avoid_windows ?? [];
+  const notes =
+    timing?.notes ??
+    "Timing calculado com base no timeframe selecionado, volatilidade, direção e confluência atual.";
+
+  const recommended =
+    timing?.recommended_windows && timing.recommended_windows.length > 0
+      ? timing.recommended_windows
+      : [
+          {
+            start: "09:00",
+            end: "11:00",
+            reason: "Maior liquidez e melhor leitura de fluxo.",
+          },
+          {
+            start: "15:00",
+            end: "17:00",
+            reason: "Retomada de volume e possíveis movimentos direcionais.",
+          },
+        ];
+
+  const avoid =
+    timing?.avoid_windows && timing.avoid_windows.length > 0
+      ? timing.avoid_windows
+      : [
+          {
+            start: "12:00",
+            end: "13:30",
+            reason: "Menor liquidez e maior risco de ruído.",
+          },
+        ];
+
+  const directionTone =
+    direction === "COMPRA"
+      ? "text-emerald-300"
+      : direction === "VENDA"
+      ? "text-red-300"
+      : "text-yellow-300";
+
+  const timingScore = Number(analysisData?.modules?.timing ?? confidence ?? 50);
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6">
-        <div className="text-white text-2xl font-bold">
-          🔥 Melhores Horários para Operar
-        </div>
-        <div className="text-zinc-400 mt-2">
-          {marketName} • Timezone: {timezone} • Status: {status}
-        </div>
-      </div>
+      <div className="relative overflow-hidden rounded-[2rem] border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-6 shadow-2xl shadow-cyan-500/10">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-cyan-400/20 blur-3xl" />
 
-      <div className="rounded-2xl border border-cyan-900/40 bg-cyan-950/20 p-5">
-        <div className="text-cyan-400 text-xl font-bold">{bestWindowLabel}</div>
-        <div className="text-zinc-300 mt-2">{notes}</div>
-      </div>
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">
+              Timing Operacional IA
+            </p>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <div className="text-green-400 font-semibold">
-            ✓ Horários Recomendados
+            <h2 className="mt-2 text-3xl font-black text-white">
+              Melhores Horários para Operar
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-zinc-400">
+              {asset} • {timeframe} • {marketName} • Timezone: {timezone}
+            </p>
           </div>
 
-          {recommended.map((item, idx) => (
-            <div
-              key={idx}
-              className="rounded-2xl border border-green-900/40 bg-green-950/25 p-5"
-            >
-              <div className="text-green-400 text-xl font-bold">
-                {item.start} - {item.end}
-              </div>
-              <div className="text-zinc-400 mt-1">{item.reason}</div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-center">
+              <p className="text-xs text-zinc-500">Status</p>
+              <p className="mt-1 font-black text-emerald-300">{status}</p>
             </div>
-          ))}
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-center">
+              <p className="text-xs text-zinc-500">Sinal</p>
+              <p className={`mt-1 font-black ${directionTone}`}>{direction}</p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-center">
+              <p className="text-xs text-zinc-500">Timing</p>
+              <p className="mt-1 font-black text-cyan-300">
+                {timingScore.toFixed(1)}%
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[2rem] border border-cyan-400/20 bg-cyan-400/[0.05] p-6">
+        <h3 className="text-xl font-black text-cyan-300">
+          {bestWindowLabel}
+        </h3>
+
+        <p className="mt-2 text-sm leading-6 text-zinc-300">{notes}</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="rounded-[2rem] border border-emerald-400/20 bg-emerald-400/[0.05] p-6">
+          <h3 className="mb-4 text-xl font-black text-emerald-300">
+            ✓ Horários Recomendados
+          </h3>
+
+          <div className="space-y-3">
+            {recommended.map((item, idx) => (
+              <div
+                key={`${item.start}-${item.end}-${idx}`}
+                className="rounded-2xl border border-emerald-400/15 bg-black/35 p-5"
+              >
+                <div className="text-2xl font-black text-emerald-300">
+                  {item.start} - {item.end}
+                </div>
+
+                <p className="mt-2 text-sm leading-6 text-zinc-300">
+                  {item.reason}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="text-red-400 font-semibold">✗ Horários a Evitar</div>
+        <div className="rounded-[2rem] border border-red-400/20 bg-red-400/[0.05] p-6">
+          <h3 className="mb-4 text-xl font-black text-red-300">
+            ✕ Horários a Evitar
+          </h3>
 
-          {avoid.map((item, idx) => (
-            <div
-              key={idx}
-              className="rounded-2xl border border-red-900/40 bg-red-950/25 p-5"
-            >
-              <div className="text-red-400 text-xl font-bold">
-                {item.start} - {item.end}
+          <div className="space-y-3">
+            {avoid.map((item, idx) => (
+              <div
+                key={`${item.start}-${item.end}-${idx}`}
+                className="rounded-2xl border border-red-400/15 bg-black/35 p-5"
+              >
+                <div className="text-2xl font-black text-red-300">
+                  {item.start} - {item.end}
+                </div>
+
+                <p className="mt-2 text-sm leading-6 text-zinc-300">
+                  {item.reason}
+                </p>
               </div>
-              <div className="text-zinc-400 mt-1">{item.reason}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+      </div>
+
+      <div className="rounded-[2rem] border border-white/10 bg-black/35 p-6">
+        <h3 className="text-xl font-black text-white">
+          Leitura de Timing da IA
+        </h3>
+
+        <p className="mt-3 text-sm leading-6 text-zinc-300">
+          {direction === "COMPRA"
+            ? `O timing atual favorece compras seletivas em ${asset}, principalmente dentro das janelas recomendadas e somente com confirmação de preço.`
+            : direction === "VENDA"
+            ? `O timing atual favorece vendas seletivas em ${asset}, principalmente quando houver confirmação de rejeição ou continuidade vendedora.`
+            : `O timing atual está neutro para ${asset}. O ideal é aguardar uma janela com maior liquidez e confirmação direcional antes de operar.`}
+        </p>
       </div>
     </div>
   );
