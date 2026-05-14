@@ -4529,12 +4529,8 @@ export default function DashboardPage() {
     "Resumo",
     "Técnica",
     "SMC",
-    "Harmônicos",
-    "WEGD",
-    "Probabilística",
     "Calculadora",
     "Timing",
-    "SINAL FINAL",
   ];
 
   const selectedAssetOptions = useMemo(
