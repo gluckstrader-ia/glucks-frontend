@@ -542,7 +542,7 @@ function MarketIntelligenceHub() {
       title: "Expectativas do Mercado para Hoje",
       description: "Cenário do dia, pontos de atenção e possíveis impactos.",
       duration: "7 min",
-      youtubeId: "S0hCGYcEEa8",
+      youtubeId: "S-4CwqFxYvg",
       thumbnail: "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
       badge: "Visão do dia",
     },
