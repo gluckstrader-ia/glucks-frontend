@@ -543,7 +543,7 @@ function MarketIntelligenceHub() {
       description: "Cenário do dia, pontos de atenção e possíveis impactos.",
       duration: "7 min",
       youtubeId: "S-4CwqFxYvg",
-      thumbnail: "https://img.youtube.com/vi/S0hCGYcEEa8/hqdefault.jpg",
+      thumbnail: "https://img.youtube.com/vi/S-4CwqFxYvg/hqdefault.jpg",
       badge: "Visão do dia",
     },
     {
