@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import type { LiveRoomResponse } from "../lib/liveRoomApi";
 import LiveRoomChart from "../components/live-room/LiveRoomChart";
 import { getStoredToken } from "../lib/auth";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
-const MEET_LINK = "https://meet.google.com/SEU-LINK-AQUI";
+const JITSI_ROOM_URL =
+  "https://meet.jit.si/moderated/5743b6002a380b644b4e0487f4e892f63765edc3d91ecebe1ae9e18ea51fb1db";
 
 const ASSETS = [
   {
@@ -51,6 +52,7 @@ function formatDate(value?: string | null) {
   if (!value) return "-";
 
   const date = new Date(value);
+
   if (Number.isNaN(date.getTime())) return "-";
 
   return date.toLocaleString("pt-BR");
@@ -84,12 +86,22 @@ function signalClasses(signal: LiveRoomResponse["signal"]) {
   }
 }
 
-function normalizeDirectionToLive(direction?: string): LiveRoomResponse["signal"] {
+function normalizeDirectionToLive(
+  direction?: string
+): LiveRoomResponse["signal"] {
   const value = String(direction || "").toUpperCase();
 
-  if (["COMPRA", "BUY", "ALTA", "BULLISH"].includes(value)) return "buy";
-  if (["VENDA", "SELL", "BAIXA", "BEARISH"].includes(value)) return "sell";
-  if (["NEUTRO", "NEUTRAL"].includes(value)) return "neutral";
+  if (["COMPRA", "BUY", "ALTA", "BULLISH"].includes(value)) {
+    return "buy";
+  }
+
+  if (["VENDA", "SELL", "BAIXA", "BEARISH"].includes(value)) {
+    return "sell";
+  }
+
+  if (["NEUTRO", "NEUTRAL"].includes(value)) {
+    return "neutral";
+  }
 
   return "wait";
 }
@@ -101,6 +113,7 @@ function buildLiveRoomFromAnalyzeData(
   if (!payload) return null;
 
   const finalSignal = payload?.final_signal ?? {};
+
   const direction = normalizeDirectionToLive(
     finalSignal?.direction ?? payload?.direction
   );
@@ -119,7 +132,9 @@ function buildLiveRoomFromAnalyzeData(
   );
 
   const entry = Number(finalSignal?.entry ?? payload?.entry ?? price);
+
   const stop = Number(finalSignal?.stop ?? payload?.stop ?? entry);
+
   const target1 = Number(finalSignal?.target ?? payload?.target ?? entry);
 
   const target2 =
@@ -176,6 +191,7 @@ async function fetchAnalyzeFallback(
   timeframe: string
 ): Promise<LiveRoomResponse> {
   const config = getAssetConfig(selectedAsset);
+
   const token = getStoredToken();
 
   const response = await fetch(`${API_URL}/analyze`, {
@@ -197,7 +213,7 @@ async function fetchAnalyzeFallback(
     throw new Error(
       typeof payload?.detail === "string"
         ? payload.detail
-        : "Erro ao gerar leitura pela IA."
+        : "Erro ao gerar leitura da IA."
     );
   }
 
@@ -214,26 +230,39 @@ export default function LiveRoomPage() {
   const navigate = useNavigate();
 
   const [asset, setAsset] = useState("EURUSD");
+
   const [data, setData] = useState<LiveRoomResponse | null>(null);
+
   const [loading, setLoading] = useState(true);
+
   const [refreshing, setRefreshing] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
 
   const timeframe = "5m";
 
-  async function loadAnalysis(selectedAsset: string, silent = false) {
+  async function loadAnalysis(
+    selectedAsset: string,
+    silent = false
+  ) {
     try {
       if (!silent) setLoading(true);
+
       if (silent) setRefreshing(true);
 
       setError(null);
 
-      const result = await fetchAnalyzeFallback(selectedAsset, timeframe);
+      const result = await fetchAnalyzeFallback(
+        selectedAsset,
+        timeframe
+      );
 
       setData(result);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Erro ao carregar análise.";
+        err instanceof Error
+          ? err.message
+          : "Erro ao carregar análise.";
 
       setError(message);
     } finally {
@@ -253,92 +282,52 @@ export default function LiveRoomPage() {
   }, [asset]);
 
   const pageStatus = useMemo(() => {
-    if (loading) return "Carregando Sala...";
+    if (loading) return "Carregando sala ao vivo...";
+
     if (error) return "Erro na conexão";
-    if (refreshing) return "Atualizando leitura...";
+
+    if (refreshing) return "Atualizando análise...";
 
     return "Conectado em tempo real";
   }, [loading, error, refreshing]);
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
-      <div className="mx-auto max-w-[1800px] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1850px] px-4 py-6 sm:px-6 lg:px-8">
 
         {/* HERO LIVE */}
-        <div className="mb-8 overflow-hidden rounded-[32px] border border-emerald-500/20 bg-black shadow-[0_0_80px_rgba(16,185,129,0.15)]">
 
-          <div className="relative">
+        <div className="mb-8 overflow-hidden rounded-[36px] border border-emerald-500/20 bg-black shadow-[0_0_80px_rgba(16,185,129,0.15)]">
 
-            <div className="absolute left-6 top-6 z-20 flex items-center gap-3 rounded-full border border-red-500/30 bg-black/60 px-5 py-3 backdrop-blur">
-              <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse"></div>
+          <div className="flex items-center justify-between border-b border-zinc-800 bg-black/80 px-6 py-5 backdrop-blur">
 
-              <span className="text-sm font-black tracking-[0.2em] text-red-300">
-                AO VIVO
-              </span>
-            </div>
+            <div className="flex items-center gap-4">
 
-            <div className="absolute right-6 top-6 z-20 rounded-full border border-emerald-500/20 bg-black/60 px-5 py-3 text-sm font-semibold text-emerald-300 backdrop-blur">
-              {pageStatus}
-            </div>
+              <div className="flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2">
+                <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse"></div>
 
-            <a
-              href={MEET_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative block"
-            >
-              <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#050816] via-transparent to-transparent"></div>
+                <span className="text-sm font-black tracking-[0.2em] text-red-300">
+                  AO VIVO
+                </span>
+              </div>
 
-              <img
-                src="https://images.unsplash.com/photo-1642790106117-e829e14a795f?q=80&w=2070&auto=format&fit=crop"
-                alt="Sala ao vivo"
-                className="h-[700px] w-full object-cover opacity-40 transition duration-500 group-hover:scale-[1.02]"
-              />
-
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 text-center">
-
-                <div className="mb-6 text-7xl animate-pulse">
-                  🔴
-                </div>
-
-                <h1 className="max-w-5xl text-4xl font-black leading-tight text-white sm:text-6xl">
-                  ENTRAR NA SALA AO VIVO
+              <div>
+                <h1 className="text-2xl font-black">
+                  Sala Ao Vivo Gluck’s Trader IA
                 </h1>
 
-                <p className="mt-6 max-w-3xl text-lg leading-8 text-zinc-300 sm:text-2xl">
-                  Transmissão exclusiva da Gluck’s Trader IA com análises ao vivo,
-                  operações, gerenciamento e leitura profissional do mercado.
+                <p className="mt-1 text-sm text-zinc-400">
+                  Transmissão em tempo real diretamente pela plataforma
                 </p>
-
-                <div className="mt-10 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-8 py-5 text-xl font-black text-emerald-300 transition group-hover:bg-emerald-500/20">
-                  CLIQUE PARA ACESSAR A TRANSMISSÃO
-                </div>
-
-              </div>
-            </a>
-
-          </div>
-        </div>
-
-        {/* HEADER */}
-        <div className="mb-6 rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl backdrop-blur">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
-            <div>
-              <div className="mb-2 inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
-                Gluck’s Trader IA
               </div>
 
-              <h1 className="text-2xl font-black sm:text-3xl">
-                Sala Inteligente IA
-              </h1>
-
-              <p className="mt-2 max-w-3xl text-sm text-zinc-300 sm:text-base">
-                Leitura contínua do mercado com atualização automática.
-              </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+
+              <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300">
+                {pageStatus}
+              </div>
 
               <button
                 type="button"
@@ -348,27 +337,37 @@ export default function LiveRoomPage() {
                 ← Dashboard
               </button>
 
-              <button
-                type="button"
-                onClick={() => loadAnalysis(asset, false)}
-                className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-5 py-3 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
-              >
-                Atualizar leitura
-              </button>
-
             </div>
+
           </div>
+
+          {/* JITSI */}
+
+          <div className="relative bg-black">
+
+            <iframe
+              src={JITSI_ROOM_URL}
+              allow="camera; microphone; fullscreen; display-capture; autoplay"
+              className="h-[850px] w-full border-0"
+              title="Sala Ao Vivo Glucks Trader IA"
+            />
+
+          </div>
+
         </div>
 
         {/* GRID */}
+
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
 
           {/* ESQUERDA */}
+
           <div className="space-y-6">
 
             <div className="rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl">
 
               <div className="mb-4 flex items-center justify-between">
+
                 <div>
                   <h2 className="text-xl font-black">
                     Gráfico ao Vivo
@@ -382,16 +381,20 @@ export default function LiveRoomPage() {
                 <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-300">
                   LIVE
                 </div>
+
               </div>
 
-              <LiveRoomChart asset={asset} timeframe={timeframe} />
+              <LiveRoomChart
+                asset={asset}
+                timeframe={timeframe}
+              />
 
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
               <InfoCard
-                title="Preço"
+                title="Preço Atual"
                 value={data ? formatPrice(data.price) : "-"}
               />
 
@@ -432,10 +435,12 @@ export default function LiveRoomPage() {
 
               </div>
 
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 text-zinc-200 leading-8">
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 leading-8 text-zinc-200">
+
                 {loading && !data
-                  ? "Carregando análise..."
+                  ? "Carregando análise da IA..."
                   : data?.narration_text || "-"}
+
               </div>
 
             </div>
@@ -443,12 +448,13 @@ export default function LiveRoomPage() {
           </div>
 
           {/* DIREITA */}
+
           <div className="space-y-6">
 
             <div className="rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl">
 
               <h2 className="mb-4 text-xl font-black">
-                Ativos
+                Ativos Disponíveis
               </h2>
 
               <div className="space-y-3">
@@ -459,6 +465,7 @@ export default function LiveRoomPage() {
                   return (
                     <button
                       key={item.symbol}
+                      type="button"
                       onClick={() => setAsset(item.symbol)}
                       className={`w-full rounded-2xl border p-4 text-left transition ${
                         active
@@ -515,7 +522,7 @@ export default function LiveRoomPage() {
                 />
 
                 <InfoCard
-                  title="Risco/Retorno"
+                  title="Risco / Retorno"
                   value={data?.risk_reward || "-"}
                 />
 
@@ -526,7 +533,7 @@ export default function LiveRoomPage() {
             <div className="rounded-3xl border border-zinc-800 bg-white/5 p-5 shadow-2xl">
 
               <h2 className="mb-4 text-xl font-black">
-                Última atualização
+                Última Atualização
               </h2>
 
               <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 text-zinc-300">
@@ -559,13 +566,15 @@ function InfoCard({
 }) {
   return (
     <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
+
       <div className="text-xs uppercase tracking-wide text-zinc-400">
         {title}
       </div>
 
-      <div className="mt-2 text-xl font-black text-white break-words">
+      <div className="mt-2 break-words text-xl font-black text-white">
         {value}
       </div>
+
     </div>
   );
 }
