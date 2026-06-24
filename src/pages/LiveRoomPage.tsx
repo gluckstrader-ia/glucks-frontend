@@ -6,7 +6,7 @@ import { getStoredToken } from "../lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
-const MEET_LINK = "https://meet.google.com/mvz-sbgj-qun";
+const MEET_LINK = "https://meet.google.com/qkz-fcos-ujd";
 
 const ASSETS = [
   {
