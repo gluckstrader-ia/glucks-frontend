@@ -1,6 +1,26 @@
-import type { RealtimeFuture } from "./types";
+import type { MockRealtimeFuture } from "./types";
 
-export const MOCK_REALTIME_FUTURES: RealtimeFuture[] = [
+function buildMockTimeSeries(
+  length: number,
+  startHour: number,
+  startMinute: number,
+  stepMinutes = 5,
+): string[] {
+  const start = startHour * 60 + startMinute;
+
+  return Array.from({ length }, (_, index) => {
+    const totalMinutes = start + index * stepMinutes;
+    const hour = Math.floor(totalMinutes / 60) % 24;
+    const minute = totalMinutes % 60;
+
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(
+      2,
+      "0",
+    )}:00`;
+  });
+}
+
+export const MOCK_REALTIME_FUTURES: MockRealtimeFuture[] = [
   {
     symbol: "WINFUT",
     contract: "WINQ26 + INDFUT",
@@ -15,13 +35,12 @@ export const MOCK_REALTIME_FUTURES: RealtimeFuture[] = [
     amplitude: 2960,
     volume: 343230000000,
     fullContract: "IND",
-    aggressionUnit: "BRL",
     buyerAggression: 1700000000,
     sellerAggression: 1784600000,
     fullBalance: -84600000,
     netBalance: 27500000,
     score: 28,
-    signal: "VENDA FORTE",
+    signal: "VENDA",
     confidence: 100,
     confirmations: 5,
     modules: [
@@ -38,6 +57,7 @@ export const MOCK_REALTIME_FUTURES: RealtimeFuture[] = [
       175790, 175960, 175900, 176010, 175940, 175970, 175900, 175930, 175870,
       175910, 175840, 175860, 175800,
     ],
+    timeSeries: buildMockTimeSeries(40, 9, 0),
     buyerSeries: [
       18, 9, 13, 10, 8, 6, -5, -7, -9, -11, -36, -38, -42, -46, -48, -44,
       -43, -42, -63, -55, -48, -51, -46, -45, -50, -44, -51, -47, -55, -56,
@@ -68,7 +88,6 @@ export const MOCK_REALTIME_FUTURES: RealtimeFuture[] = [
     amplitude: 34.5,
     volume: 74760000000,
     fullContract: "DOL",
-    aggressionUnit: "BRL",
     buyerAggression: 4100000000,
     sellerAggression: 2700000000,
     fullBalance: 137100000,
@@ -90,6 +109,7 @@ export const MOCK_REALTIME_FUTURES: RealtimeFuture[] = [
       5144, 5136, 5133, 5135, 5132, 5134, 5131, 5136, 5133, 5131, 5134, 5132,
       5129,
     ],
+    timeSeries: buildMockTimeSeries(37, 9, 0),
     buyerSeries: [
       -25, -8, 1, 3, 4, 2, 5, 4, 3, 6, 7, 8, 7, 9, 10, 8, 7, 8, 6, 7, 8,
       5, 6, 4, 3, 4, 2, 1, 18, 21, 19, 17, 16, 20, 26, 35, 47, 55, 57, 58,
