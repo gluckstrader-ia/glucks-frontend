@@ -1,0 +1,31 @@
+--- src/pages/DashboardPage.tsx
++++ src/pages/DashboardPage.tsx
+@@ -21,6 +21,7 @@
+ import QuantDashboardCard from "../components/dashboard/QuantDashboardCard";
+ import { useQuantDashboard } from "../hooks/useQuantDashboard";
+ import FloatingCommunityChat from "../components/community/FloatingCommunityChat";
++import RealtimeFuturesDashboard from "../components/realtime-futures";
+ 
+ 
+ type AnalysisModules = {
+@@ -5081,11 +5082,15 @@
+           </div>
+ 
+           {mainTab === "Resumo" && (
+-            <ResumoAvancadoTab
+-              asset={resolvedAsset}
+-              tf={tf}
+-              analysisData={analysisData}
+-            />
++            <div className="space-y-6">
++              <ResumoAvancadoTab
++                asset={resolvedAsset}
++                tf={tf}
++                analysisData={analysisData}
++              />
++
++              <RealtimeFuturesDashboard />
++            </div>
+           )}
+ 
+           {mainTab === "Técnica" && (

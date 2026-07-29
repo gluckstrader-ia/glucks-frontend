@@ -15,13 +15,18 @@ import {
   ExternalLink,
   CheckCircle2,
   ArrowRight,
+  Activity,
+  Radio,
+  TrendingUp,
+  TrendingDown,
+  Database,
 } from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
 import { useB3MarketData } from "../hooks/useB3MarketData";
 import QuantDashboardCard from "../components/dashboard/QuantDashboardCard";
 import { useQuantDashboard } from "../hooks/useQuantDashboard";
 import FloatingCommunityChat from "../components/community/FloatingCommunityChat";
-import RealtimeFuturesDashboard from "../components/realtime-futures";
+
 
 type AnalysisModules = {
   technical?: number;
@@ -4599,6 +4604,721 @@ function TechnicalOverviewPanel({
   );
 }
 
+
+
+type RealtimeModuleState = {
+  key: "MOM" | "CHEIO" | "BOOK" | "TAPE" | "POS";
+  positive: boolean;
+};
+
+type MockRealtimeFuture = {
+  symbol: "WINFUT" | "WDOFUT";
+  contract: string;
+  flag: "BR" | "US";
+  price: number;
+  priceDecimals: number;
+  variationPct: number;
+  variationPoints: number;
+  open: number;
+  high: number;
+  low: number;
+  amplitude: number;
+  volume: number;
+  fullContract: "IND" | "DOL";
+  buyerAggression: number;
+  sellerAggression: number;
+  fullBalance: number;
+  netBalance: number;
+  score: number;
+  signal: string;
+  confidence: number;
+  confirmations: number;
+  modules: RealtimeModuleState[];
+  priceSeries: number[];
+  buyerSeries: number[];
+  sellerSeries: number[];
+  balanceSeries: number[];
+};
+
+const MOCK_REALTIME_FUTURES: MockRealtimeFuture[] = [
+  {
+    symbol: "WINFUT",
+    contract: "WINQ26 + INDFUT",
+    flag: "BR",
+    price: 175800,
+    priceDecimals: 0,
+    variationPct: -1.04,
+    variationPoints: -2185,
+    open: 177985,
+    high: 178565,
+    low: 175605,
+    amplitude: 2960,
+    volume: 343230000000,
+    fullContract: "IND",
+    buyerAggression: 1700000000,
+    sellerAggression: 1784600000,
+    fullBalance: -84600000,
+    netBalance: 27500000,
+    score: 28,
+    signal: "VENDA FORTE",
+    confidence: 100,
+    confirmations: 5,
+    modules: [
+      { key: "MOM", positive: false },
+      { key: "CHEIO", positive: false },
+      { key: "BOOK", positive: false },
+      { key: "TAPE", positive: false },
+      { key: "POS", positive: false },
+    ],
+    priceSeries: [
+      178120, 177820, 178030, 177690, 177900, 177760, 177990, 177840, 177950,
+      177920, 177510, 177460, 177180, 176980, 177150, 176810, 176960, 176540,
+      176280, 176620, 176410, 176350, 176290, 176130, 175940, 176020, 175880,
+      175790, 175960, 175900, 176010, 175940, 175970, 175900, 175930, 175870,
+      175910, 175840, 175860, 175800,
+    ],
+    buyerSeries: [
+      18, 9, 13, 10, 8, 6, -5, -7, -9, -11, -36, -38, -42, -46, -48, -44,
+      -43, -42, -63, -55, -48, -51, -46, -45, -50, -44, -51, -47, -55, -56,
+      -52, -59, -61, -63, -62, -66, -68, -67, -65, -63,
+    ],
+    sellerSeries: [
+      -8, -10, -12, -9, -6, -3, 2, 3, 1, 0, 3, 7, 4, 9, 11, 13, 8, 3, 1,
+      0, -3, -2, -5, -4, -3, -5, -6, -5, -8, -10, -12, -10, -8, -7, -6,
+      -5, -4, -3, -2, -1,
+    ],
+    balanceSeries: [
+      -3, 4, 8, 6, 10, 11, 9, 12, 16, 14, 21, 18, 28, 22, 34, 31, 37, 28,
+      31, 44, 48, 37, 34, 40, 39, 45, 43, 47, 44, 50, 46, 51, 48, 52, 51,
+      53, 50, 55, 52, 49,
+    ],
+  },
+  {
+    symbol: "WDOFUT",
+    contract: "WDOQ26 + DOLFUT",
+    flag: "US",
+    price: 5129,
+    priceDecimals: 1,
+    variationPct: -0.05,
+    variationPoints: 0.5,
+    open: 5128.5,
+    high: 5144.5,
+    low: 5110,
+    amplitude: 34.5,
+    volume: 74760000000,
+    fullContract: "DOL",
+    buyerAggression: 4100000000,
+    sellerAggression: 2700000000,
+    fullBalance: 137100000,
+    netBalance: -74400000,
+    score: 40,
+    signal: "VENDA",
+    confidence: 40,
+    confirmations: 2,
+    modules: [
+      { key: "MOM", positive: false },
+      { key: "CHEIO", positive: false },
+      { key: "BOOK", positive: true },
+      { key: "TAPE", positive: false },
+      { key: "POS", positive: true },
+    ],
+    priceSeries: [
+      5128, 5122, 5121, 5127, 5124, 5126, 5120, 5123, 5117, 5115, 5116, 5117,
+      5116, 5119, 5115, 5113, 5111, 5115, 5120, 5125, 5128, 5132, 5138, 5140,
+      5144, 5136, 5133, 5135, 5132, 5134, 5131, 5136, 5133, 5131, 5134, 5132,
+      5129,
+    ],
+    buyerSeries: [
+      -25, -8, 1, 3, 4, 2, 5, 4, 3, 6, 7, 8, 7, 9, 10, 8, 7, 8, 6, 7, 8,
+      5, 6, 4, 3, 4, 2, 1, 18, 21, 19, 17, 16, 20, 26, 35, 47, 55, 57, 58,
+      60, 60, 62, 62,
+    ],
+    sellerSeries: [
+      22, 2, -1, 3, 4, 5, 4, 3, 1, 2, 3, 2, 1, 2, 3, 4, 3, 4, 5, 4, 5,
+      4, 3, 5, 6, 5, 7, 8, 3, 1, 0, -1, -2, -3, -9, -12, -14, -15, -17,
+      -18, -19, -18, -19, -20,
+    ],
+    balanceSeries: [
+      31, 4, -4, -7, -8, -9, -10, -12, -14, -16, -17, -18, -20, -23, -22,
+      -21, -22, -20, -18, -19, -17, -18, -19, -18, -32, -36, -34, -33, -37,
+      -40, -42, -46, -50, -53, -54, -55, -57, -55, -56, -58, -59, -58, -56,
+      -54,
+    ],
+  },
+];
+
+function formatPrototypePrice(value: number, decimals = 0) {
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+}
+
+function formatPrototypeMoney(value: number) {
+  const abs = Math.abs(value);
+  const sign = value > 0 ? "+ " : value < 0 ? "- " : "";
+
+  if (abs >= 1_000_000_000) {
+    return `${sign}R$ ${(abs / 1_000_000_000).toLocaleString("pt-BR", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 2,
+    })} bi`;
+  }
+
+  if (abs >= 1_000_000) {
+    return `${sign}R$ ${(abs / 1_000_000).toLocaleString("pt-BR", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    })} mi`;
+  }
+
+  return `${sign}${formatBrl(abs)}`;
+}
+
+function buildChartPoints(values: number[], width: number, height: number, padding = 8) {
+  if (!values.length) return "";
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(max - min, 1);
+
+  return values
+    .map((value, index) => {
+      const x = padding + (index / Math.max(values.length - 1, 1)) * (width - padding * 2);
+      const y = height - padding - ((value - min) / range) * (height - padding * 2);
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+}
+
+function PrototypePriceChart({
+  values,
+  rising,
+}: {
+  values: number[];
+  rising: boolean;
+}) {
+  const width = 760;
+  const height = 190;
+  const points = buildChartPoints(values, width, height, 10);
+  const stroke = rising ? "#22d3ee" : "#60a5fa";
+  const fill = rising ? "rgba(34,211,238,0.15)" : "rgba(96,165,250,0.14)";
+  const areaPoints = `10,${height - 10} ${points} ${width - 10},${height - 10}`;
+
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-[#07101c]">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-[190px] w-full"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label="Gráfico intradiário simulado"
+      >
+        {[38, 76, 114, 152].map((y) => (
+          <line
+            key={y}
+            x1="0"
+            y1={y}
+            x2={width}
+            y2={y}
+            stroke="rgba(148,163,184,0.10)"
+            strokeWidth="1"
+          />
+        ))}
+
+        <polygon points={areaPoints} fill={fill} />
+        <polyline
+          points={points}
+          fill="none"
+          stroke={stroke}
+          strokeWidth="3"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      </svg>
+
+      <div className="pointer-events-none absolute inset-x-3 bottom-2 flex justify-between text-[9px] font-semibold text-slate-600">
+        <span>09:00</span>
+        <span>10:00</span>
+        <span>11:00</span>
+        <span>12:00</span>
+        <span>13:00</span>
+      </div>
+    </div>
+  );
+}
+
+function PrototypeFlowChart({
+  buyer,
+  seller,
+  balance,
+}: {
+  buyer: number[];
+  seller: number[];
+  balance: number[];
+}) {
+  const width = 760;
+  const height = 205;
+  const all = [...buyer, ...seller, ...balance];
+  const min = Math.min(...all);
+  const max = Math.max(...all);
+  const range = Math.max(max - min, 1);
+
+  const buildSharedPoints = (values: number[]) =>
+    values
+      .map((value, index) => {
+        const x = 8 + (index / Math.max(values.length - 1, 1)) * (width - 16);
+        const y = height - 8 - ((value - min) / range) * (height - 16);
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      })
+      .join(" ");
+
+  const zeroY = height - 8 - ((0 - min) / range) * (height - 16);
+
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-[#060d18]">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-[205px] w-full"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label="Fluxo acumulado simulado"
+      >
+        {[41, 82, 123, 164].map((y) => (
+          <line
+            key={y}
+            x1="0"
+            y1={y}
+            x2={width}
+            y2={y}
+            stroke="rgba(148,163,184,0.08)"
+            strokeWidth="1"
+          />
+        ))}
+
+        <line
+          x1="0"
+          y1={zeroY}
+          x2={width}
+          y2={zeroY}
+          stroke="rgba(148,163,184,0.28)"
+          strokeDasharray="5 5"
+        />
+
+        <polyline
+          points={buildSharedPoints(buyer)}
+          fill="none"
+          stroke="#60a5fa"
+          strokeWidth="3"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        <polyline
+          points={buildSharedPoints(seller)}
+          fill="none"
+          stroke="#ef4444"
+          strokeWidth="3"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        <polyline
+          points={buildSharedPoints(balance)}
+          fill="none"
+          stroke="#f59e0b"
+          strokeWidth="3"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      </svg>
+
+      <div className="pointer-events-none absolute inset-x-3 bottom-2 flex justify-between text-[9px] font-semibold text-slate-600">
+        <span>09:00</span>
+        <span>10:00</span>
+        <span>11:00</span>
+        <span>12:00</span>
+        <span>13:00</span>
+      </div>
+    </div>
+  );
+}
+
+function PrototypeMetric({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "positive" | "negative" | "warning";
+}) {
+  const valueClass =
+    tone === "positive"
+      ? "text-emerald-400"
+      : tone === "negative"
+      ? "text-red-400"
+      : tone === "warning"
+      ? "text-amber-400"
+      : "text-slate-300";
+
+  return (
+    <div className="rounded-lg border border-slate-800 bg-[#0a1422] px-3 py-2.5 text-center">
+      <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-600">
+        {label}
+      </div>
+      <div className={`mt-1 font-mono text-sm font-black ${valueClass}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function PrototypeAggressionCard({
+  label,
+  value,
+  tone,
+  subtitle,
+}: {
+  label: string;
+  value: number;
+  tone: "buyer" | "seller" | "balance";
+  subtitle: string;
+}) {
+  const cardClass =
+    tone === "buyer"
+      ? "border-cyan-400/25 bg-cyan-400/[0.035]"
+      : tone === "seller"
+      ? "border-red-400/25 bg-red-400/[0.035]"
+      : "border-amber-400/25 bg-amber-400/[0.035]";
+
+  const textClass =
+    tone === "buyer"
+      ? "text-cyan-300"
+      : tone === "seller"
+      ? "text-red-400"
+      : value >= 0
+      ? "text-emerald-400"
+      : "text-red-400";
+
+  const barClass =
+    tone === "buyer"
+      ? "bg-cyan-400"
+      : tone === "seller"
+      ? "bg-red-400"
+      : "bg-amber-400";
+
+  return (
+    <div className={`overflow-hidden rounded-xl border p-3 ${cardClass}`}>
+      <div className="text-[9px] font-black uppercase tracking-[0.13em] text-slate-600">
+        {label}
+      </div>
+      <div className={`mt-1 font-mono text-lg font-black ${textClass}`}>
+        {formatPrototypeMoney(value)}
+      </div>
+      <div className="mt-1 text-[10px] text-slate-500">{subtitle}</div>
+      <div className="mt-3 h-0.5 overflow-hidden rounded-full bg-slate-800">
+        <div className={`h-full w-[72%] ${barClass}`} />
+      </div>
+    </div>
+  );
+}
+
+function PrototypeScore({ future }: { future: MockRealtimeFuture }) {
+  const isStrongSell = future.signal.includes("VENDA");
+  const accent = isStrongSell ? "#ef4444" : "#22c55e";
+
+  return (
+    <div className="rounded-xl border border-slate-800 bg-[#0a1320] p-3">
+      <div className="flex items-center gap-3">
+        <div
+          className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
+          style={{
+            background: `conic-gradient(${accent} ${future.score * 3.6}deg, rgba(51,65,85,0.55) 0deg)`,
+          }}
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#07101c] font-mono text-lg font-black text-white">
+            {future.score}
+          </div>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-600">
+            Sinal quantitativo
+          </div>
+          <div className={`mt-1 text-base font-black ${isStrongSell ? "text-red-400" : "text-emerald-400"}`}>
+            {future.signal}
+          </div>
+
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {future.modules.map((module) => (
+              <span
+                key={module.key}
+                className={`rounded border px-1.5 py-0.5 text-[8px] font-black ${
+                  module.positive
+                    ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-300"
+                    : "border-red-400/25 bg-red-400/10 text-red-300"
+                }`}
+              >
+                {module.positive ? "↑" : "↓"} {module.key}
+              </span>
+            ))}
+          </div>
+
+          <div className="mt-2 text-[9px] text-slate-500">
+            Confiança {future.confidence}% · {future.confirmations}/5 confirmações
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RealtimeFuturePrototypePanel({
+  future,
+}: {
+  future: MockRealtimeFuture;
+}) {
+  const negative = future.variationPct < 0;
+
+  return (
+    <article className="overflow-hidden rounded-2xl border border-slate-800 bg-[#07101c] shadow-[0_20px_80px_rgba(2,8,23,0.55)]">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800 bg-[#0a1320] px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 min-w-8 items-center justify-center rounded-md border border-cyan-400/20 bg-cyan-400/10 px-1.5 text-[10px] font-black text-cyan-200">
+            {future.flag}
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="font-mono text-sm font-black text-slate-100">
+                {future.symbol}
+              </h4>
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-emerald-300">
+                <Radio className="h-2.5 w-2.5" /> Simulado
+              </span>
+            </div>
+            <p className="mt-0.5 text-[9px] font-semibold text-slate-600">
+              {future.contract}
+            </p>
+          </div>
+        </div>
+
+        <div className="text-right">
+          <div className="font-mono text-xl font-black text-slate-100">
+            {formatPrototypePrice(future.price, future.priceDecimals)}
+          </div>
+          <div className="mt-1 flex items-center justify-end gap-2 font-mono text-[10px]">
+            <span
+              className={`inline-flex items-center gap-1 rounded px-2 py-0.5 font-black ${
+                negative
+                  ? "bg-red-500/10 text-red-400"
+                  : "bg-emerald-500/10 text-emerald-400"
+              }`}
+            >
+              {negative ? (
+                <TrendingDown className="h-3 w-3" />
+              ) : (
+                <TrendingUp className="h-3 w-3" />
+              )}
+              {future.variationPct > 0 ? "+" : ""}
+              {future.variationPct.toFixed(2)}%
+            </span>
+            <span className="text-slate-500">
+              {future.variationPoints > 0 ? "+" : ""}
+              {formatPrototypePrice(future.variationPoints, future.priceDecimals)} pts
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <div className="space-y-3 p-3">
+        <PrototypePriceChart values={future.priceSeries} rising={!negative} />
+
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <PrototypeMetric
+            label="Abertura"
+            value={formatPrototypePrice(future.open, future.priceDecimals)}
+          />
+          <PrototypeMetric
+            label="Máxima"
+            value={formatPrototypePrice(future.high, future.priceDecimals)}
+            tone="positive"
+          />
+          <PrototypeMetric
+            label="Mínima"
+            value={formatPrototypePrice(future.low, future.priceDecimals)}
+            tone="negative"
+          />
+          <PrototypeMetric
+            label="Amplitude"
+            value={`+${formatPrototypePrice(future.amplitude, future.priceDecimals)}`}
+            tone="warning"
+          />
+          <PrototypeMetric label="Vol. financeiro" value={formatPrototypeMoney(future.volume).replace("+ ", "")} />
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.18em] text-slate-600">
+            <Activity className="h-3 w-3 text-cyan-400" /> Agressão e contrato cheio
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <PrototypeAggressionCard
+              label="Agressão compradora"
+              value={future.buyerAggression}
+              tone="buyer"
+              subtitle="Compras a mercado"
+            />
+            <PrototypeAggressionCard
+              label="Agressão vendedora"
+              value={-future.sellerAggression}
+              tone="seller"
+              subtitle="Vendas a mercado"
+            />
+            <PrototypeAggressionCard
+              label={`Saldo do cheio · ${future.fullContract}`}
+              value={future.fullBalance}
+              tone="balance"
+              subtitle="Contrato cheio correspondente"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-[#0a1422] px-3 py-2.5">
+          <div>
+            <div className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-600">
+              Saldo líquido do painel
+            </div>
+            <div className="mt-1 text-[10px] text-slate-500">
+              Resultado consolidado do protótipo
+            </div>
+          </div>
+          <div
+            className={`font-mono text-base font-black ${
+              future.netBalance >= 0 ? "text-emerald-400" : "text-red-400"
+            }`}
+          >
+            {formatPrototypeMoney(future.netBalance)}
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-600">
+              Fluxo ao longo do pregão
+            </div>
+            <div className="flex flex-wrap gap-3 text-[8px] font-semibold text-slate-500">
+              <span className="inline-flex items-center gap-1">
+                <span className="h-0.5 w-3 bg-blue-400" /> Comprador
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-0.5 w-3 bg-red-400" /> Vendedor
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-0.5 w-3 bg-amber-400" /> Saldo cheio
+              </span>
+            </div>
+          </div>
+
+          <PrototypeFlowChart
+            buyer={future.buyerSeries}
+            seller={future.sellerSeries}
+            balance={future.balanceSeries}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-xl border border-slate-800 bg-[#0a1320] p-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg border border-slate-800 bg-[#07101c] p-2.5">
+                <div className="text-[8px] font-black uppercase tracking-[0.13em] text-slate-600">
+                  Agressão do cheio
+                </div>
+                <div
+                  className={`mt-1 font-mono text-sm font-black ${
+                    future.fullBalance >= 0 ? "text-emerald-400" : "text-red-400"
+                  }`}
+                >
+                  {formatPrototypeMoney(future.fullBalance)}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-800 bg-[#07101c] p-2.5">
+                <div className="text-[8px] font-black uppercase tracking-[0.13em] text-slate-600">
+                  Predominância
+                </div>
+                <div className="mt-1 font-mono text-sm font-black text-red-400">
+                  VENDEDORA
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-2 rounded-lg border border-slate-800 bg-[#07101c] px-3 py-2 text-[9px] leading-5 text-slate-500">
+              Nesta demonstração, todos os valores são fixos. Em uma integração real,
+              este bloco seria alimentado pelo RTD do Profit Pro e pelo motor quantitativo.
+            </div>
+          </div>
+
+          <PrototypeScore future={future} />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function RealtimeFuturesDashboardPrototype() {
+  return (
+    <section className="space-y-4 rounded-3xl border border-cyan-400/15 bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.08),transparent_30%),rgba(3,7,18,0.82)] p-3 md:p-4">
+      <div className="flex flex-col gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-2.5 text-amber-300">
+            <Database className="h-5 w-5" />
+          </div>
+
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">
+              Protótipo visual
+            </div>
+            <h3 className="mt-1 text-xl font-black text-white">
+              Fluxo de Futuros em Tempo Real
+            </h3>
+            <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-400">
+              Estrutura estática para validar o layout de WINFUT e WDOFUT antes de
+              desenvolver o coletor RTD, a API e as regras quantitativas.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 flex-wrap gap-2 text-[9px] font-black uppercase tracking-[0.12em]">
+          <span className="rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1.5 text-amber-300">
+            Dados simulados
+          </span>
+          <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-slate-400">
+            Sem atualização
+          </span>
+          <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-cyan-300">
+            Somente front-end
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
+        {MOCK_REALTIME_FUTURES.map((future) => (
+          <RealtimeFuturePrototypePanel key={future.symbol} future={future} />
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-2xl border border-slate-800 bg-[#07101c] px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <span>
+          Exibição planejada: abaixo do Resumo Operacional, independente do botão
+          “Gerar Análise”.
+        </span>
+        <span className="inline-flex items-center gap-2 text-slate-600">
+          <Clock className="h-3.5 w-3.5" /> Horário ilustrativo: 13:18:05
+        </span>
+      </div>
+    </section>
+  );
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const token = getStoredToken();
@@ -5088,7 +5808,7 @@ const resolvedAssetType =
                 analysisData={analysisData}
               />
 
-              <RealtimeFuturesDashboard />
+              <RealtimeFuturesDashboardPrototype />
             </div>
           )}
 
