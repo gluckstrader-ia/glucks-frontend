@@ -9,8 +9,6 @@ import {
   WifiOff,
 } from "lucide-react";
 import RealtimeFuturePanel from "./RealtimeFuturePanel";
-import RealtimeSignalAudit from "./RealtimeSignalAudit";
-import RealtimePerformancePanel from "./RealtimePerformancePanel";
 import type { RealtimeMarketStatus } from "./types";
 import { useRealtimeFutures } from "./useRealtimeFutures";
 
@@ -200,8 +198,7 @@ function RealtimeFuturesDashboardContent() {
               />
             ))}
           </div>
-          <RealtimeSignalAudit />
-          <RealtimePerformancePanel />
+          
         </>
       ) : (
         <div className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-black/30 px-6 py-10 text-center">
