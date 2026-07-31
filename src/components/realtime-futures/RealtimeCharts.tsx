@@ -2,11 +2,17 @@ import { buildChartPoints } from "./formatters";
 
 export function IntradayPriceChart({
   values,
-  rising,
+  times: _times,
+  market: _market,
 }: {
   values: number[];
-  rising: boolean;
+  times: string[];
+  market: "BR" | "US";
 }) {
+  const firstValue = values[0] ?? 0;
+  const lastValue = values[values.length - 1] ?? firstValue;
+  const rising = lastValue >= firstValue;
+
   const width = 760;
   const height = 190;
   const points = buildChartPoints(values, width, height, 10);
@@ -169,10 +175,12 @@ export function FullContractFlowChart({
   buyer,
   seller,
   balance,
+  times: _times,
 }: {
   buyer: number[];
   seller: number[];
   balance: number[];
+  times: string[];
 }) {
   const width = 760;
   const flowHeight = 158;
