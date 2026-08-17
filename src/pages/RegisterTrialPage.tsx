@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { BrainCircuit, CheckCircle2, ShieldCheck, Zap } from "lucide-react";
@@ -100,25 +100,11 @@ export default function RegisterTrialPage() {
 
   useEffect(() => {
     const ref = (searchParams.get("ref") || "").trim();
+
     if (ref) {
       setPartnerCode(ref.toUpperCase());
     }
   }, [searchParams]);
-
-  const trialEndLabel = useMemo(() => {
-    const now = new Date();
-    const end = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
-
-    try {
-      return end.toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-    } catch {
-      return "em 2 dias";
-    }
-  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -176,6 +162,7 @@ export default function RegisterTrialPage() {
             message = detail;
           } else if (Array.isArray(detail) && detail.length > 0) {
             const first = detail[0];
+
             if (first?.msg) {
               message = first.msg;
             }
@@ -214,7 +201,7 @@ export default function RegisterTrialPage() {
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
 
             <div className="mb-8 flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-300 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-500/10 text-emerald-300 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
                 <BrainCircuit className="h-7 w-7" />
               </div>
 
@@ -223,28 +210,33 @@ export default function RegisterTrialPage() {
                   Teste grátis
                 </p>
                 <h1 className="mt-2 text-3xl font-black tracking-tight text-white md:text-4xl">
-                  Crie sua conta e libere 2 dias de acesso
+                  Teste a Gluck&apos;s Trader por 5 pregões
                 </h1>
               </div>
             </div>
 
             <p className="max-w-2xl text-sm leading-7 text-zinc-300 md:text-base">
-              Acesse a experiência premium da Gluck&apos;s Trader IA por 2 dias.
-              Explore o dashboard, acompanhe as análises e conheça a plataforma
-              antes de escolher seu plano.
+              Crie sua conta e vá direto ao dashboard para conhecer a plataforma,
+              acompanhar as análises e testar os recursos antes de escolher um plano.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300">
                 <ShieldCheck className="h-4 w-4" />
-                Trial liberado até {trialEndLabel}
+                5 pregões de acesso
               </div>
 
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-medium text-cyan-300">
                 <Zap className="h-4 w-4" />
-                Sem compromisso inicial
+                Sem cartão e sem cobrança automática
               </div>
             </div>
+
+            <p className="mt-4 max-w-2xl text-xs leading-6 text-zinc-500">
+              A duração do teste é calculada pelo calendário de pregões da B3.
+              O horário exato de encerramento é definido pelo sistema no momento
+              do cadastro.
+            </p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
@@ -259,6 +251,7 @@ export default function RegisterTrialPage() {
                       setName(event.target.value)
                     }
                     placeholder="Digite seu nome"
+                    autoComplete="name"
                     className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
                   />
                 </div>
@@ -274,21 +267,7 @@ export default function RegisterTrialPage() {
                       setEmail(event.target.value)
                     }
                     placeholder="voce@email.com"
-                    className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-zinc-200">
-                    Senha
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                      setPassword(event.target.value)
-                    }
-                    placeholder="Crie sua senha"
+                    autoComplete="email"
                     className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
                   />
                 </div>
@@ -298,19 +277,43 @@ export default function RegisterTrialPage() {
                     WhatsApp
                   </label>
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="numeric"
                     value={phone}
                     onChange={(event: ChangeEvent<HTMLInputElement>) =>
                       setPhone(formatPhone(event.target.value))
                     }
                     placeholder="(51) 99988-7766"
+                    autoComplete="tel"
                     className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
                   />
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="mb-2 block text-sm font-medium text-zinc-200">
-                    Código do parceiro (opcional)
+                    Senha
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      setPassword(event.target.value)
+                    }
+                    placeholder="Crie uma senha com pelo menos 6 caracteres"
+                    autoComplete="new-password"
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
+                  />
+                </div>
+              </div>
+
+              <details className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+                <summary className="cursor-pointer select-none text-sm text-zinc-400 transition hover:text-zinc-200">
+                  Tenho um código de parceiro
+                </summary>
+
+                <div className="pt-4">
+                  <label className="mb-2 block text-sm font-medium text-zinc-200">
+                    Código do parceiro
                   </label>
                   <input
                     type="text"
@@ -319,10 +322,10 @@ export default function RegisterTrialPage() {
                       setPartnerCode(event.target.value.toUpperCase())
                     }
                     placeholder="Digite o código do parceiro"
-                    className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-black/30 px-4 text-sm uppercase text-white outline-none transition placeholder:normal-case placeholder:text-zinc-500 focus:border-emerald-400/40 focus:bg-black/40"
                   />
                 </div>
-              </div>
+              </details>
 
               {error ? (
                 <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -335,22 +338,22 @@ export default function RegisterTrialPage() {
                 disabled={loading}
                 className="group relative inline-flex h-14 w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500 via-green-500 to-cyan-500 px-6 text-sm font-semibold text-black shadow-[0_0_40px_rgba(16,185,129,0.25)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                <span className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.55),transparent)] translate-x-[-120%] transition duration-1000 group-hover:translate-x-[120%]" />
+                <span className="absolute inset-0 translate-x-[-120%] bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.55),transparent)] transition duration-1000 group-hover:translate-x-[120%]" />
                 <span className="relative z-10">
-                  {loading ? "Criando conta..." : "Começar meu teste grátis"}
+                  {loading ? "Criando conta..." : "Liberar meus 5 pregões"}
                 </span>
               </button>
             </form>
 
             <div className="mt-6 flex flex-wrap items-center gap-3 text-xs text-zinc-400">
               <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-emerald-300">
-                Sem compromisso
+                Sem cartão
               </span>
               <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-cyan-300">
-                Acesso premium liberado
+                Sem cobrança automática
               </span>
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
-                Cadastro em menos de 1 minuto
+                Acesso liberado após o cadastro
               </span>
             </div>
 
@@ -372,78 +375,96 @@ export default function RegisterTrialPage() {
                   Plataforma premium
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold text-white">
-                  O que você desbloqueia
+                  O que você poderá testar
                 </h2>
               </div>
 
               <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300">
-                Trial ativo
+                5 pregões
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="rounded-3xl border border-emerald-500/15 bg-[linear-gradient(180deg,rgba(16,185,129,0.10),rgba(255,255,255,0.02))] p-5">
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm text-zinc-400">Painel inteligente</p>
+                    <p className="text-sm text-zinc-400">Análise completa</p>
                     <p className="text-xl font-semibold text-white">
-                      Dashboard ao vivo
+                      Plano operacional em uma tela
                     </p>
                   </div>
 
                   <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
-                    Live
+                    Exemplo visual
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <div className="rounded-2xl bg-black/30 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">
-                      Score
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                      Direção
                     </p>
-                    <p className="mt-2 text-lg font-semibold text-emerald-300">
-                      89%
+                    <p className="mt-2 text-sm font-semibold text-emerald-300">
+                      Compra / Venda
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-black/30 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">
-                      Timing
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                      Entrada
                     </p>
-                    <p className="mt-2 text-lg font-semibold text-cyan-300">
-                      Forte
+                    <p className="mt-2 text-sm font-semibold text-white">
+                      Ponto sugerido
                     </p>
                   </div>
 
                   <div className="rounded-2xl bg-black/30 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">
-                      Setup
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                      Stop
                     </p>
-                    <p className="mt-2 text-lg font-semibold text-white">
-                      Buy
+                    <p className="mt-2 text-sm font-semibold text-white">
+                      Risco definido
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-black/30 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                      Alvo
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-cyan-300">
+                      Objetivo
                     </p>
                   </div>
                 </div>
+
+                <p className="mt-4 text-xs leading-5 text-zinc-500">
+                  Representação ilustrativa da organização da análise. Não é
+                  promessa de resultado nem recomendação de ganho.
+                </p>
               </div>
 
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
                 <div className="mb-4 flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                  <p className="text-sm text-zinc-300">Durante o trial</p>
+                  <p className="text-sm text-zinc-300">Durante o teste</p>
                 </div>
 
                 <ul className="space-y-3 text-sm text-zinc-200">
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                    Acesso ao dashboard premium
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-300" />
+                    Acesso ao dashboard da plataforma
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                    Recursos inteligentes liberados
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-300" />
+                    Análises com direção, entrada, stop e alvo
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                    Ambiente premium completo
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-300" />
+                    Confiança calculada pelo algoritmo e IA
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-300" />
+                    Dados de mercado conforme os ativos disponíveis
                   </li>
                 </ul>
               </div>
@@ -451,35 +472,37 @@ export default function RegisterTrialPage() {
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
                 <div className="mb-4 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-cyan-300" />
-                  <p className="text-sm text-zinc-300">Após o período</p>
+                  <p className="text-sm text-zinc-300">Quando o trial terminar</p>
                 </div>
 
                 <ul className="space-y-3 text-sm text-zinc-200">
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-cyan-300" />
-                    Conta permanece criada
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-cyan-300" />
+                    Sua conta permanece criada
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-cyan-300" />
-                    Trial encerra automaticamente
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-cyan-300" />
+                    O trial encerra automaticamente
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-cyan-300" />
-                    Acesso bloqueia sem plano ativo
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-cyan-300" />
+                    Nenhuma cobrança é feita automaticamente
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-cyan-300" />
-                    Escolha um plano para continuar
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-cyan-300" />
+                    Você escolhe se deseja contratar um plano
                   </li>
                 </ul>
               </div>
 
               <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/8 p-5">
                 <p className="text-xs uppercase tracking-[0.28em] text-emerald-300">
-                  Experiência premium
+                  Importante
                 </p>
                 <p className="mt-3 text-sm leading-7 text-zinc-200">
-                  Acesso completo a plataforma!
+                  A Gluck&apos;s Trader organiza informações e análises para apoiar
+                  sua leitura do mercado. Operações financeiras envolvem risco e a
+                  decisão final é sempre do usuário.
                 </p>
               </div>
             </div>
