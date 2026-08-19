@@ -102,6 +102,13 @@ type EditFormState = {
   access_expires_at: string;
 };
 
+type PaidPlanKey = "mensal" | "trimestral";
+
+const PAID_PLAN_DAYS: Record<PaidPlanKey, number> = {
+  mensal: 30,
+  trimestral: 90,
+};
+
 export default function AdminPage() {
   const navigate = useNavigate();
 
@@ -337,9 +344,38 @@ export default function AdminPage() {
       is_active: !!user.is_active,
       is_blocked: !!user.is_blocked,
       is_admin: !!user.is_admin,
-      plan: user.plan || "mensal",
+      plan: normalizePlanForAdmin(user.plan),
       plan_status: user.plan_status || "pending",
       access_expires_at: toDatetimeLocal(user.access_expires_at),
+    });
+  }
+
+  function applyPaidPlan(plan: PaidPlanKey) {
+    if (!editingUser) return;
+
+    const now = new Date();
+    const currentExpiration = editingUser.access_expires_at
+      ? new Date(editingUser.access_expires_at)
+      : null;
+
+    const baseDate =
+      currentExpiration &&
+      !Number.isNaN(currentExpiration.getTime()) &&
+      currentExpiration.getTime() > now.getTime()
+        ? currentExpiration
+        : now;
+
+    const expiration = new Date(
+      baseDate.getTime() + PAID_PLAN_DAYS[plan] * 24 * 60 * 60 * 1000
+    );
+
+    setEditingUser({
+      ...editingUser,
+      plan,
+      plan_status: "active",
+      is_active: true,
+      is_blocked: false,
+      access_expires_at: toDatetimeLocal(expiration.toISOString()),
     });
   }
 
@@ -1115,6 +1151,44 @@ export default function AdminPage() {
                 onChange={(value) => setEditingUser({ ...editingUser, email: value })}
               />
 
+              <div className="md:col-span-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.07] p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-white">
+                      Liberação rápida de assinatura
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-zinc-400">
+                      Use estes botões após confirmar o pagamento. O sistema prepara plano,
+                      status, desbloqueio e vencimento; nada é salvo até você clicar em
+                      &quot;Salvar alterações&quot;.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => applyPaidPlan("mensal")}
+                      className="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-emerald-500"
+                    >
+                      Mensal +30 dias
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => applyPaidPlan("trimestral")}
+                      className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-500/20"
+                    >
+                      Trimestral +90 dias
+                    </button>
+                  </div>
+                </div>
+
+                <p className="mt-3 text-xs text-zinc-500">
+                  Se o cliente ainda possui acesso vigente, os 30 ou 90 dias são somados
+                  ao vencimento atual. Se o acesso já venceu, a contagem começa agora.
+                </p>
+              </div>
+
               <SelectBlock
                 label="Plano"
                 value={editingUser.plan}
@@ -1123,7 +1197,9 @@ export default function AdminPage() {
                   { label: "Trial", value: "trial" },
                   { label: "Mensal", value: "mensal" },
                   { label: "Trimestral", value: "trimestral" },
-                  { label: "Semestral", value: "semestral" },
+                  ...(editingUser.plan === "semestral"
+                    ? [{ label: "Semestral (legado — não vender)", value: "semestral" }]
+                    : []),
                   { label: "Nenhum", value: "none" },
                 ]}
               />
@@ -1525,6 +1601,26 @@ function ToggleBlock({
       </button>
     </label>
   );
+}
+
+function normalizePlanForAdmin(value?: string | null) {
+  const normalized = (value || "").trim().toLowerCase();
+
+  if (normalized === "monthly") return "mensal";
+  if (normalized === "quarterly") return "trimestral";
+  if (normalized === "semiannual") return "semestral";
+
+  if (
+    normalized === "trial" ||
+    normalized === "mensal" ||
+    normalized === "trimestral" ||
+    normalized === "semestral" ||
+    normalized === "none"
+  ) {
+    return normalized;
+  }
+
+  return normalized || "none";
 }
 
 function formatDate(value?: string | null) {
