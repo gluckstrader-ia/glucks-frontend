@@ -1623,18 +1623,36 @@ function normalizePlanForAdmin(value?: string | null) {
   return normalized || "none";
 }
 
+function parseApiDate(value?: string | null) {
+  if (!value) return null;
+
+  const normalized = value.trim();
+
+  // O backend pode devolver timestamps UTC sem "Z".
+  // Quando não existe informação explícita de fuso, tratamos como UTC.
+  const hasTimezone =
+    /Z$/i.test(normalized) || /[+-]\d{2}:?\d{2}$/.test(normalized);
+
+  const date = new Date(hasTimezone ? normalized : `${normalized}Z`);
+
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date;
+}
+
 function formatDate(value?: string | null) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
+  const date = parseApiDate(value);
+  if (!date) return "-";
+
   return date.toLocaleString("pt-BR");
 }
 
 function toDatetimeLocal(value?: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
+  const date = parseApiDate(value);
+  if (!date) return "";
+
   const pad = (n: number) => String(n).padStart(2, "0");
+
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
     date.getDate()
   )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
