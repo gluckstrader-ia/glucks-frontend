@@ -3,13 +3,24 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { clearAuth, getStoredUser } from "../lib/auth";
 import { createCheckout } from "../services/payments";
 
-type PlanKey = "mensal" | "trimestral" | "semestral";
-type ApiPlanKey = "monthly" | "quarterly" | "semiannual";
+type PlanKey = "mensal" | "trimestral";
+type ApiPlanKey = "monthly" | "quarterly";
 
 const PLAN_TO_API: Record<PlanKey, ApiPlanKey> = {
   mensal: "monthly",
   trimestral: "quarterly",
-  semestral: "semiannual",
+};
+
+type PlanCard = {
+  id: PlanKey;
+  title: string;
+  price: string;
+  period: string;
+  description: string;
+  features: string[];
+  badge?: string;
+  equivalent?: string;
+  saving?: string;
 };
 
 export default function PremiumPage() {
@@ -21,11 +32,11 @@ export default function PremiumPage() {
   const highlightPlan = useMemo(() => {
     const plan = (searchParams.get("plan") || "").toLowerCase();
 
-    if (plan === "mensal" || plan === "trimestral" || plan === "semestral") {
+    if (plan === "mensal" || plan === "trimestral") {
       return plan as PlanKey;
     }
 
-    return "mensal" as PlanKey;
+    return "trimestral" as PlanKey;
   }, [searchParams]);
 
   function handleLogout() {
@@ -62,49 +73,39 @@ export default function PremiumPage() {
     }
   }
 
-  const plans = [
+  const plans: PlanCard[] = [
     {
-      id: "mensal" as PlanKey,
+      id: "mensal",
       title: "Plano Mensal",
       price: "R$ 197",
       period: "/mês",
       description:
-        "Ideal para começar agora e testar toda a experiência da plataforma.",
+        "Acesso completo por 30 dias, ideal para quem quer continuar usando a plataforma mês a mês.",
       features: [
-        "Acesso à plataforma",
+        "Acesso completo à plataforma",
         "Dashboard de análise",
         "Leitura técnica com IA",
+        "Direção, entrada, stop e alvo",
         "Atualizações contínuas",
       ],
     },
     {
-      id: "trimestral" as PlanKey,
+      id: "trimestral",
       title: "Plano Trimestral",
       price: "R$ 497",
       period: "/3 meses",
       description:
-        "Mais estabilidade e melhor custo-benefício para operar com consistência.",
+        "A mesma experiência completa por 90 dias, com melhor custo-benefício no período.",
       features: [
         "Tudo do plano mensal",
-        "Melhor custo-benefício",
-        "Mais tempo para evolução",
-        "Acesso contínuo ao ecossistema",
+        "90 dias de acesso",
+        "Economia de R$ 94 no período",
+        "Equivalente a R$ 165,67 por mês",
+        "Acesso contínuo sem renovação mensal",
       ],
       badge: "Mais vantajoso",
-    },
-    {
-      id: "semestral" as PlanKey,
-      title: "Plano Semestral",
-      price: "R$ 897",
-      period: "/6 meses",
-      description:
-        "Para quem quer acompanhamento por mais tempo e foco em performance.",
-      features: [
-        "Tudo do plano trimestral",
-        "Maior economia",
-        "Visão de médio prazo",
-        "Plano mais completo",
-      ],
+      equivalent: "R$ 165,67/mês",
+      saving: "Economize R$ 94",
     },
   ];
 
@@ -155,7 +156,7 @@ export default function PremiumPage() {
           </div>
 
           <h1 className="mt-6 text-4xl font-bold tracking-tight md:text-6xl">
-            Desbloqueie o acesso à
+            Continue com acesso à
             <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
               {" "}
               Gluck&apos;s Trader IA
@@ -163,12 +164,21 @@ export default function PremiumPage() {
           </h1>
 
           <p className="mt-5 text-lg text-zinc-400 md:text-xl">
-            Tenha acesso à plataforma, dashboard inteligente, leituras com IA e
-            recursos premium para análise de mercado.
+            Escolha entre 30 ou 90 dias de acesso completo à plataforma e às
+            ferramentas de análise.
           </p>
+
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-zinc-400">
+            <span className="rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-2">
+              Mensal: R$ 197
+            </span>
+            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-emerald-300">
+              Trimestral: economize R$ 94
+            </span>
+          </div>
         </section>
 
-        <section className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <section className="mx-auto mt-12 grid max-w-5xl grid-cols-1 gap-6 lg:grid-cols-2">
           {plans.map((plan) => {
             const isHighlighted = highlightPlan === plan.id;
             const isLoading = loadingPlan === plan.id;
@@ -178,7 +188,7 @@ export default function PremiumPage() {
                 key={plan.id}
                 className={`relative rounded-[30px] border p-6 shadow-[0_16px_50px_rgba(0,0,0,0.28)] transition ${
                   isHighlighted
-                    ? "border-green-500/40 bg-[linear-gradient(180deg,rgba(18,34,28,0.96),rgba(7,10,16,0.98))]"
+                    ? "border-green-500/40 bg-[linear-gradient(180deg,rgba(18,34,28,0.96),rgba(7,10,16,0.98))] shadow-[0_0_70px_rgba(34,197,94,0.10)]"
                     : "border-zinc-800 bg-[linear-gradient(180deg,rgba(17,24,39,0.92),rgba(7,10,16,0.96))]"
                 }`}
               >
@@ -196,6 +206,19 @@ export default function PremiumPage() {
                   </span>
                   <span className="pb-1 text-zinc-400">{plan.period}</span>
                 </div>
+
+                {plan.equivalent ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                      {plan.equivalent}
+                    </span>
+                    {plan.saving ? (
+                      <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
+                        {plan.saving}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <p className="mt-4 min-h-[72px] text-zinc-400">
                   {plan.description}
@@ -223,11 +246,29 @@ export default function PremiumPage() {
                       : "bg-zinc-100 text-black hover:bg-white"
                   }`}
                 >
-                  {isLoading ? "Gerando pagamento..." : "Assinar agora"}
+                  {isLoading
+                    ? "Gerando pagamento..."
+                    : plan.id === "trimestral"
+                    ? "Assinar trimestral"
+                    : "Assinar mensal"}
                 </button>
               </div>
             );
           })}
+        </section>
+
+        <section className="mx-auto mt-8 max-w-5xl">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-5 py-4 text-center text-sm leading-6 text-zinc-400">
+            O pagamento é processado pelo PagBank. Após a confirmação do
+            pagamento, a equipe libera o acesso correspondente ao plano
+            escolhido.
+          </div>
+
+          <p className="mx-auto mt-4 max-w-3xl text-center text-xs leading-5 text-zinc-500">
+            A Gluck&apos;s Trader IA é uma ferramenta de apoio à análise de
+            mercado. Operações financeiras envolvem risco e não há garantia de
+            resultado.
+          </p>
         </section>
       </main>
     </div>
