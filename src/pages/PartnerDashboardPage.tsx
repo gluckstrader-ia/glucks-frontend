@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { getToken } from "../lib/auth";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 type Material = {
   id?: number;
@@ -10,18 +12,9 @@ type Material = {
   file_url?: string;
 };
 
-type Commission = {
-  id: number;
-  plan?: string;
-  commission_amount?: number;
-  status?: string;
-  created_at?: string;
-};
-
 type DashboardData = {
   partner_code: string;
   partner_link: string;
-  pix_key?: string | null;
   metrics: {
     clicks: number;
     referred_users: number;
@@ -30,28 +23,27 @@ type DashboardData = {
     available_amount: number;
     paid_amount: number;
   };
-  recent_commissions: Commission[];
   materials?: Material[];
 };
 
-const starterMaterials: Material[] = [
+const defaultMaterials: Material[] = [
   {
     title: "Como apresentar a Gluck's Trader IA",
     category: "Apresentação",
     content:
-      "A Gluck's Trader IA é uma plataforma que utiliza inteligência artificial e ferramentas de análise para auxiliar traders na tomada de decisão."
+      "A Gluck's Trader IA é uma plataforma inteligente criada para auxiliar traders nas análises e tomada de decisão."
   },
   {
-    title: "Copy pronta para WhatsApp e Instagram",
+    title: "Copy pronta para divulgação",
     category: "Copy",
     content:
-      "Você já imaginou ter uma ferramenta inteligente para auxiliar suas análises no mercado? Conheça a Gluck's Trader IA e faça seu teste."
+      "Conheça uma ferramenta inteligente para auxiliar suas análises no mercado. Faça seu teste na Gluck's Trader IA."
   },
   {
     title: "Roteiro para primeiro vídeo",
     category: "Vídeo",
     content:
-      "Gancho: Eu gostaria de ter encontrado essa ferramenta quando comecei no mercado. Mostre o problema, apresente a solução e finalize com o link."
+      "Gancho: Eu gostaria de ter encontrado essa ferramenta quando comecei no mercado..."
   }
 ];
 
@@ -65,43 +57,83 @@ function money(value: number) {
 export default function PartnerDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
 
-  async function load() {
-    const response = await fetch(`${API_URL}/partners/dashboard`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
+  async function loadDashboard() {
+    try {
+      setLoading(true);
+      setError("");
 
-    const json = await response.json();
-    setData(json);
-    setLoading(false);
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("Sessão não encontrada. Faça login novamente.");
+      }
+
+      const response = await fetch(`${API_URL}/partners/dashboard`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof result.detail === "string"
+            ? result.detail
+            : "Erro ao carregar dashboard."
+        );
+      }
+
+      setData(result);
+
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erro inesperado."
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
-    load();
+    loadDashboard();
   }, []);
 
   const materials = useMemo(() => {
-    if (data?.materials && data.materials.length > 0) {
+    if (data?.materials?.length) {
       return data.materials;
     }
 
-    return starterMaterials;
+    return defaultMaterials;
   }, [data]);
 
-  async function copy(text: string, title: string) {
+  async function copy(text: string, id: string) {
     await navigator.clipboard.writeText(text);
-    setCopied(title);
+    setCopied(id);
 
     setTimeout(() => setCopied(""), 2000);
   }
 
-  if (loading || !data) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#03070d] text-white flex items-center justify-center">
         Carregando painel...
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="min-h-screen bg-[#03070d] text-white flex items-center justify-center p-6">
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-5">
+          {error || "Não foi possível carregar os dados."}
+        </div>
       </div>
     );
   }
@@ -110,19 +142,28 @@ export default function PartnerDashboardPage() {
     <div className="min-h-screen bg-[#03070d] p-6 text-white">
       <main className="mx-auto max-w-7xl space-y-8">
 
-        <section className="rounded-[32px] border border-emerald-500/20 bg-gradient-to-br from-emerald-500/20 to-black p-8">
+        <section className="rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/20 to-black p-8">
           <h1 className="text-4xl font-black">
             Seu painel de crescimento
           </h1>
 
           <p className="mt-3 text-zinc-300">
-            Use suas ferramentas de divulgação e transforme indicações em resultados.
+            Acompanhe indicações, resultados e materiais para divulgação.
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <Card title="Disponível" value={money(data.metrics.available_amount)} />
-            <Card title="Clientes ativos" value={data.metrics.active_customers} />
-            <Card title="Cliques" value={data.metrics.clicks} />
+            <Metric
+              title="Disponível"
+              value={money(data.metrics.available_amount)}
+            />
+            <Metric
+              title="Clientes ativos"
+              value={data.metrics.active_customers}
+            />
+            <Metric
+              title="Cliques"
+              value={data.metrics.clicks}
+            />
           </div>
         </section>
 
@@ -135,12 +176,12 @@ export default function PartnerDashboardPage() {
             <input
               readOnly
               value={data.partner_link}
-              className="flex-1 rounded-xl bg-black p-3"
+              className="flex-1 rounded-xl bg-black border border-zinc-800 p-3"
             />
 
             <button
               onClick={() => copy(data.partner_link, "link")}
-              className="rounded-xl bg-emerald-400 px-5 font-bold text-black"
+              className="rounded-xl bg-emerald-400 px-6 font-black text-black"
             >
               {copied === "link" ? "Copiado!" : "Copiar"}
             </button>
@@ -152,37 +193,37 @@ export default function PartnerDashboardPage() {
             🚀 Kit inicial do parceiro
           </h2>
 
-          <p className="mt-2 text-zinc-400">
-            Materiais prontos para ajudar você a divulgar.
-          </p>
-
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {materials.map((material) => (
-              <div
-                key={material.title}
+            {materials.map((item) => (
+              <article
+                key={item.title}
                 className="rounded-2xl border border-zinc-800 bg-black p-5"
               >
                 <span className="text-sm text-emerald-400">
-                  {material.category}
+                  {item.category}
                 </span>
 
                 <h3 className="mt-2 font-bold">
-                  {material.title}
+                  {item.title}
                 </h3>
 
                 <p className="mt-3 text-sm text-zinc-400">
-                  {material.content}
+                  {item.content}
                 </p>
 
-                {material.content && (
+                {item.content && (
                   <button
-                    onClick={() => copy(material.content || "", material.title)}
-                    className="mt-4 rounded-xl border border-emerald-500 px-4 py-2 text-sm"
+                    onClick={() =>
+                      copy(item.content || "", item.title)
+                    }
+                    className="mt-4 rounded-xl border border-emerald-500 px-4 py-2"
                   >
-                    {copied === material.title ? "Copiado!" : "Copiar material"}
+                    {copied === item.title
+                      ? "Copiado!"
+                      : "Copiar material"}
                   </button>
                 )}
-              </div>
+              </article>
             ))}
           </div>
         </section>
@@ -192,11 +233,19 @@ export default function PartnerDashboardPage() {
   );
 }
 
-function Card({ title, value }: { title: string; value: React.ReactNode }) {
+function Metric({
+  title,
+  value,
+}: {
+  title: string;
+  value: React.ReactNode;
+}) {
   return (
     <div className="rounded-2xl border border-zinc-800 bg-black/40 p-5">
       <p className="text-zinc-400">{title}</p>
-      <strong className="mt-2 block text-2xl">{value}</strong>
+      <strong className="mt-2 block text-2xl">
+        {value}
+      </strong>
     </div>
   );
 }
