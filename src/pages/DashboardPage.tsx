@@ -1146,7 +1146,7 @@ function SummaryTab({
               </div>
 
               <div className="text-zinc-400 text-sm mt-3">
-                Confiança:{" "}
+                Probabilidade:{" "}
                 <span className="text-cyan-400 font-semibold">
                   {tp2Confidence ?? "--"}%
                 </span>
@@ -1177,7 +1177,7 @@ function SummaryTab({
               </div>
 
               <div className="text-zinc-400 text-sm mt-3">
-                Confiança:{" "}
+                Probabilidade:{" "}
                 <span className="text-cyan-400 font-semibold">
                   {tp3Confidence ?? "--"}%
                 </span>
@@ -4334,7 +4334,7 @@ function TechnicalOverviewPanel({
             Painel Técnico IA
           </p>
 
-          <h3 className="mt-2 text-xl font-black text-white">
+          <h3 className="mt-1 text-lg font-black text-white">
             {asset} •{" "}
             {tf === "5m"
               ? "5 Minutos"
@@ -4343,14 +4343,14 @@ function TechnicalOverviewPanel({
               : tf}
           </h3>
 
-          <p className="mt-2 max-w-2xl text-sx leading-6 text-zinc-400">
+          <p className="mt-1 max-w-2xl text-xs leading-4 text-zinc-400">
             Termômetros técnicos consolidados por indicadores,
             médias móveis e média geral da IA.
           </p>
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid gap-2 xl:grid-cols-3">
         <GaugeMeter
           title="Indicadores Técnicos"
           value={indicatorValue}
@@ -4373,17 +4373,8 @@ function TechnicalOverviewPanel({
         />
       </div>
 
-      <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-3">
+      <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-2">
         <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h4 className="text-xl font-black text-white">
-              Médias Móveis
-            </h4>
-
-            <p className="mt-1 text-sm text-zinc-400">
-              Leitura comparativa entre médias simples e exponenciais.
-            </p>
-          </div>
 
           <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-300">
             SMA / EMA
