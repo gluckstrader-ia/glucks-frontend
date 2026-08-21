@@ -2,10 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
+type Material = {
+  id?: number;
+  title: string;
+  category?: string;
+  content?: string;
+  file_url?: string;
+};
+
 type Commission = {
   id: number;
   plan?: string;
-  gross_amount?: number;
   commission_amount?: number;
   status?: string;
   created_at?: string;
@@ -15,7 +22,6 @@ type DashboardData = {
   partner_code: string;
   partner_link: string;
   pix_key?: string | null;
-  pix_type?: string | null;
   metrics: {
     clicks: number;
     referred_users: number;
@@ -25,11 +31,29 @@ type DashboardData = {
     paid_amount: number;
   };
   recent_commissions: Commission[];
+  materials?: Material[];
 };
 
-function token() {
-  return localStorage.getItem("glucks_token") || localStorage.getItem("token") || "";
-}
+const starterMaterials: Material[] = [
+  {
+    title: "Como apresentar a Gluck's Trader IA",
+    category: "Apresentação",
+    content:
+      "A Gluck's Trader IA é uma plataforma que utiliza inteligência artificial e ferramentas de análise para auxiliar traders na tomada de decisão."
+  },
+  {
+    title: "Copy pronta para WhatsApp e Instagram",
+    category: "Copy",
+    content:
+      "Você já imaginou ter uma ferramenta inteligente para auxiliar suas análises no mercado? Conheça a Gluck's Trader IA e faça seu teste."
+  },
+  {
+    title: "Roteiro para primeiro vídeo",
+    category: "Vídeo",
+    content:
+      "Gancho: Eu gostaria de ter encontrado essa ferramenta quando comecei no mercado. Mostre o problema, apresente a solução e finalize com o link."
+  }
+];
 
 function money(value: number) {
   return Number(value || 0).toLocaleString("pt-BR", {
@@ -41,103 +65,71 @@ function money(value: number) {
 export default function PartnerDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState("");
+  const [copied, setCopied] = useState("");
 
   async function load() {
-    try {
-      setLoading(true);
+    const response = await fetch(`${API_URL}/partners/dashboard`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
 
-      const response = await fetch(`${API_URL}/partners/dashboard`, {
-        headers: {
-          Authorization: `Bearer ${token()}`,
-        },
-      });
-
-      const json = await response.json();
-
-      if (!response.ok) {
-        throw new Error(json.detail || "Erro ao carregar dashboard");
-      }
-
-      setData(json);
-    } catch (e: any) {
-      setError(e.message || "Erro inesperado");
-    } finally {
-      setLoading(false);
-    }
+    const json = await response.json();
+    setData(json);
+    setLoading(false);
   }
 
   useEffect(() => {
     load();
   }, []);
 
-  const generated = useMemo(() => {
-    if (!data) return 0;
+  const materials = useMemo(() => {
+    if (data?.materials && data.materials.length > 0) {
+      return data.materials;
+    }
 
-    return data.recent_commissions.reduce(
-      (total, item) => total + Number(item.commission_amount || 0),
-      0
-    );
+    return starterMaterials;
   }, [data]);
 
-  function copyLink() {
-    if (!data?.partner_link) return;
+  async function copy(text: string, title: string) {
+    await navigator.clipboard.writeText(text);
+    setCopied(title);
 
-    navigator.clipboard.writeText(data.partner_link);
-    setCopied(true);
-
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(""), 2000);
   }
 
-  if (loading) {
+  if (loading || !data) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
         Carregando painel...
       </div>
     );
   }
 
-  if (error || !data) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-black p-6 text-white">
-        <div className="rounded-3xl border border-red-500/30 bg-red-500/10 p-8">
-          <h1 className="font-bold">Erro ao carregar painel</h1>
-          <p>{error}</p>
-          <button onClick={load} className="mt-4 rounded-xl bg-emerald-400 px-5 py-2 text-black">
-            Tentar novamente
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const m = data.metrics;
-
   return (
-    <div className="min-h-screen bg-[#03070d] px-4 py-8 text-white">
+    <div className="min-h-screen bg-[#03070d] p-6 text-white">
       <main className="mx-auto max-w-7xl space-y-8">
 
-        <section className="rounded-[32px] border border-emerald-500/30 bg-gradient-to-br from-emerald-500/20 to-zinc-950 p-8">
-          <span className="text-emerald-300">✦ Gluck's Partner</span>
-
-          <h1 className="mt-4 text-4xl font-black">
+        <section className="rounded-[32px] border border-emerald-500/20 bg-gradient-to-br from-emerald-500/20 to-black p-8">
+          <h1 className="text-4xl font-black">
             Seu painel de crescimento
           </h1>
 
           <p className="mt-3 text-zinc-300">
-            Transforme indicações em uma fonte de receita recorrente.
+            Use suas ferramentas de divulgação e transforme indicações em resultados.
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <Metric title="Disponível" value={money(m.available_amount)} />
-            <Metric title="Clientes ativos" value={m.active_customers} />
-            <Metric title="Total gerado" value={money(generated)} />
+            <Card title="Disponível" value={money(data.metrics.available_amount)} />
+            <Card title="Clientes ativos" value={data.metrics.active_customers} />
+            <Card title="Cliques" value={data.metrics.clicks} />
           </div>
         </section>
 
         <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
-          <h2 className="text-2xl font-bold">Seu link de indicação</h2>
+          <h2 className="text-2xl font-black">
+            Seu link de indicação
+          </h2>
 
           <div className="mt-4 flex flex-col gap-3 md:flex-row">
             <input
@@ -147,41 +139,49 @@ export default function PartnerDashboardPage() {
             />
 
             <button
-              onClick={copyLink}
-              className="rounded-xl bg-emerald-400 px-6 font-bold text-black"
+              onClick={() => copy(data.partner_link, "link")}
+              className="rounded-xl bg-emerald-400 px-5 font-bold text-black"
             >
-              {copied ? "Copiado!" : "Copiar"}
+              {copied === "link" ? "Copiado!" : "Copiar"}
             </button>
           </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          <Metric title="Cliques" value={m.clicks}/>
-          <Metric title="Cadastros" value={m.referred_users}/>
-          <Metric title="Pago" value={money(m.paid_amount)}/>
-        </section>
-
         <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
-          <h2 className="text-2xl font-bold">Como ganhar mais</h2>
+          <h2 className="text-2xl font-black">
+            🚀 Kit inicial do parceiro
+          </h2>
 
-          <ul className="mt-4 space-y-3 text-zinc-300">
-            <li>• Divulgue seu link diariamente.</li>
-            <li>• Mostre o funcionamento da plataforma.</li>
-            <li>• Use o teste gratuito como principal argumento.</li>
-            <li>• Compartilhe resultados e demonstrações.</li>
-          </ul>
-        </section>
+          <p className="mt-2 text-zinc-400">
+            Materiais prontos para ajudar você a divulgar.
+          </p>
 
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6">
-          <h2 className="text-2xl font-bold">Comissões recentes</h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {materials.map((material) => (
+              <div
+                key={material.title}
+                className="rounded-2xl border border-zinc-800 bg-black p-5"
+              >
+                <span className="text-sm text-emerald-400">
+                  {material.category}
+                </span>
 
-          <div className="mt-4 space-y-3">
-            {data.recent_commissions.map((item) => (
-              <div key={item.id} className="rounded-xl border border-zinc-800 p-4">
-                <div>{item.plan || "Plano"}</div>
-                <div className="text-emerald-300">
-                  {money(Number(item.commission_amount || 0))}
-                </div>
+                <h3 className="mt-2 font-bold">
+                  {material.title}
+                </h3>
+
+                <p className="mt-3 text-sm text-zinc-400">
+                  {material.content}
+                </p>
+
+                {material.content && (
+                  <button
+                    onClick={() => copy(material.content || "", material.title)}
+                    className="mt-4 rounded-xl border border-emerald-500 px-4 py-2 text-sm"
+                  >
+                    {copied === material.title ? "Copiado!" : "Copiar material"}
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -192,10 +192,10 @@ export default function PartnerDashboardPage() {
   );
 }
 
-function Metric({title, value}: {title:string; value:React.ReactNode}) {
+function Card({ title, value }: { title: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-black/40 p-5">
-      <p className="text-sm text-zinc-400">{title}</p>
+    <div className="rounded-2xl border border-zinc-800 bg-black/40 p-5">
+      <p className="text-zinc-400">{title}</p>
       <strong className="mt-2 block text-2xl">{value}</strong>
     </div>
   );
