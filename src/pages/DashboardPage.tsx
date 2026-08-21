@@ -1146,7 +1146,7 @@ function SummaryTab({
               </div>
 
               <div className="text-zinc-400 text-sm mt-3">
-                Probabilidade:{" "}
+                Confiança:{" "}
                 <span className="text-cyan-400 font-semibold">
                   {tp2Confidence ?? "--"}%
                 </span>
@@ -1177,7 +1177,7 @@ function SummaryTab({
               </div>
 
               <div className="text-zinc-400 text-sm mt-3">
-                Probabilidade:{" "}
+                Confiança:{" "}
                 <span className="text-cyan-400 font-semibold">
                   {tp3Confidence ?? "--"}%
                 </span>
@@ -4220,7 +4220,6 @@ function TechnicalOverviewPanel({
   analysisData: AnalysisData | null;
 }) {
   const tech = analysisData?.technical;
-  const assetType = analysisData?.asset_type ?? "forex";
 
   if (!analysisData || !tech) {
     return (
@@ -4331,10 +4330,10 @@ function TechnicalOverviewPanel({
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
-            Painel Técnico IA
+            PAINEL TÉCNICO INTELIGENTE IA
           </p>
 
-          <h3 className="mt-1 text-lg font-black text-white">
+          <h3 className="mt-2 text-xl font-black text-white">
             {asset} •{" "}
             {tf === "5m"
               ? "5 Minutos"
@@ -4343,26 +4342,27 @@ function TechnicalOverviewPanel({
               : tf}
           </h3>
 
-          <p className="mt-1 max-w-2xl text-xs leading-4 text-zinc-400">
+          <p className="mt-2 max-w-2xl text-sx leading-6 text-zinc-400">
             Termômetros técnicos consolidados por indicadores,
             médias móveis e média geral da IA.
           </p>
         </div>
       </div>
 
-      <div className="grid gap-2 xl:grid-cols-3">
-        <GaugeMeter
-          title="Indicadores Técnicos"
-          value={indicatorValue}
-          label={getLabel(indicatorValue)}
-          subtitle={`${buySignals} compra • ${neutralSignals} neutro • ${sellSignals} venda`}
-        />
+      <div className="grid gap-2 xl:grid-cols-3 scale-[0.95] origin-top">
 
         <GaugeMeter
           title="Resumo Geral"
           value={generalValue}
           label={getLabel(generalValue)}
           subtitle={`Viés: ${trendBias}`}
+        />
+
+        <GaugeMeter
+          title="Indicadores Técnicos"
+          value={indicatorValue}
+          label={getLabel(indicatorValue)}
+          subtitle={`${buySignals} compra • ${neutralSignals} neutro • ${sellSignals} venda`}
         />
 
         <GaugeMeter
@@ -4373,132 +4373,63 @@ function TechnicalOverviewPanel({
         />
       </div>
 
-      <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-2">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-3">
+  <div className="mb-3 flex items-center justify-between">
+    <h4 className="text-base font-black text-white">
+      Resumo das Médias
+    </h4>
 
-          <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-300">
-            SMA / EMA
-          </div>
-        </div>
+    <span className="text-[10px] font-bold text-cyan-300">
+      SMA / EMA
+    </span>
+  </div>
 
-        <div className="overflow-hidden rounded-2xl border border-white/10">
-          <div className="grid grid-cols-[1fr_1.2fr_1.2fr] bg-white/[0.04] px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
-            <div>Nome</div>
+  <div className="grid grid-cols-3 gap-2">
 
-            <div className="text-center">
-              Simples
-            </div>
-
-            <div className="text-right">
-              Exponencial
-            </div>
-          </div>
-
-          {(movingAverages.length > 0
-            ? movingAverages
-            : [
-                {
-                  name: "MA9",
-                  simple: null,
-                  simple_action: "—",
-                  exponential: ema9,
-                  exponential_action:
-                    ema9 !== null &&
-                    ema21 !== null
-                      ? ema9 > ema21
-                        ? "Compra"
-                        : ema9 < ema21
-                        ? "Venda"
-                        : "Neutro"
-                      : "—",
-                },
-                {
-                  name: "MA21",
-                  simple: null,
-                  simple_action: "—",
-                  exponential: ema21,
-                  exponential_action:
-                    ema9 !== null &&
-                    ema21 !== null
-                      ? ema21 < ema9
-                        ? "Compra"
-                        : ema21 > ema9
-                        ? "Venda"
-                        : "Neutro"
-                      : "—",
-                },
-              ]
-          ).map((ma) => {
-            const simpleAction =
-              ma.simple_action ?? "—";
-
-            const exponentialAction =
-              ma.exponential_action ?? "—";
-
-            const simpleClass =
-              simpleAction === "Compra"
-                ? "text-emerald-300"
-                : simpleAction === "Venda"
-                ? "text-red-300"
-                : "text-zinc-400";
-
-            const exponentialClass =
-              exponentialAction === "Compra"
-                ? "text-emerald-300"
-                : exponentialAction === "Venda"
-                ? "text-red-300"
-                : "text-zinc-400";
-
-            return (
-              <div
-                key={ma.name}
-                className="grid grid-cols-[1fr_1.2fr_1.2fr] items-center border-t border-white/10 px-3 py-2 text-sm"
-              >
-                <div className="font-black text-white">
-                  {ma.name}
-                </div>
-
-                <div className="text-center">
-                  <span className="font-semibold text-zinc-200">
-                    {typeof ma.simple === "number"
-                      ? formatPrice(
-                          ma.simple,
-                          assetType
-                        )
-                      : "—"}
-                  </span>
-
-                  <span
-                    className={`ml-3 font-black ${simpleClass}`}
-                  >
-                    {simpleAction}
-                  </span>
-                </div>
-
-                <div className="text-right">
-                  <span className="font-semibold text-zinc-200">
-                    {typeof ma.exponential ===
-                    "number"
-                      ? formatPrice(
-                          ma.exponential,
-                          assetType
-                        )
-                      : "—"}
-                  </span>
-
-                  <span
-                    className={`ml-3 font-black ${exponentialClass}`}
-                  >
-                    {exponentialAction}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="text-[10px] text-zinc-500">
+        Curto Prazo
       </div>
 
-      <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-5">
+      <div className="mt-1 text-xs font-black text-white">
+        {maBuy > maSell
+          ? "Comprador"
+          : maSell > maBuy
+          ? "Vendedor"
+          : "Neutro"}
+      </div>
+    </div>
+
+
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="text-[10px] text-zinc-500">
+        Médio Prazo
+      </div>
+
+      <div className="mt-1 text-xs font-black text-white">
+        {movingAverageValue >= 60
+          ? "Alta"
+          : movingAverageValue <= 40
+          ? "Baixa"
+          : "Equilibrado"}
+      </div>
+    </div>
+
+
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="text-[10px] text-zinc-500">
+        Tendência EMA
+      </div>
+
+      <div className="mt-1 text-xs font-black text-white">
+        {emaTrend}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+      <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-3">
   <div className="mb-4 flex items-center justify-between">
     <div>
       <h4 className="text-xl font-black text-white">
@@ -4558,13 +4489,13 @@ function TechnicalOverviewPanel({
   </div>
 </div>
 
-      <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-5">
+      <div className="mt-3 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-3">
         <div className="flex items-start gap-3">
           <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-cyan-300" />
 
           <div>
             <h4 className="font-black text-white">
-              Leitura operacional da IA
+              Decisão Estratégica da IA
             </h4>
 
             <p className="mt-2 text-sm leading-6 text-zinc-300">
