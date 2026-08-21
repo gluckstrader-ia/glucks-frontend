@@ -165,7 +165,7 @@ export default function QuantDashboardCard({
     return (
       <section className="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-5 max-h-[740px] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-xl font-bold text-white">Dashboard Quant</h3>
+          <h3 className="text-lg font-bold text-white">Dashboard Quant</h3>
           <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-400">
             {asset} • {timeframe}
           </span>
@@ -181,10 +181,10 @@ export default function QuantDashboardCard({
   const tempPercent = thermometerPercent(data.score);
 
   return (
-    <section className="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-5 max-h-[715px] flex flex-col overflow-hidden">
+    <section className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-3 h-[620px] flex flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-3 shrink-0">
         <div>
-          <h3 className="text-xl font-bold text-white">Dashboard Quant</h3>
+          <h3 className="text-lg font-bold text-white">Dashboard Quant</h3>
           <p className="mt-1 text-xs text-zinc-500">
             Leitura quantitativa em tempo real
           </p>
@@ -195,7 +195,7 @@ export default function QuantDashboardCard({
         </span>
       </div>
 
-      <div className="mt-5 flex-1 overflow-y-auto overflow-x-hidden pr-2 space-y-4">
+      <div className="mt-3 flex-1 overflow-hidden space-y-3">
         <div className="grid grid-cols-[1fr_72px] gap-4">
           <div>
             <div className="text-sm text-zinc-400">Score Quantitativo</div>
@@ -206,7 +206,7 @@ export default function QuantDashboardCard({
               >
                 {Math.round(data.score)}
               </div>
-              <div className="pb-1 text-2xl text-zinc-400">/ 100</div>
+              <div className="pb-1 text-xl text-zinc-400">/ 100</div>
             </div>
 
             <div
@@ -269,7 +269,7 @@ export default function QuantDashboardCard({
           />
         </div>
 
-        <div className="mt-5 rounded-2xl border border-zinc-800 bg-black/30 p-4">
+        <div className="mt-3 rounded-xl border border-zinc-800 bg-black/30 p-3">
           <div className="mb-3 text-sm font-semibold text-white">
             Força da Tendência
           </div>
@@ -288,7 +288,7 @@ export default function QuantDashboardCard({
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-zinc-800 bg-black/30 p-4">
+        <div className="mt-3 rounded-xl border border-zinc-800 bg-black/30 p-3">
           <div className="mb-3 text-sm font-semibold text-white">
             Momento de Mercado
           </div>
@@ -312,7 +312,7 @@ export default function QuantDashboardCard({
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-zinc-800 bg-black/30 p-4">
+        <div className="mt-3 rounded-xl border border-zinc-800 bg-black/30 p-3">
           <div className="mb-3 text-sm font-semibold text-white">
             Volatilidade e Fluxo
           </div>

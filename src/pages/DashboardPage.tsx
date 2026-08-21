@@ -658,7 +658,7 @@ function MarketIntelligenceHub() {
                     </div>
                   </div>
 
-                  <div className="hidden rounded-2xl border border-emerald-300/20 bg-black/30 px-4 py-3 text-right sm:block">
+                  <div className="hidden rounded-2xl border border-emerald-300/20 bg-black/30 px-3 py-2 text-right sm:block">
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">
                       Academy
                     </p>
@@ -782,7 +782,7 @@ function MarketIntelligenceHub() {
                     </div>
                   </div>
 
-                  <div className="hidden rounded-2xl border border-cyan-300/20 bg-black/30 px-4 py-3 text-right sm:block">
+                  <div className="hidden rounded-2xl border border-cyan-300/20 bg-black/30 px-3 py-2 text-right sm:block">
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-300">
                       Radar
                     </p>
@@ -1179,12 +1179,12 @@ function SummaryTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className={`rounded-3xl border p-6 ${directionBg}`}>
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="flex items-start gap-4">
             <div
-              className={`h-16 w-16 rounded-3xl border flex items-center justify-center text-3xl ${
+              className={`h-12 w-12 rounded-3xl border flex items-center justify-center text-3xl ${
                 direction === "COMPRA"
                   ? "bg-green-500/20 border-green-500/30 text-green-400"
                   : direction === "VENDA"
@@ -1206,7 +1206,7 @@ function SummaryTab({
           </div>
 
           <div className="text-right">
-            <div className="text-white text-4xl font-bold uppercase">
+            <div className="text-white text-2xl font-bold uppercase">
               {normalizedAsset}
             </div>
             <div className="text-zinc-400 text-2xl mt-1">
@@ -1249,13 +1249,13 @@ function SummaryTab({
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
           <div className="text-cyan-400 text-sm">Confluência</div>
-          <div className="text-white text-4xl font-bold mt-3">{confluence}</div>
+          <div className="text-white text-2xl font-bold mt-3">{confluence}</div>
         </div>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
           <div className="text-yellow-400 text-sm">Tendência</div>
           <div
-            className={`text-4xl font-bold mt-3 ${
+            className={`text-2xl font-bold mt-3 ${
               trendLabel === "ALTA" || trendLabel === "COMPRA"
                 ? "text-green-400"
                 : trendLabel === "BAIXA" || trendLabel === "VENDA"
@@ -1270,7 +1270,7 @@ function SummaryTab({
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
           <div className="text-green-400 text-sm">Técnico</div>
           <div
-            className={`text-4xl font-bold mt-3 ${
+            className={`text-2xl font-bold mt-3 ${
               technicalLabel === "ALTA" || technicalLabel === "COMPRA"
                 ? "text-green-400"
                 : technicalLabel === "BAIXA" || technicalLabel === "VENDA"
@@ -1285,7 +1285,7 @@ function SummaryTab({
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
           <div className="text-yellow-400 text-sm">Smart Money</div>
           <div
-            className={`text-4xl font-bold mt-3 ${
+            className={`text-2xl font-bold mt-3 ${
               smartMoneyLabel === "ALTA" ||
               smartMoneyLabel === "COMPRA" ||
               smartMoneyLabel === "BULLISH"
@@ -1351,11 +1351,11 @@ function ResumoAvancadoTab({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-5">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-white text-2xl font-bold">
+            <div className="text-white text-lg font-bold">
               Resumo Operacional
             </div>
             <div className="text-zinc-400 text-sm mt-1">
@@ -1617,7 +1617,7 @@ function TechnicalTab({
       : "text-yellow-400";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6 shadow-2xl">
         <div className="text-center mb-6">
           <div className="text-cyan-400 text-lg font-semibold">
@@ -1661,7 +1661,7 @@ function TechnicalTab({
 
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 text-center">
             <div className="text-zinc-400 text-sm">Viés Técnico</div>
-            <div className={`text-4xl font-bold mt-3 ${biasColor}`}>
+            <div className={`text-2xl font-bold mt-3 ${biasColor}`}>
               {biasLabel}
             </div>
             <div className="text-zinc-500 mt-2">
@@ -1682,7 +1682,7 @@ function TechnicalTab({
               : "border-yellow-900/60 bg-gradient-to-r from-yellow-950/40 to-zinc-950"
           }`}
         >
-          <div className={`text-4xl font-bold ${biasColor}`}>
+          <div className={`ttext-2xl font-bold ${biasColor}`}>
             {normalizedBias === "ALTA" || normalizedBias === "COMPRA"
               ? "↗ Viés de Alta ↗"
               : normalizedBias === "BAIXA" || normalizedBias === "VENDA"
@@ -1690,7 +1690,7 @@ function TechnicalTab({
               : "→ Viés Neutro →"}
           </div>
 
-          <div className="text-zinc-400 mt-2">
+          <div className="text-zinc-400 mt-1 text-xs">
             Leitura baseada no retorno real do backend
           </div>
         </div>
@@ -1739,7 +1739,7 @@ function TechnicalTab({
           <div className="text-white text-lg font-semibold">
             Relação entre Médias
           </div>
-          <div className="text-zinc-400 mt-2">
+          <div className="text-zinc-400 mt-1 text-xs">
             {emaRelation}
           </div>
           <div className="text-zinc-500 text-sm mt-2">
@@ -1753,7 +1753,7 @@ function TechnicalTab({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div className="rounded-2xl border border-red-900/70 bg-red-950/20 p-5 text-center">
             <div className="text-red-400 text-2xl">↘</div>
-            <div className="text-zinc-400 mt-2">Sinais de Venda</div>
+            <div className="text-zinc-400 mt-1 text-xs">Sinais de Venda</div>
             <div className="text-red-400 text-5xl font-bold mt-2">
               {sellSignals !== null ? sellSignals : "—"}
             </div>
@@ -1761,7 +1761,7 @@ function TechnicalTab({
 
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5 text-center">
             <div className="text-zinc-500 text-2xl">–</div>
-            <div className="text-zinc-400 mt-2">Sinais Neutros</div>
+            <div className="text-zinc-400 mt-1 text-xs">Sinais Neutros</div>
             <div className="text-white text-5xl font-bold mt-2">
               {neutralSignals !== null ? neutralSignals : "—"}
             </div>
@@ -1769,7 +1769,7 @@ function TechnicalTab({
 
           <div className="rounded-2xl border border-green-900/70 bg-green-950/20 p-5 text-center">
             <div className="text-green-400 text-2xl">↗</div>
-            <div className="text-zinc-400 mt-2">Sinais de Compra</div>
+            <div className="text-zinc-400 mt-1 text-xs">Sinais de Compra</div>
             <div className="text-green-400 text-5xl font-bold mt-2">
               {buySignals !== null ? buySignals : "—"}
             </div>
@@ -1801,7 +1801,7 @@ function TechnicalTab({
         </div>
       </div>
 
-      <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6">
+      <div className="rounded-xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-3">
         <div className="text-white text-3xl font-bold mb-6">
           Padrões & Níveis Técnicos
         </div>
@@ -1817,7 +1817,7 @@ function TechnicalTab({
                 supports.map((s, idx) => (
                   <div
                     key={idx}
-                    className="rounded-xl border border-green-900/30 bg-black/20 px-4 py-3 text-white text-2xl font-semibold"
+                    className="rounded-xl border border-green-900/30 bg-black/20 px-3 py-2 text-white text-2xl font-semibold"
                   >
                     {formatPrice(s, assetType)}
                   </div>
@@ -1838,7 +1838,7 @@ function TechnicalTab({
                 resistances.map((r, idx) => (
                   <div
                     key={idx}
-                    className="rounded-xl border border-red-900/30 bg-black/20 px-4 py-3 text-white text-2xl font-semibold"
+                    className="rounded-xl border border-red-900/30 bg-black/20 px-3 py-2 text-white text-2xl font-semibold"
                   >
                     {formatPrice(r, assetType)}
                   </div>
@@ -1969,7 +1969,7 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
             </div>
 
             <div>
-              <div className="text-white text-2xl font-bold">
+              <div className="text-white text-lg font-bold">
                 Smart Money Concept (SMC)
               </div>
               <div className="text-zinc-400 text-sm md:text-base">
@@ -2002,7 +2002,7 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
       <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5 md:p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="text-white text-2xl font-bold">📊 Análise Multi-Período</div>
+          <div className="text-white text-lg font-bold">📊 Análise Multi-Período</div>
 
           {divergence && (
             <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm text-red-400">
@@ -2031,7 +2031,7 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
                   <div className={`text-lg font-bold ${tone.text}`}>{tone.icon}</div>
                 </div>
 
-                <div className="mt-3 text-4xl font-bold text-white">
+                <div className="mt-3 text-2xl font-bold text-white">
                   {typeof item.data?.candles === "number" ? item.data.candles : "—"}
                 </div>
 
@@ -2046,7 +2046,7 @@ function SmcTab({ analysisData }: { analysisData: AnalysisData | null }) {
         </div>
 
         {divergence && (
-          <div className="mt-4 rounded-2xl border border-red-500/15 bg-[linear-gradient(90deg,rgba(127,29,29,0.45),rgba(69,10,10,0.18))] px-4 py-3 text-sm md:text-base text-red-300">
+          <div className="mt-4 rounded-2xl border border-red-500/15 bg-[linear-gradient(90deg,rgba(127,29,29,0.45),rgba(69,10,10,0.18))] px-3 py-2 text-sm md:text-base text-red-300">
             ⚠ Divergência: {divergence}
           </div>
         )}
@@ -2319,7 +2319,7 @@ function HarmonicsTab({ analysisData }: { analysisData: AnalysisData | null }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="rounded-3xl border border-zinc-800 bg-[linear-gradient(180deg,rgba(10,16,28,0.95),rgba(3,7,13,0.96))] p-5 md:p-6">
         <div className="flex items-center gap-3 text-white text-2xl font-bold">
           <span className="text-pink-400">⬡</span>
@@ -2357,7 +2357,7 @@ function HarmonicsTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
                   <div className="text-right">
                     <div className="text-zinc-400 text-lg">Confiança</div>
-                    <div className="mt-1 text-4xl font-bold text-emerald-400">
+                    <div className="mt-1 text-2xl font-bold text-emerald-400">
                       {typeof pattern.confidence === "number"
                         ? `${pattern.confidence}%`
                         : "—"}
@@ -2396,7 +2396,7 @@ function HarmonicsTab({ analysisData }: { analysisData: AnalysisData | null }) {
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <div className="text-white text-2xl font-bold">
+                            <div className="text-white text-lg font-bold">
                               {ratio.key ?? "—"}
                             </div>
                             <div className="mt-2 text-xs text-zinc-500">
@@ -2405,7 +2405,7 @@ function HarmonicsTab({ analysisData }: { analysisData: AnalysisData | null }) {
                           </div>
 
                           <div className="text-right">
-                            <div className="text-white text-2xl font-bold">
+                            <div className="text-white text-lg font-bold">
                               {ratio.value ?? "—"}
                             </div>
                             <div
@@ -2652,7 +2652,7 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
             key={tab}
             type="button"
             onClick={() => setSubTab(tab)}
-            className={`flex-1 min-w-[140px] px-4 py-3 rounded-xl text-sm border transition ${
+            className={`flex-1 min-w-[140px] px-3 py-2 rounded-xl text-sm border transition ${
               subTab === tab
                 ? "bg-black text-white border-zinc-800 font-semibold"
                 : "bg-transparent text-zinc-400 border-transparent hover:text-white hover:bg-zinc-900"
@@ -2671,7 +2671,7 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
               <div className="rounded-3xl border border-zinc-800 bg-slate-500/20 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <div className="text-white text-4xl font-bold">
+                    <div className="text-white text-2xl font-bold">
                       {wyckoff.phase ?? "—"}
                     </div>
                     <div className="text-zinc-300 mt-1">
@@ -2803,10 +2803,10 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
                 <div className="rounded-2xl bg-yellow-950/20 border border-yellow-900/30 p-5 flex items-start justify-between gap-4">
                   <div>
-                    <div className="text-white text-2xl font-bold">
+                    <div className="text-white text-lg font-bold">
                       {wyckoff.volume_state ?? "—"}
                     </div>
-                    <div className="text-zinc-400 mt-2">
+                    <div className="text-zinc-400 mt-1 text-xs">
                       Volume e esforço no contexto atual
                     </div>
                   </div>
@@ -2841,7 +2841,7 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
                     <div className="text-yellow-400 text-4xl">≋</div>
                     <div>
                       <div className="text-zinc-400">Onda Atual</div>
-                      <div className="text-white text-4xl font-bold mt-1">
+                      <div className="text-white text-2xl font-bold mt-1">
                         {elliott.current_wave ?? "—"}
                       </div>
                     </div>
@@ -2851,7 +2851,7 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
                     <div className="px-4 py-2 rounded-xl bg-yellow-500/20 text-yellow-400 font-bold inline-flex">
                       {elliott.mode ?? "—"}
                     </div>
-                    <div className="text-zinc-400 mt-2">
+                    <div className="text-zinc-400 mt-1 text-xs">
                       Confiança:{" "}
                       {typeof elliott.confidence === "number"
                         ? `${elliott.confidence}%`
@@ -2884,7 +2884,7 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
                       return (
                         <div
                           key={i}
-                          className={`px-4 py-3 rounded-2xl border min-w-[90px] text-center ${
+                          className={`px-3 py-2 rounded-2xl border min-w-[90px] text-center ${
                             green
                               ? "border-green-900/40 bg-green-950/25"
                               : "border-yellow-900/40 bg-yellow-950/25"
@@ -2912,7 +2912,7 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 <div className="rounded-3xl border border-cyan-900/40 bg-cyan-950/20 p-6 text-center">
                   <div className="text-zinc-400">Próxima Onda</div>
-                  <div className="text-cyan-400 text-4xl font-bold mt-2">
+                  <div className="text-cyan-400 text-2xl font-bold mt-2">
                     {elliott.next_wave ?? "—"}
                   </div>
                   <div className="text-zinc-500 mt-1">Esperada</div>
@@ -2961,7 +2961,7 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
             <>
               <div className="rounded-3xl border border-yellow-900/40 bg-[linear-gradient(135deg,rgba(120,53,15,0.26),rgba(6,78,115,0.22),rgba(3,7,13,0.96))] p-6">
                 <div className="text-zinc-400">Ângulo Dominante</div>
-                <div className="text-white text-4xl font-bold mt-1">
+                <div className="text-white text-2xl font-bold mt-1">
                   {gann.dominant_angle ?? "—"}
                 </div>
               </div>
@@ -3124,11 +3124,11 @@ function WegdTab({ analysisData }: { analysisData: AnalysisData | null }) {
 
                 <div className="rounded-2xl bg-orange-950/20 border border-orange-900/30 p-5">
                   <div className="flex items-center justify-between gap-4">
-                    <div className="text-white text-4xl font-bold">
+                    <div className="text-white text-2xl font-bold">
                       {dow.market_phase ?? "—"}
                     </div>
 
-                    <div className="text-white text-4xl font-bold">
+                    <div className="text-white text-2xl font-bold">
                       {typeof dow.market_phase_score === "number"
                         ? `${dow.market_phase_score}%`
                         : "—"}
@@ -3299,31 +3299,31 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
-            <div className="text-white text-4xl font-bold">
+            <div className="text-white text-2xl font-bold">
               {safePct(historical?.return_pct)}
             </div>
-            <div className="text-zinc-400 mt-2">Retorno</div>
+            <div className="text-zinc-400 mt-1 text-xs">Retorno</div>
           </div>
 
           <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
-            <div className="text-white text-4xl font-bold">
+            <div className="text-white text-2xl font-bold">
               {safePct(historical?.volatility_pct)}
             </div>
-            <div className="text-zinc-400 mt-2">Volatilidade</div>
+            <div className="text-zinc-400 mt-1 text-xs">Volatilidade</div>
           </div>
 
           <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
-            <div className="text-white text-4xl font-bold">
+            <div className="text-white text-2xl font-bold">
               {safeNum(historical?.sharpe)}
             </div>
-            <div className="text-zinc-400 mt-2">Sharpe Ratio</div>
+            <div className="text-zinc-400 mt-1 text-xs">Sharpe Ratio</div>
           </div>
 
           <div className="rounded-2xl border border-red-500/20 bg-red-950/20 p-5 text-center">
-            <div className="text-red-400 text-4xl font-bold">
+            <div className="text-red-400 text-2xl font-bold">
               {safePct(historical?.max_drawdown_pct, 0)}
             </div>
-            <div className="text-zinc-400 mt-2">Max Drawdown</div>
+            <div className="text-zinc-400 mt-1 text-xs">Max Drawdown</div>
           </div>
         </div>
       </div>
@@ -3376,7 +3376,7 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
           Cenários Probabilísticos
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-3">
           <div>
             <div className="flex items-center justify-between text-xl mb-2">
               <span className="text-white font-semibold">Alta (Bullish)</span>
@@ -3397,7 +3397,7 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
               </div>
             </div>
 
-            <div className="text-zinc-400 mt-2">
+            <div className="text-zinc-400 mt-1 text-xs">
               Cenário otimista baseado em volatilidade e tendência recente.
             </div>
           </div>
@@ -3422,7 +3422,7 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
               </div>
             </div>
 
-            <div className="text-zinc-400 mt-2">
+            <div className="text-zinc-400 mt-1 text-xs">
               Cenário base/mediano da distribuição.
             </div>
           </div>
@@ -3447,7 +3447,7 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
               </div>
             </div>
 
-            <div className="text-zinc-400 mt-2">
+            <div className="text-zinc-400 mt-1 text-xs">
               Cenário pessimista baseado em drawdown e pressão vendedora.
             </div>
           </div>
@@ -3491,7 +3491,7 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
                       : "—"}
                   </div>
 
-                  <div className="text-zinc-400 mt-2">
+                  <div className="text-zinc-400 mt-1 text-xs">
                     {seasonalityWinText(item.value)}
                   </div>
                 </div>
@@ -3510,31 +3510,31 @@ function ProbabilisticaTab({ analysisData }: { analysisData: AnalysisData | null
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-red-500/20 bg-red-950/20 p-5 text-center">
-            <div className="text-red-400 text-4xl font-bold">
+            <div className="text-red-400 text-2xl font-bold">
               {safePct(riskMetrics?.var_95)}
             </div>
-            <div className="text-zinc-400 mt-2">VaR 95%</div>
+            <div className="text-zinc-400 mt-1 text-xs">VaR 95%</div>
           </div>
 
           <div className="rounded-2xl border border-red-500/20 bg-red-950/20 p-5 text-center">
-            <div className="text-red-400 text-4xl font-bold">
+            <div className="text-red-400 text-2xl font-bold">
               {safePct(riskMetrics?.expected_shortfall)}
             </div>
-            <div className="text-zinc-400 mt-2">Expected Shortfall</div>
+            <div className="text-zinc-400 mt-1 text-xs">Expected Shortfall</div>
           </div>
 
           <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
-            <div className="text-white text-4xl font-bold">
+            <div className="text-white text-2xl font-bold">
               {safeNum(riskMetrics?.beta, 0)}
             </div>
-            <div className="text-zinc-400 mt-2">Beta</div>
+            <div className="text-zinc-400 mt-1 text-xs">Beta</div>
           </div>
 
           <div className="rounded-2xl bg-zinc-900/70 p-5 text-center">
-            <div className="text-white text-4xl font-bold">
+            <div className="text-white text-2xl font-bold">
               {safeNum(riskMetrics?.correlation, 0)}
             </div>
-            <div className="text-zinc-400 mt-2">Correlação</div>
+            <div className="text-zinc-400 mt-1 text-xs">Correlação</div>
           </div>
         </div>
       </div>
@@ -3565,8 +3565,8 @@ function CalculadoraTab({
   const positionSize = riskPerUnit > 0 ? riskValue / riskPerUnit : 0;
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6">
+    <div className="space-y-3">
+      <div className="rounded-xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-3">
         <div className="text-white text-2xl font-bold mb-2">
           Calculadora de Gestão de Risco
         </div>
@@ -3617,7 +3617,7 @@ function CalculadoraTab({
           </div>
           <div>
             <div className="text-zinc-400">Distância do Stop</div>
-            <div className="text-white text-2xl font-bold">
+            <div className="text-white text-lg font-bold">
               {riskPerUnit.toFixed(2)}
             </div>
           </div>
@@ -3690,7 +3690,7 @@ function TimingTab({ analysisData }: { analysisData: AnalysisData | null }) {
   const timingScore = Number(analysisData?.modules?.timing ?? confidence ?? 50);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="relative overflow-hidden rounded-[2rem] border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-6 shadow-2xl shadow-cyan-500/10">
         <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-cyan-400/20 blur-3xl" />
 
@@ -3885,19 +3885,19 @@ function SinalFinalTab({ analysisData }: { analysisData: AnalysisData | null }) 
   };
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6">
-        <div className="text-white text-2xl font-bold">🎯 Sinal Final</div>
-        <div className="text-zinc-400 mt-2">
+    <div className="space-y-3">
+      <div className="rounded-xl border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-3">
+        <div className="text-white text-lg font-bold">🎯 Sinal Final</div>
+        <div className="text-zinc-400 mt-1 text-xs">
           Consolidação final da leitura da IA com base nos módulos retornados.
         </div>
       </div>
 
-      <div className={`rounded-3xl border p-6 ${bgCard}`}>
+      <div className={`rounded-xl border p-3 ${bgCard}`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4">
             <div
-              className={`h-16 w-16 rounded-3xl border flex items-center justify-center text-3xl ${
+              className={`h-12 w-12 rounded-3xl border flex items-center justify-center text-3xl ${
                 normalizedDirection === "COMPRA"
                   ? "bg-green-500/15 border-green-500/30 text-green-400"
                   : normalizedDirection === "VENDA"
@@ -3912,7 +3912,7 @@ function SinalFinalTab({ analysisData }: { analysisData: AnalysisData | null }) 
               <div className="text-zinc-500 uppercase tracking-wide text-sm">
                 Direção final
               </div>
-              <div className={`text-4xl font-bold mt-1 ${color}`}>
+              <div className={`text-2xl font-bold mt-1 ${color}`}>
                 {direction ?? "—"}
               </div>
               <div className="text-zinc-400 mt-2 text-lg">
@@ -3928,7 +3928,7 @@ function SinalFinalTab({ analysisData }: { analysisData: AnalysisData | null }) 
             <div className="text-zinc-500 text-sm uppercase tracking-wide">
               Confiança
             </div>
-            <div className={`text-4xl font-bold mt-1 ${confidenceColor}`}>
+            <div className={`text-2xl font-bold mt-1 ${confidenceColor}`}>
               {confidence !== null ? `${confidence}%` : "—"}
             </div>
           </div>
@@ -3936,51 +3936,51 @@ function SinalFinalTab({ analysisData }: { analysisData: AnalysisData | null }) 
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-3">
           <div className="text-zinc-400 text-sm">Entrada</div>
-          <div className="text-white text-2xl font-bold mt-2">
+          <div className="text-white text-lg font-bold mt-1">
             {safeFormatPrice(entry)}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-red-900/50 bg-red-950/20 p-4">
+        <div className="rounded-xl border border-red-900/50 bg-red-950/20 p-3">
           <div className="text-red-400 text-sm">Stop</div>
-          <div className="text-red-400 text-2xl font-bold mt-2">
+          <div className="text-red-400 text-lg font-bold mt-1">
             {safeFormatPrice(stop)}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-green-900/50 bg-green-950/20 p-4">
+        <div className="rounded-xl border border-green-900/50 bg-green-950/20 p-3">
           <div className="text-green-400 text-sm">Alvo</div>
-          <div className="text-green-400 text-2xl font-bold mt-2">
+          <div className="text-green-400 text-lg font-bold mt-1">
             {safeFormatPrice(target)}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-3">
           <div className="text-zinc-400 text-sm">Risco/Retorno</div>
-          <div className="text-cyan-400 text-2xl font-bold mt-2">
+          <div className="text-cyan-400 text-lg font-bold mt-1">
             {riskReward !== null ? `1:${riskReward.toFixed(2)}` : "—"}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-3">
           <div className="text-zinc-400 text-sm">Score de Confluência</div>
-          <div className="text-white text-2xl font-bold mt-2">
+          <div className="text-white text-lg font-bold mt-1">
             {confluenceScore !== null ? confluenceScore : "—"}
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-5">
-        <div className="text-white font-semibold mb-3">📊 Justificativa</div>
+      <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-3">
+        <div className="text-white font-semibold mb-2">📊 Justificativa</div>
 
         {justification.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-1">
             {justification.map((item, i) => (
               <div
                 key={i}
-                className="rounded-xl border border-zinc-800 bg-black/20 px-4 py-3 text-zinc-300"
+                className="rounded-xl border border-zinc-800 bg-black/20 px-3 py-2 text-zinc-300"
               >
                 • {item}
               </div>
@@ -4028,7 +4028,7 @@ function AiThinkingOverlay({
     <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center px-4">
       <div className="w-full max-w-2xl rounded-[28px] border border-emerald-500/20 bg-[linear-gradient(180deg,rgba(3,7,13,0.98),rgba(6,16,12,0.98))] p-6 md:p-8 shadow-[0_0_60px_rgba(16,185,129,0.12)]">
         <div className="flex items-start gap-4">
-          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10">
+          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10">
             <div className="h-7 w-7 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
             <div className="absolute inset-0 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.18)]" />
           </div>
@@ -4122,7 +4122,7 @@ function GaugeMeter({
         </span>
       </div>
 
-      <div className="relative z-10 mx-auto mt-5 h-[155px] w-[260px] max-w-full">
+      <div className="relative z-10 mx-auto mt-2 h-[110px] w-[190px] max-w-full">
         <svg
           viewBox="0 0 260 160"
           className="h-full w-full drop-shadow-[0_0_18px_rgba(0,255,170,0.12)]"
@@ -4316,14 +4316,14 @@ function TechnicalOverviewPanel({
     tech.ema_trend ?? "Indefinido";
 
   return (
-    <div className="h-[620px] overflow-y-auto rounded-2xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-5 shadow-2xl shadow-cyan-500/10">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div className="h-[620px] overflow-hidden rounded-xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-3 shadow-2xl shadow-cyan-500/10">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
             Painel Técnico IA
           </p>
 
-          <h3 className="mt-2 text-3xl font-black text-white">
+          <h3 className="mt-2 text-xl font-black text-white">
             {asset} •{" "}
             {tf === "5m"
               ? "5 Minutos"
@@ -4332,7 +4332,7 @@ function TechnicalOverviewPanel({
               : tf}
           </h3>
 
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
+          <p className="mt-2 max-w-2xl text-sx leading-6 text-zinc-400">
             Termômetros técnicos consolidados por indicadores,
             médias móveis e média geral da IA.
           </p>
@@ -4362,7 +4362,7 @@ function TechnicalOverviewPanel({
         />
       </div>
 
-      <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-5">
+      <div className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-3">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h4 className="text-xl font-black text-white">
@@ -4380,7 +4380,7 @@ function TechnicalOverviewPanel({
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-white/10">
-          <div className="grid grid-cols-[1fr_1.2fr_1.2fr] bg-white/[0.04] px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
+          <div className="grid grid-cols-[1fr_1.2fr_1.2fr] bg-white/[0.04] px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
             <div>Nome</div>
 
             <div className="text-center">
@@ -4450,7 +4450,7 @@ function TechnicalOverviewPanel({
             return (
               <div
                 key={ma.name}
-                className="grid grid-cols-[1fr_1.2fr_1.2fr] items-center border-t border-white/10 px-4 py-3 text-sm"
+                className="grid grid-cols-[1fr_1.2fr_1.2fr] items-center border-t border-white/10 px-3 py-2 text-sm"
               >
                 <div className="font-black text-white">
                   {ma.name}
@@ -4514,7 +4514,7 @@ function TechnicalOverviewPanel({
   </div>
 
   <div className="overflow-hidden rounded-2xl border border-white/10">
-    <div className="grid grid-cols-[1.4fr_1fr_1fr] bg-white/[0.04] px-4 py-3 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
+    <div className="grid grid-cols-[1.4fr_1fr_1fr] bg-white/[0.04] px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
       <div>Nome</div>
       <div className="text-center">Valor</div>
       <div className="text-right">Ação</div>
@@ -4535,7 +4535,7 @@ function TechnicalOverviewPanel({
       return (
         <div
           key={indicator.name}
-          className="grid grid-cols-[1.4fr_1fr_1fr] items-center border-t border-white/10 px-4 py-3 text-sm"
+          className="grid grid-cols-[1.4fr_1fr_1fr] items-center border-t border-white/10 px-3 py-2 text-sm"
         >
           <div className="font-black text-white">
             {indicator.name}
@@ -4609,14 +4609,14 @@ export default function DashboardPage() {
   const [assetCategory, setAssetCategory] =
     useState<AssetCategoryLabel>("Forex");
   const [asset, setAsset] = useState("EURUSD");
-  const [customAsset, setCustomAsset] = useState("");
+  //const [customAsset, setCustomAsset] = useState("");
   const [tf, setTf] = useState("5m");
   const [mainTab, setMainTab] = useState("Resumo");
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [apiError, setApiError] = useState("");
   const analysisInFlightRef = useRef(false);
 
-  const selectedAsset = (customAsset.trim() || asset).toUpperCase();
+  const selectedAsset = asset.toUpperCase();
   const shouldUseB3Feed =
     assetCategory === "Futuros BR" && ["WIN", "WDO"].includes(selectedAsset);
 
@@ -4776,7 +4776,7 @@ const resolvedAssetType =
   useEffect(() => {
     const nextDefault = getDefaultAssetByCategory(assetCategory);
     setAsset(nextDefault);
-    setCustomAsset("");
+    //setCustomAsset("");
   }, [assetCategory]);
 
   useEffect(() => {
@@ -4874,7 +4874,7 @@ const resolvedAssetType =
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-3">
           <div className="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-5">
             <div className="flex flex-wrap items-end gap-3">
               <div className="min-w-[180px]">
@@ -4918,20 +4918,6 @@ const resolvedAssetType =
                 </select>
               </div>
 
-              <div className="min-w-[180px]">
-                <label className="block text-sm text-zinc-400 mb-2">
-                  Ativo manual
-                </label>
-                <input
-                  value={customAsset}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setCustomAsset(e.target.value.toUpperCase())
-                  }
-                  className="h-10 w-full rounded-xl bg-zinc-900 border border-zinc-700 px-3 text-white"
-                  placeholder="Ex: PETR4, AAPL, BTCUSDT"
-                />
-              </div>
-
               <div className="min-w-[140px]">
                 <label className="block text-sm text-zinc-400 mb-2">
                   Timeframe
@@ -4973,7 +4959,7 @@ const resolvedAssetType =
               </span>
             </div>
 
-            <div className="mt-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            <div className="mt-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
               Análise manual: clique em <span className="font-semibold">Gerar Análise</span> para atualizar os dados.
               {assetCategory === "Futuros BR" && shouldUseB3Feed ? " Feed B3/Nelogica conectado para WIN/WDO." : ""}
             </div>
@@ -4991,8 +4977,8 @@ const resolvedAssetType =
             </div>
           )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_0px] gap-4 items-start">
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.9fr)_420px_340px] gap-4 items-start">
+          <div className="grid grid-cols-1 gap-3 items-start">
+            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.9fr)_360px_300px] gap-3 items-start">
               {/* PAINEL TÉCNICO PREMIUM */}
               <div className="rounded-3xl border border-zinc-900 bg-zinc-950/80 p-4">
                 <div className="mb-3 flex items-center justify-between">
@@ -5081,7 +5067,7 @@ const resolvedAssetType =
           </div>
 
           {mainTab === "Resumo" && (
-            <div className="space-y-6">
+            <div className="space-y-3">
               <ResumoAvancadoTab
                 asset={resolvedAsset}
                 tf={tf}

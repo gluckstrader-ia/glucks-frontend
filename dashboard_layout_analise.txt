@@ -1,0 +1,30 @@
+src\pages\DashboardPage.tsx:574:      <Card className="overflow-hidden border-zinc-800 bg-zinc-950/80 shadow-2xl shadow-cyan-500/5 xl:col-span-5">
+src\pages\DashboardPage.tsx:602:            <section className="overflow-hidden rounded-[1.75rem] border border-cyan-400/20 bg-[#080b12]/90 shadow-2xl shadow-cyan-500/10">
+src\pages\DashboardPage.tsx:635:              <section className="relative overflow-hidden rounded-[1.75rem] border border-emerald-300/30 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.22),transparent_34%),linear-gradient(180deg,rgba(6,32,25,0.85),rgba(3,7,13,0.98))] p-5 shadow-[0_0_60px_rgba(16,185,129,0.12)]">
+src\pages\DashboardPage.tsx:683:                      className={`group relative grid w-full grid-cols-[104px_1fr_auto] items-center gap-4 overflow-hidden rounded-2xl border p-3 text-left transition duration-300 hover:-translate-y-0.5 ${
+src\pages\DashboardPage.tsx:697:                      <div className="relative overflow-hidden rounded-xl border border-emerald-300/20 bg-black">
+src\pages\DashboardPage.tsx:760:              <section className="relative overflow-hidden rounded-[1.75rem] border border-cyan-300/30 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.20),transparent_34%),linear-gradient(180deg,rgba(8,47,73,0.50),rgba(3,7,13,0.96))] p-5 shadow-2xl shadow-cyan-500/20">
+src\pages\DashboardPage.tsx:807:                      className={`group relative grid w-full grid-cols-[104px_1fr_auto] items-center gap-4 overflow-hidden rounded-2xl border p-3 text-left transition duration-300 hover:-translate-y-0.5 ${
+src\pages\DashboardPage.tsx:821:                      <div className="relative overflow-hidden rounded-xl border border-cyan-300/20 bg-black">
+src\pages\DashboardPage.tsx:870:          <div className="relative w-full max-w-4xl overflow-hidden rounded-[2rem] border border-emerald-400/20 bg-zinc-950 shadow-2xl shadow-emerald-500/20">
+src\pages\DashboardPage.tsx:1787:          <div className="h-4 rounded-full overflow-hidden bg-zinc-800 flex">
+src\pages\DashboardPage.tsx:2378:                  <div className="mt-2 h-3 rounded-full overflow-hidden bg-zinc-800">
+src\pages\DashboardPage.tsx:2606:      <div className="mt-3 h-3 rounded-full overflow-hidden bg-zinc-800">
+src\pages\DashboardPage.tsx:3390:            <div className="h-8 rounded-full overflow-hidden bg-zinc-800 relative">
+src\pages\DashboardPage.tsx:3415:            <div className="h-8 rounded-full overflow-hidden bg-zinc-800 relative">
+src\pages\DashboardPage.tsx:3440:            <div className="h-8 rounded-full overflow-hidden bg-zinc-800 relative">
+src\pages\DashboardPage.tsx:3645:  const asset = analysisData?.asset ?? "Ativo";
+src\pages\DashboardPage.tsx:3694:      <div className="relative overflow-hidden rounded-[2rem] border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-6 shadow-2xl shadow-cyan-500/10">
+src\pages\DashboardPage.tsx:4070:          <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-zinc-800">
+src\pages\DashboardPage.tsx:4111:    <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(180deg,rgba(9,13,24,0.98),rgba(0,0,0,0.96))] p-5 shadow-2xl">
+src\pages\DashboardPage.tsx:4216:      <div className="flex h-[620px] items-center justify-center rounded-2xl border border-zinc-800 bg-black p-8 text-center">
+src\pages\DashboardPage.tsx:4221:            Painel Técnico IA
+src\pages\DashboardPage.tsx:4319:    <div className="h-[620px] overflow-visible rounded-2xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-5 shadow-2xl shadow-cyan-500/10">
+src\pages\DashboardPage.tsx:4323:            Painel Técnico IA
+src\pages\DashboardPage.tsx:4382:        <div className="overflow-hidden rounded-2xl border border-white/10">
+src\pages\DashboardPage.tsx:4516:  <div className="overflow-hidden rounded-2xl border border-white/10">
+src\pages\DashboardPage.tsx:4829:            className="group relative inline-flex items-center gap-3 overflow-hidden rounded-xl border border-amber-500/40 bg-[#0a0a0a] px-5 py-2.5 text-sm font-semibold text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.12)] transition-all duration-300 hover:scale-[1.03] hover:border-amber-400 hover:text-white"
+src\pages\DashboardPage.tsx:4904:                  Ativo da lista
+src\pages\DashboardPage.tsx:4963:              Análise manual: clique em <span className="font-semibold">Gerar Análise</span> para atualizar os dados.
+src\pages\DashboardPage.tsx:4986:                    Painel Técnico do Ativo
+src\pages\DashboardPage.tsx:5064:              Ativo: <b className="text-white"> {resolvedAsset}</b> •
