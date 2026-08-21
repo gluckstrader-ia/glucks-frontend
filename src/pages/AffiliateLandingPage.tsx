@@ -56,7 +56,7 @@ export default function AffiliateLandingPage() {
               <li>✓ Estrutura para crescer</li>
             </ul>
 
-            <Link to="/partner-register" className="mt-8 inline-block rounded-xl bg-emerald-400 px-6 py-3 font-black text-black">
+            <Link to="/cadastro-parceiro" className="mt-8 inline-block rounded-xl bg-emerald-400 px-6 py-3 font-black text-black">
               Quero ser parceiro
             </Link>
           </div>
@@ -77,7 +77,7 @@ export default function AffiliateLandingPage() {
             </form>
 
             <p className="mt-5 text-sm text-zinc-400">
-              Ainda não é parceiro? <Link className="text-emerald-300" to="/partner-register">Criar conta</Link>
+              Ainda não é parceiro? <Link className="text-emerald-300" to="/cadastro-parceiro">Criar conta</Link>
             </p>
           </div>
         </section>
