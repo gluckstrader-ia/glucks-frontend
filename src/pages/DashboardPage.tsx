@@ -4373,161 +4373,92 @@ function TechnicalOverviewPanel({
         />
       </div>
 
-      <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-3">
-  <div className="mb-3 flex items-center justify-between">
-    <h4 className="text-base font-black text-white">
-      Resumo das Médias
-    </h4>
+      <div className="mt-3 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/[0.08] to-black p-4">
+  <div className="flex items-start gap-3">
 
-    <span className="text-[10px] font-bold text-cyan-300">
-      SMA / EMA
-    </span>
-  </div>
-
-  <div className="grid grid-cols-3 gap-2">
-
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-      <div className="text-[10px] text-zinc-500">
-        Curto Prazo
-      </div>
-
-      <div className="mt-1 text-xs font-black text-white">
-        {maBuy > maSell
-          ? "Comprador"
-          : maSell > maBuy
-          ? "Vendedor"
-          : "Neutro"}
-      </div>
+    <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-2">
+      <Brain className="h-5 w-5 text-cyan-300" />
     </div>
 
+    <div className="flex-1">
 
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-      <div className="text-[10px] text-zinc-500">
-        Médio Prazo
-      </div>
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="font-black text-white">
+          Decisão Estratégica da IA
+        </h4>
 
-      <div className="mt-1 text-xs font-black text-white">
-        {movingAverageValue >= 60
-          ? "Alta"
-          : movingAverageValue <= 40
-          ? "Baixa"
-          : "Equilibrado"}
-      </div>
-    </div>
-
-
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-      <div className="text-[10px] text-zinc-500">
-        Tendência EMA
-      </div>
-
-      <div className="mt-1 text-xs font-black text-white">
-        {emaTrend}
-      </div>
-    </div>
-
-  </div>
-</div>
-
-      <div className="mt-3 rounded-2xl border border-white/10 bg-black/30 p-3">
-  <div className="mb-4 flex items-center justify-between">
-    <div>
-      <h4 className="text-xl font-black text-white">
-        Indicadores Técnicos
-      </h4>
-
-      <p className="mt-1 text-sm text-zinc-400">
-        Leitura dos principais indicadores retornados pela IA.
-      </p>
-    </div>
-
-    <div className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-300">
-      Osciladores
-    </div>
-  </div>
-
-  <div className="overflow-hidden rounded-2xl border border-white/10">
-    <div className="grid grid-cols-[1.4fr_1fr_1fr] bg-white/[0.04] px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
-      <div>Nome</div>
-      <div className="text-center">Valor</div>
-      <div className="text-right">Ação</div>
-    </div>
-
-    {(tech.technical_indicators ?? []).map((indicator) => {
-      const action = indicator.action ?? "—";
-
-      const actionClass =
-        action === "Compra"
-          ? "text-emerald-300"
-          : action === "Venda"
-          ? "text-red-300"
-          : action === "Sobrecompra" || action === "Mais Volatilidade"
-          ? "text-amber-300"
-          : "text-zinc-400";
-
-      return (
-        <div
-          key={indicator.name}
-          className="grid grid-cols-[1.4fr_1fr_1fr] items-center border-t border-white/10 px-3 py-2 text-sm"
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-black ${
+            generalValue >= 60
+              ? "bg-emerald-400/10 text-emerald-300 border border-emerald-400/20"
+              : generalValue <= 40
+              ? "bg-red-400/10 text-red-300 border border-red-400/20"
+              : "bg-yellow-400/10 text-yellow-300 border border-yellow-400/20"
+          }`}
         >
-          <div className="font-black text-white">
-            {indicator.name}
+          {getLabel(generalValue)}
+        </span>
+      </div>
+
+
+      <p className="mt-3 text-sm leading-6 text-zinc-300">
+
+        {generalValue >= 75
+          ? `A IA identificou forte alinhamento comprador em ${asset}. O conjunto técnico apresenta predominância positiva, com tendência e indicadores favorecendo continuidade do movimento enquanto os principais níveis forem respeitados.`
+
+          : generalValue >= 60
+          ? `A IA identificou um cenário comprador em ${asset}, porém com necessidade de confirmação. O contexto favorece operações seletivas, observando rompimentos e regiões importantes de suporte.`
+
+          : generalValue <= 25
+          ? `A IA identificou forte pressão vendedora em ${asset}. O cenário demonstra domínio dos vendedores e exige cautela enquanto não houver recuperação dos principais níveis técnicos.`
+
+          : generalValue <= 40
+          ? `A IA identificou um cenário vendedor em ${asset}. Existe pressão negativa no mercado, mas ainda é necessário aguardar confirmação antes de aumentar exposição.`
+
+          : `A IA identificou equilíbrio entre compradores e vendedores em ${asset}. O cenário atual exige confirmação antes de uma tomada de decisão.`}
+
+      </p>
+
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
+          <div className="text-[10px] text-zinc-500">
+            Indicadores
           </div>
 
-          <div className="text-center font-semibold text-zinc-200">
-            {typeof indicator.value === "number"
-              ? indicator.value.toFixed(4)
-              : "—"}
-          </div>
-
-          <div className={`text-right font-black ${actionClass}`}>
-            {action}
+          <div className="mt-1 text-xs font-black text-white">
+            {getLabel(indicatorValue)}
           </div>
         </div>
-      );
-    })}
+
+
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
+          <div className="text-[10px] text-zinc-500">
+            Médias
+          </div>
+
+          <div className="mt-1 text-xs font-black text-white">
+            {getLabel(movingAverageValue)}
+          </div>
+        </div>
+
+
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
+          <div className="text-[10px] text-zinc-500">
+            Viés IA
+          </div>
+
+          <div className="mt-1 text-xs font-black text-cyan-300">
+            {trendBias}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
   </div>
 </div>
-
-      <div className="mt-3 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.05] p-3">
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-cyan-300" />
-
-          <div>
-            <h4 className="font-black text-white">
-              Decisão Estratégica da IA
-            </h4>
-
-            <p className="mt-2 text-sm leading-6 text-zinc-300">
-              {generalValue >= 75
-                ? `A leitura técnica de ${asset} mostra forte predominância compradora. Os indicadores e médias móveis estão alinhados para compra, sugerindo continuidade de força compradora enquanto o preço respeitar os principais níveis técnicos.`
-                : generalValue >= 60
-                ? `A leitura técnica de ${asset} apresenta viés comprador, mas ainda exige confirmação. O cenário favorece compras seletivas, principalmente se houver rompimento ou defesa de região importante.`
-                : generalValue <= 25
-                ? `A leitura técnica de ${asset} mostra forte predominância vendedora. O conjunto de indicadores aponta pressão de baixa relevante, favorecendo operações vendidas enquanto não houver recuperação consistente.`
-                : generalValue <= 40
-                ? `A leitura técnica de ${asset} apresenta viés vendedor. O mercado demonstra pressão de baixa, mas ainda é importante aguardar confirmação antes de aumentar exposição.`
-                : `A leitura técnica de ${asset} está neutra. O mercado ainda não apresenta dominância clara entre compradores e vendedores, então o ideal é aguardar confirmação antes de operar.`}
-            </p>
-
-            <p className="mt-3 text-sm leading-6 text-zinc-400">
-              Indicadores técnicos:{" "}
-              <span className="font-bold text-white">
-                {getLabel(indicatorValue)}
-              </span>
-              . Médias móveis:{" "}
-              <span className="font-bold text-white">
-                {getLabel(movingAverageValue)}
-              </span>
-              . Viés informado pelo backend:{" "}
-              <span className="font-bold text-cyan-300">
-                {trendBias}
-              </span>
-              .
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
