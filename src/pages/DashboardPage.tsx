@@ -4978,7 +4978,30 @@ const resolvedAssetType =
           )}
 
           <div className="grid grid-cols-1 gap-3 items-start">
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.9fr)_360px_300px] gap-3 items-start">
+            <div className="grid grid-cols-1 xl:grid-cols-[300px_360px_minmax(0,1.9fr)] gap-3 items-start">
+              {/* LATERAL DIREITA */}
+              <div className="hidden xl:block xl:sticky xl:top-4">
+                <SummaryTab
+                  asset={resolvedAsset}
+                  tf={tf}
+                  analysisData={analysisData}
+                  compact
+                  b3Data={b3Data}
+                  isB3Future={isB3Future}
+                />
+              </div>
+
+              
+              {/* DASHBOARD QUANT */}
+              <div className="hidden xl:block">
+                <QuantDashboardCard
+                  asset={resolvedAsset}
+                  timeframe={tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
+                  data={quantData}
+                  loading={quantLoading}
+                />
+              </div>
+
               {/* PAINEL TÉCNICO PREMIUM */}
               <div className="rounded-3xl border border-zinc-900 bg-zinc-950/80 p-4">
                 <div className="mb-3 flex items-center justify-between">
@@ -4996,27 +5019,6 @@ const resolvedAssetType =
                   asset={resolvedAsset}
                   tf={tf}
                   analysisData={analysisData}
-                />
-              </div>
-              {/* DASHBOARD QUANT */}
-              <div className="hidden xl:block">
-                <QuantDashboardCard
-                  asset={resolvedAsset}
-                  timeframe={tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
-                  data={quantData}
-                  loading={quantLoading}
-                />
-              </div>
-
-              {/* LATERAL DIREITA */}
-              <div className="hidden xl:block xl:sticky xl:top-4">
-                <SummaryTab
-                  asset={resolvedAsset}
-                  tf={tf}
-                  analysisData={analysisData}
-                  compact
-                  b3Data={b3Data}
-                  isB3Future={isB3Future}
                 />
               </div>
             </div>
