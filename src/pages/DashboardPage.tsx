@@ -4403,59 +4403,72 @@ function TechnicalOverviewPanel({
 
       <p className="mt-3 text-sm leading-6 text-zinc-300">
 
-        {generalValue >= 75
-          ? `A IA identificou forte alinhamento comprador em ${asset}. O conjunto técnico apresenta predominância positiva, com tendência e indicadores favorecendo continuidade do movimento enquanto os principais níveis forem respeitados.`
+  {generalValue >= 75
+    ? `A IA identificou um cenário de alta convicção compradora em ${asset}. A tendência, indicadores e médias apresentam alinhamento positivo, favorecendo continuidade do movimento enquanto os principais níveis técnicos forem respeitados.`
 
-          : generalValue >= 60
-          ? `A IA identificou um cenário comprador em ${asset}, porém com necessidade de confirmação. O contexto favorece operações seletivas, observando rompimentos e regiões importantes de suporte.`
+    : generalValue >= 60
+    ? `A IA identificou predominância compradora em ${asset}. O cenário apresenta força positiva, porém recomenda confirmação antes de entradas agressivas devido ao comportamento atual do momentum.`
 
-          : generalValue <= 25
-          ? `A IA identificou forte pressão vendedora em ${asset}. O cenário demonstra domínio dos vendedores e exige cautela enquanto não houver recuperação dos principais níveis técnicos.`
+    : generalValue <= 25
+    ? `A IA identificou forte domínio vendedor em ${asset}. A pressão negativa permanece predominante, indicando cautela com compras enquanto não houver recuperação dos níveis técnicos importantes.`
 
+    : generalValue <= 40
+    ? `A IA identificou um cenário vendedor em ${asset}. Existe pressão baixista, porém o movimento necessita confirmação antes de aumentar exposição operacional.`
+
+    : `A IA identificou equilíbrio entre compradores e vendedores em ${asset}. O mercado aguarda definição, sendo recomendado evitar antecipações até uma confirmação mais clara.`}
+
+</p>
+
+
+<div className="mt-3 grid grid-cols-2 gap-2">
+
+  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+
+    <div className="text-[10px] text-zinc-500">
+      Força do Cenário
+    </div>
+
+    <div
+      className={`mt-1 text-sm font-black ${
+        generalValue >= 60
+          ? "text-emerald-300"
           : generalValue <= 40
-          ? `A IA identificou um cenário vendedor em ${asset}. Existe pressão negativa no mercado, mas ainda é necessário aguardar confirmação antes de aumentar exposição.`
+          ? "text-red-300"
+          : "text-yellow-300"
+      }`}
+    >
+      {generalValue >= 75
+        ? "Muito Forte"
+        : generalValue >= 60
+        ? "Favorável"
+        : generalValue <= 25
+        ? "Muito Fraco"
+        : generalValue <= 40
+        ? "Desfavorável"
+        : "Indefinido"}
+    </div>
 
-          : `A IA identificou equilíbrio entre compradores e vendedores em ${asset}. O cenário atual exige confirmação antes de uma tomada de decisão.`}
-
-      </p>
-
-
-      <div className="mt-4 grid grid-cols-3 gap-2">
-
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
-          <div className="text-[10px] text-zinc-500">
-            Indicadores
-          </div>
-
-          <div className="mt-1 text-xs font-black text-white">
-            {getLabel(indicatorValue)}
-          </div>
-        </div>
+  </div>
 
 
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
-          <div className="text-[10px] text-zinc-500">
-            Médias
-          </div>
+  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
 
-          <div className="mt-1 text-xs font-black text-white">
-            {getLabel(movingAverageValue)}
-          </div>
-        </div>
+    <div className="text-[10px] text-zinc-500">
+      Recomendação IA
+    </div>
 
+    <div className="mt-1 text-sm font-black text-white">
 
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2">
-          <div className="text-[10px] text-zinc-500">
-            Viés IA
-          </div>
+      {generalValue >= 60
+        ? "Buscar confirmação"
+        : generalValue <= 40
+        ? "Aguardar reação"
+        : "Esperar definição"}
 
-          <div className="mt-1 text-xs font-black text-cyan-300">
-            {trendBias}
-          </div>
-        </div>
+    </div>
 
-      </div>
-
+  </div>
+  </div>
     </div>
   </div>
 </div>
