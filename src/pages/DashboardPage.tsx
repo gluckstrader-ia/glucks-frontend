@@ -4188,15 +4188,15 @@ function GaugeMeter({
           <circle cx="130" cy="130" r="7" fill="rgba(226,232,240,0.95)" />
         </svg>
 
-        <div className="pointer-events-none absolute left-[16px] top-[116px] text-xs font-black text-red-300">
+        <div className="pointer-events-none absolute left-[10px] top-[100px] text-[11px] font-black text-red-300">
           Venda
         </div>
 
-        <div className="pointer-events-none absolute left-1/2 top-[15px] -translate-x-1/2 text-xs font-black text-zinc-300">
+        <div className="pointer-events-none absolute left-1/2 top-[18px] -translate-x-1/2 text-[11px] font-black text-zinc-300">
           Neutro
         </div>
 
-        <div className="pointer-events-none absolute right-[14px] top-[116px] text-xs font-black text-emerald-300">
+        <div className="pointer-events-none absolute right-[10px] top-[100px] text-[11px] font-black text-emerald-300">
           Compra
         </div>
       </div>
