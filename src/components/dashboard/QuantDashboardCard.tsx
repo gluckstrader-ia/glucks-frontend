@@ -158,7 +158,7 @@ export default function QuantDashboardCard({
 }: Props) {
   if (loading) {
     return (
-      <section className="flex h-[694px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
+      <section className="flex h-[760px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
         <div className="h-6 w-40 rounded bg-zinc-800 animate-pulse" />
         <div className="mt-6 flex-1 space-y-4 overflow-hidden">
           <div className="h-24 rounded-2xl bg-zinc-900 animate-pulse" />
@@ -177,7 +177,7 @@ export default function QuantDashboardCard({
 
   if (!data) {
     return (
-      <section className="flex h-[694px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
+      <section className="flex h-[760px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-lg font-bold text-white">Dashboard Quant</h3>
           <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-400">
@@ -202,7 +202,7 @@ export default function QuantDashboardCard({
   const tempPercent = thermometerPercent(data.score);
 
   return (
-    <section className="flex h-[694px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 shadow-[0_18px_50px_rgba(0,0,0,0.2)]">
+    <section className="flex h-[760px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 shadow-[0_18px_50px_rgba(0,0,0,0.2)]">
       <div className="shrink-0 border-b border-white/[0.06] px-4 py-3.5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
