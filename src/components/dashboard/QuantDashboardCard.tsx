@@ -260,9 +260,6 @@ export default function QuantDashboardCard({
             </div>
           </div>
 
-          <p className="mt-2.5 border-t border-white/[0.06] pt-2.5 text-[10px] leading-4 text-zinc-500">
-            Combina tendência, momento, pressão de preço, força relativa e volatilidade.
-          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
