@@ -111,16 +111,20 @@ function MetricRow({
   rightClassName?: string;
 }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2.5 transition-colors hover:bg-white/[0.045]">
-      <div className="min-w-0 text-xs leading-5 text-zinc-400">{label}</div>
-      <div className={`text-right text-sm font-bold tabular-nums ${valueClassName}`}>
-        {value}
+    <div className="min-w-0 rounded-lg border border-white/[0.06] bg-white/[0.025] px-2.5 py-2 transition-colors hover:bg-white/[0.045]">
+      <div className="truncate text-[9px] font-medium uppercase tracking-wide text-zinc-500" title={label}>
+        {label}
       </div>
-      {rightLabel && (
-        <div className={`col-span-2 text-right text-[10px] font-medium ${rightClassName}`}>
-          {rightLabel}
+      <div className="mt-1 flex min-w-0 items-baseline justify-between gap-1.5">
+        <div className={`truncate text-xs font-bold tabular-nums ${valueClassName}`} title={value}>
+          {value}
         </div>
-      )}
+        {rightLabel && (
+          <div className={`shrink-0 text-[8px] font-semibold ${rightClassName}`}>
+            {rightLabel}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -154,7 +158,7 @@ export default function QuantDashboardCard({
 }: Props) {
   if (loading) {
     return (
-      <section className="flex h-[620px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
+      <section className="flex h-[694px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
         <div className="h-6 w-40 rounded bg-zinc-800 animate-pulse" />
         <div className="mt-6 flex-1 space-y-4 overflow-hidden">
           <div className="h-24 rounded-2xl bg-zinc-900 animate-pulse" />
@@ -173,7 +177,7 @@ export default function QuantDashboardCard({
 
   if (!data) {
     return (
-      <section className="flex h-[620px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
+      <section className="flex h-[694px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-lg font-bold text-white">Dashboard Quant</h3>
           <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-400">
@@ -198,7 +202,7 @@ export default function QuantDashboardCard({
   const tempPercent = thermometerPercent(data.score);
 
   return (
-    <section className="flex h-[620px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 shadow-[0_18px_50px_rgba(0,0,0,0.2)]">
+    <section className="flex h-[694px] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 shadow-[0_18px_50px_rgba(0,0,0,0.2)]">
       <div className="shrink-0 border-b border-white/[0.06] px-4 py-3.5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -214,8 +218,8 @@ export default function QuantDashboardCard({
         </div>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3 [scrollbar-color:#3f3f46_transparent] [scrollbar-width:thin]">
-        <div className="rounded-2xl border border-white/[0.07] bg-gradient-to-br from-white/[0.045] to-transparent p-3.5">
+      <div className="flex-1 space-y-2.5 overflow-hidden px-4 py-3">
+        <div className="rounded-2xl border border-white/[0.07] bg-gradient-to-br from-white/[0.045] to-transparent p-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
@@ -234,7 +238,7 @@ export default function QuantDashboardCard({
             </div>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-3">
             <div
               className="relative h-2.5 rounded-full bg-gradient-to-r from-rose-500 via-zinc-700 to-emerald-500"
               role="meter"
@@ -256,7 +260,7 @@ export default function QuantDashboardCard({
             </div>
           </div>
 
-          <p className="mt-3 border-t border-white/[0.06] pt-3 text-[11px] leading-5 text-zinc-500">
+          <p className="mt-2.5 border-t border-white/[0.06] pt-2.5 text-[10px] leading-4 text-zinc-500">
             Combina tendência, momento, pressão de preço, força relativa e volatilidade.
           </p>
         </div>
@@ -286,13 +290,11 @@ export default function QuantDashboardCard({
 
         <div className="rounded-xl border border-zinc-800 bg-black/30 p-3">
           <div className="mb-2.5 flex items-center justify-between">
-            <div className="text-xs font-semibold text-white">
-            Força da Tendência
-            </div>
-            <span className="text-[9px] uppercase tracking-wider text-zinc-600">Direção</span>
+            <div className="text-xs font-semibold text-white">Indicadores detalhados</div>
+            <span className="text-[9px] uppercase tracking-wider text-zinc-600">Leitura completa</span>
           </div>
 
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
             <MetricRow
               label="Curto Prazo"
               value={data.shortTrend}
@@ -303,18 +305,6 @@ export default function QuantDashboardCard({
               value={data.midTrend}
               valueClassName={trendColor(data.midTrend)}
             />
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-zinc-800 bg-black/30 p-3">
-          <div className="mb-2.5 flex items-center justify-between">
-            <div className="text-xs font-semibold text-white">
-            Momento de Mercado
-            </div>
-            <span className="text-[9px] uppercase tracking-wider text-zinc-600">Impulso</span>
-          </div>
-
-          <div className="space-y-2">
             <MetricRow
               label="Momento (ROC)"
               value={data.roc.toFixed(3)}
@@ -330,18 +320,6 @@ export default function QuantDashboardCard({
               value={data.pressure.toFixed(3)}
               valueClassName={valueColor(data.pressure)}
             />
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-zinc-800 bg-black/30 p-3">
-          <div className="mb-2.5 flex items-center justify-between">
-            <div className="text-xs font-semibold text-white">
-            Volatilidade e Fluxo
-            </div>
-            <span className="text-[9px] uppercase tracking-wider text-zinc-600">Atividade</span>
-          </div>
-
-          <div className="space-y-2">
             <MetricRow
               label="ATR (14)"
               value={data.atr.toFixed(6)}
