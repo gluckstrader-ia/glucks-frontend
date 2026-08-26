@@ -4127,22 +4127,86 @@ function GaugeMeter({
   value,
   label,
   subtitle,
+  animationKey,
 }: {
   title: string;
   value: number;
   label: string;
   subtitle?: string;
+  animationKey: number;
 }) {
   const safe = Math.max(0, Math.min(100, value));
   const [animatedValue, setAnimatedValue] = useState(50);
+  const animatedValueRef = useRef(50);
+  const targetValueRef = useRef(safe);
+  const animationFrameRef = useRef<number | null>(null);
+
+  targetValueRef.current = safe;
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setAnimatedValue(safe);
-    });
+    if (animationKey <= 0) return;
+    if (animationFrameRef.current !== null) {
+      window.cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
 
-    return () => window.cancelAnimationFrame(frame);
-  }, [safe]);
+    const startValue = animatedValueRef.current;
+    const endValue = targetValueRef.current;
+    const distance = Math.abs(endValue - startValue);
+
+    if (distance < 0.1) {
+      animatedValueRef.current = endValue;
+      setAnimatedValue(endValue);
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (prefersReducedMotion) {
+      animatedValueRef.current = endValue;
+      setAnimatedValue(endValue);
+      return;
+    }
+
+    const duration = Math.min(1800, Math.max(1100, 900 + distance * 9));
+    let startedAt: number | null = null;
+
+    const easeOutCubic = (progress: number) =>
+      1 - Math.pow(1 - progress, 3);
+
+    const animate = (timestamp: number) => {
+      if (startedAt === null) {
+        startedAt = timestamp;
+      }
+
+      const elapsed = timestamp - startedAt;
+      const progress = Math.min(1, elapsed / duration);
+      const eased = easeOutCubic(progress);
+      const nextValue = startValue + (endValue - startValue) * eased;
+
+      animatedValueRef.current = nextValue;
+      setAnimatedValue(nextValue);
+
+      if (progress < 1) {
+        animationFrameRef.current = window.requestAnimationFrame(animate);
+      } else {
+        animatedValueRef.current = endValue;
+        setAnimatedValue(endValue);
+        animationFrameRef.current = null;
+      }
+    };
+
+    animationFrameRef.current = window.requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [animationKey]);
 
   const angle = -90 + (animatedValue / 100) * 180;
 
@@ -4164,7 +4228,7 @@ function GaugeMeter({
         </div>
 
         <span className="text-xs font-bold text-zinc-400">
-          {safe.toFixed(0)}%
+          {animatedValue.toFixed(0)}%
         </span>
       </div>
 
@@ -4221,7 +4285,6 @@ function GaugeMeter({
               transform: `rotate(${angle}deg)`,
               transformOrigin: "130px 130px",
               transformBox: "view-box",
-              transition: "transform 900ms cubic-bezier(0.22, 1, 0.36, 1)",
             }}
           />
 
@@ -4254,10 +4317,12 @@ function TechnicalOverviewPanel({
   asset,
   tf,
   analysisData,
+  gaugeAnimationKey,
 }: {
   asset: string;
   tf: string;
   analysisData: AnalysisData | null;
+  gaugeAnimationKey: number;
 }) {
   const tech = analysisData?.technical;
 
@@ -4510,6 +4575,7 @@ function TechnicalOverviewPanel({
           value={generalValue}
           label={getLabel(generalValue)}
           subtitle={`Viés: ${trendBias}`}
+          animationKey={gaugeAnimationKey}
         />
 
         <GaugeMeter
@@ -4517,6 +4583,7 @@ function TechnicalOverviewPanel({
           value={indicatorValue}
           label={getLabel(indicatorValue)}
           subtitle={`${buySignals} compra • ${neutralSignals} neutro • ${sellSignals} venda`}
+          animationKey={gaugeAnimationKey}
         />
 
         <GaugeMeter
@@ -4524,6 +4591,7 @@ function TechnicalOverviewPanel({
           value={movingAverageValue}
           label={getLabel(movingAverageValue)}
           subtitle={`EMA: ${emaTrend}`}
+          animationKey={gaugeAnimationKey}
         />
       </div>
 
@@ -4630,6 +4698,7 @@ export default function DashboardPage() {
   const [tf, setTf] = useState("5m");
   const [mainTab, setMainTab] = useState("Resumo");
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+  const [gaugeAnimationKey, setGaugeAnimationKey] = useState(0);
   const [apiError, setApiError] = useState("");
   const analysisInFlightRef = useRef(false);
 
@@ -4785,6 +4854,12 @@ const resolvedAssetType =
         setTimeout(() => {
           setLoading(false);
           setProgress(0);
+
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+              setGaugeAnimationKey((current) => current + 1);
+            });
+          });
         }, 300);
       }
     }
@@ -5036,6 +5111,7 @@ const resolvedAssetType =
                   asset={resolvedAsset}
                   tf={tf}
                   analysisData={analysisData}
+                  gaugeAnimationKey={gaugeAnimationKey}
                 />
               </div>
             </div>
