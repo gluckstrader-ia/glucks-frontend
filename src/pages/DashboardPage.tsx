@@ -28,6 +28,8 @@ import {
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
 import { useB3MarketData } from "../hooks/useB3MarketData";
 import FloatingCommunityChat from "../components/community/FloatingCommunityChat";
+import { useRealtimeFutures } from "../components/realtime-futures/useRealtimeFutures";
+import type { RealtimeFuture } from "../components/realtime-futures/types";
 
 type AnalysisModules = {
   technical?: number;
@@ -4460,6 +4462,73 @@ function GaugeMeter({
 }
 
 
+function FlowSparkline({
+  values,
+  positive,
+}: {
+  values: number[];
+  positive: boolean;
+}) {
+  const clean = values.filter((value) => Number.isFinite(value)).slice(-48);
+
+  if (clean.length < 2) {
+    return (
+      <div className="flex h-20 items-center justify-center rounded-xl border border-white/[0.05] bg-black/25 text-[10px] font-semibold text-zinc-600">
+        Aguardando histórico do fluxo...
+      </div>
+    );
+  }
+
+  const width = 320;
+  const height = 72;
+  const padding = 6;
+  const min = Math.min(...clean);
+  const max = Math.max(...clean);
+  const span = Math.max(max - min, 1);
+
+  const points = clean
+    .map((value, index) => {
+      const x =
+        padding +
+        (index / Math.max(clean.length - 1, 1)) * (width - padding * 2);
+      const y =
+        height -
+        padding -
+        ((value - min) / span) * (height - padding * 2);
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-white/[0.05] bg-black/25 px-2 py-1.5">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-20 w-full"
+        preserveAspectRatio="none"
+        aria-label="Evolução recente do saldo de fluxo"
+      >
+        <line
+          x1="0"
+          y1={height / 2}
+          x2={width}
+          y2={height / 2}
+          stroke="rgba(113,113,122,0.18)"
+          strokeWidth="1"
+          strokeDasharray="4 5"
+        />
+        <polyline
+          fill="none"
+          stroke={positive ? "rgba(52,211,153,0.95)" : "rgba(248,113,113,0.95)"}
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          points={points}
+        />
+      </svg>
+    </div>
+  );
+}
+
 function MarketFlowPanel({
   asset,
   tf,
@@ -4468,6 +4537,12 @@ function MarketFlowPanel({
   liveLoading,
   liveSeconds,
   liveUpdatedAt,
+  realtimeFuture,
+  realtimeConnected,
+  realtimeLoading,
+  realtimeError,
+  realtimeMarketStatus,
+  realtimeUpdatedAt,
 }: {
   asset: string;
   tf: string;
@@ -4476,8 +4551,280 @@ function MarketFlowPanel({
   liveLoading: boolean;
   liveSeconds: number;
   liveUpdatedAt: Date | null;
+  realtimeFuture?: RealtimeFuture | null;
+  realtimeConnected?: boolean;
+  realtimeLoading?: boolean;
+  realtimeError?: string;
+  realtimeMarketStatus?: string;
+  realtimeUpdatedAt?: string | null;
 }) {
   const tech = analysisData?.technical;
+
+  const timeframeLabel = tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf;
+  const isRealtimeFuture = ["WIN", "WDO"].includes(asset.toUpperCase());
+
+  if (isRealtimeFuture && realtimeFuture) {
+    const buyerAggression = Math.max(0, Number(realtimeFuture.buyerAggression ?? 0) || 0);
+    const sellerAggression = Math.max(0, Number(realtimeFuture.sellerAggression ?? 0) || 0);
+    const aggressionTotal = buyerAggression + sellerAggression;
+    const buyerPct = aggressionTotal > 0 ? (buyerAggression / aggressionTotal) * 100 : 50;
+    const sellerPct = 100 - buyerPct;
+
+    const recentDelta = (values: number[], window = 6) => {
+      const clean = values.filter((value) => Number.isFinite(value));
+      if (clean.length < 2) return 0;
+      const end = clean[clean.length - 1];
+      const start = clean[Math.max(0, clean.length - 1 - window)];
+      return end - start;
+    };
+
+    const buyerRecent = recentDelta(realtimeFuture.buyerSeries ?? []);
+    const sellerRecent = recentDelta(realtimeFuture.sellerSeries ?? []);
+    const recentNet = buyerRecent - sellerRecent;
+
+    const balanceSeries = (realtimeFuture.balanceSeries ?? []).filter((value) =>
+      Number.isFinite(value),
+    );
+    const balanceValue = Number(realtimeFuture.fullBalance ?? realtimeFuture.netBalance ?? 0) || 0;
+
+    const increments = balanceSeries
+      .slice(-10)
+      .map((value, index, list) => (index === 0 ? 0 : Math.abs(value - list[index - 1])))
+      .slice(1);
+    const currentIncrement = increments.length ? increments[increments.length - 1] : 0;
+    const previousIncrements = increments.slice(0, -1);
+    const averagePrevious = previousIncrements.length
+      ? previousIncrements.reduce((sum, value) => sum + value, 0) / previousIncrements.length
+      : 0;
+    const paceRatio = averagePrevious > 0 ? currentIncrement / averagePrevious : null;
+    const paceLabel =
+      paceRatio === null
+        ? "EM FORMAÇÃO"
+        : paceRatio >= 1.4
+        ? "ACELERANDO"
+        : paceRatio <= 0.7
+        ? "DESACELERANDO"
+        : "ESTÁVEL";
+
+    const flowDirection = recentNet > 0 ? "COMPRADOR" : recentNet < 0 ? "VENDEDOR" : "EQUILIBRADO";
+    const pressureDifference = Math.abs(buyerPct - sellerPct);
+    const pressureStrength =
+      pressureDifference >= 20 ? "FORTE" : pressureDifference >= 10 ? "MODERADA" : "EQUILIBRADA";
+
+    const sessionRange = Math.max(Number(realtimeFuture.high) - Number(realtimeFuture.low), 0);
+    const rangePosition =
+      sessionRange > 0
+        ? Math.max(
+            0,
+            Math.min(
+              100,
+              ((Number(realtimeFuture.price) - Number(realtimeFuture.low)) / sessionRange) * 100,
+            ),
+          )
+        : 50;
+
+    const aiSignal = String(
+      analysisData?.ai_brain?.signal_detected ??
+        analysisData?.final_signal?.direction ??
+        analysisData?.direction ??
+        "NEUTRO",
+    ).toUpperCase();
+
+    const flowConfirmsBuy = recentNet > 0 && balanceValue >= 0;
+    const flowConfirmsSell = recentNet < 0 && balanceValue <= 0;
+    const confirmation = aiSignal.includes("COMPRA")
+      ? flowConfirmsBuy
+        ? "FLUXO CONFIRMA COMPRA"
+        : flowConfirmsSell
+        ? "FLUXO DIVERGE DA COMPRA"
+        : "FLUXO MISTO"
+      : aiSignal.includes("VENDA")
+      ? flowConfirmsSell
+        ? "FLUXO CONFIRMA VENDA"
+        : flowConfirmsBuy
+        ? "FLUXO DIVERGE DA VENDA"
+        : "FLUXO MISTO"
+      : flowDirection === "COMPRADOR"
+      ? "FLUXO PUXA PARA COMPRA"
+      : flowDirection === "VENDEDOR"
+      ? "FLUXO PUXA PARA VENDA"
+      : "FLUXO EQUILIBRADO";
+
+    const confirmationTone = confirmation.includes("CONFIRMA")
+      ? "text-emerald-300 border-emerald-400/20 bg-emerald-400/[0.06]"
+      : confirmation.includes("DIVERGE")
+      ? "text-amber-300 border-amber-400/20 bg-amber-400/[0.06]"
+      : "text-cyan-200 border-cyan-400/15 bg-cyan-400/[0.04]";
+
+    const formatCompact = (value: number, digits = 1) => {
+      if (!Number.isFinite(value)) return "—";
+      const abs = Math.abs(value);
+      if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(digits)}M`;
+      if (abs >= 1_000) return `${(value / 1_000).toFixed(digits)}K`;
+      return value.toLocaleString("pt-BR", { maximumFractionDigits: digits });
+    };
+
+    const formatSigned = (value: number) => {
+      const prefix = value > 0 ? "+" : "";
+      return `${prefix}${formatCompact(value, 1)}`;
+    };
+
+    const priceDecimals = Math.max(0, Math.min(4, Number(realtimeFuture.priceDecimals ?? 0)));
+    const formattedPrice = Number(realtimeFuture.price).toLocaleString("pt-BR", {
+      minimumFractionDigits: priceDecimals,
+      maximumFractionDigits: priceDecimals,
+    });
+
+    const marketStatusLabel =
+      realtimeMarketStatus === "OPEN"
+        ? "AO VIVO"
+        : realtimeMarketStatus === "STALE"
+        ? "ATUALIZAÇÃO LENTA"
+        : realtimeMarketStatus === "CLOSED"
+        ? "ÚLTIMO PREGÃO"
+        : realtimeConnected
+        ? "CONECTADO"
+        : "AGUARDANDO";
+
+    return (
+      <div className="min-h-[610px] overflow-hidden rounded-2xl border border-zinc-800 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.10),transparent_30%),linear-gradient(180deg,rgba(9,9,11,0.98),rgba(0,0,0,0.98))] p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-cyan-300" />
+              <h3 className="text-base font-black text-white">Fluxo de Mercado</h3>
+              <span className="rounded-full border border-cyan-400/15 bg-cyan-400/[0.06] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-cyan-200">
+                Microestrutura
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-zinc-500">Agressão e saldo em atualização contínua</p>
+          </div>
+
+          <div className="shrink-0 text-right">
+            <div className="flex items-center justify-end gap-1.5">
+              <span className={`h-2 w-2 rounded-full ${realtimeConnected ? "bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.7)]" : "bg-zinc-700"}`} />
+              <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${realtimeConnected ? "text-emerald-300" : "text-zinc-600"}`}>
+                {realtimeLoading ? "Sincronizando" : marketStatusLabel}
+              </span>
+            </div>
+            <div className="mt-1 text-[9px] text-zinc-600">
+              Atualização de fluxo a cada 5s
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-600">
+                {asset} • preço atual
+              </div>
+              <div className="mt-1 font-mono text-2xl font-black text-white">{formattedPrice}</div>
+              <div className={`mt-1 text-[10px] font-black ${Number(realtimeFuture.variationPct) >= 0 ? "text-emerald-300" : "text-red-300"}`}>
+                {Number(realtimeFuture.variationPct) > 0 ? "+" : ""}
+                {Number(realtimeFuture.variationPct).toFixed(2)}% • {Number(realtimeFuture.variationPoints) > 0 ? "+" : ""}
+                {Number(realtimeFuture.variationPoints).toLocaleString("pt-BR", { maximumFractionDigits: priceDecimals })} pts
+              </div>
+            </div>
+
+            <div className="text-right">
+              <div className="text-[9px] font-black uppercase tracking-[0.15em] text-zinc-600">Fluxo imediato</div>
+              <div className={`mt-1 text-lg font-black ${flowDirection === "COMPRADOR" ? "text-emerald-300" : flowDirection === "VENDEDOR" ? "text-red-300" : "text-zinc-300"}`}>
+                {flowDirection}
+              </div>
+              <div className="mt-0.5 text-[9px] font-bold text-zinc-600">PRESSÃO {pressureStrength}</div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="mb-1.5 flex items-center justify-between text-[10px] font-bold">
+              <span className="text-red-300">Venda {sellerPct.toFixed(0)}%</span>
+              <span className="text-zinc-600">Agressão</span>
+              <span className="text-emerald-300">Compra {buyerPct.toFixed(0)}%</span>
+            </div>
+            <div className="relative h-2.5 overflow-hidden rounded-full bg-zinc-900 ring-1 ring-inset ring-white/[0.05]">
+              <div className="absolute inset-y-0 left-0 bg-red-500/85" style={{ width: `${sellerPct}%` }} />
+              <div className="absolute inset-y-0 right-0 bg-emerald-500/85" style={{ width: `${buyerPct}%` }} />
+              <div className="absolute left-1/2 top-1/2 h-4 w-px -translate-x-1/2 -translate-y-1/2 bg-white/60" />
+            </div>
+            <div className="mt-1.5 flex justify-between text-[9px] font-semibold text-zinc-600">
+              <span>{formatCompact(sellerAggression, 1)} vendidos</span>
+              <span>{formatCompact(buyerAggression, 1)} comprados</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+            <div className="text-[9px] uppercase tracking-wide text-zinc-600">Delta recente</div>
+            <div className={`mt-1 font-mono text-sm font-black ${recentNet > 0 ? "text-emerald-300" : recentNet < 0 ? "text-red-300" : "text-zinc-300"}`}>
+              {formatSigned(recentNet)}
+            </div>
+            <div className="mt-0.5 text-[9px] font-bold text-zinc-600">ÚLTIMAS AMOSTRAS</div>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+            <div className="text-[9px] uppercase tracking-wide text-zinc-600">Saldo do cheio</div>
+            <div className={`mt-1 font-mono text-sm font-black ${balanceValue >= 0 ? "text-emerald-300" : "text-red-300"}`}>
+              {formatSigned(balanceValue)}
+            </div>
+            <div className="mt-0.5 text-[9px] font-bold text-zinc-600">{realtimeFuture.fullContract}</div>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+            <div className="text-[9px] uppercase tracking-wide text-zinc-600">Ritmo do fluxo</div>
+            <div className={`mt-1 text-sm font-black ${paceLabel === "ACELERANDO" ? "text-emerald-300" : paceLabel === "DESACELERANDO" ? "text-amber-300" : "text-cyan-200"}`}>
+              {paceLabel}
+            </div>
+            <div className="mt-0.5 text-[9px] font-bold text-zinc-600">VARIAÇÃO DO SALDO</div>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+            <div className="text-[9px] uppercase tracking-wide text-zinc-600">Posição no range</div>
+            <div className="mt-1 text-sm font-black text-white">{rangePosition.toFixed(0)}%</div>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-900">
+              <div className="h-full rounded-full bg-cyan-400" style={{ width: `${rangePosition}%` }} />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[9px] font-black uppercase tracking-[0.14em] text-zinc-600">Saldo ao longo do pregão</span>
+            <span className={`text-[9px] font-bold ${balanceValue >= 0 ? "text-emerald-300" : "text-red-300"}`}>
+              {balanceValue >= 0 ? "comprador" : "vendedor"}
+            </span>
+          </div>
+          <FlowSparkline values={balanceSeries} positive={balanceValue >= 0} />
+        </div>
+
+        <div className={`mt-3 rounded-xl border p-3 ${confirmationTone}`}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[9px] font-black uppercase tracking-[0.14em]">Confirmação do fluxo</span>
+            <span className="text-[9px] font-black">{confirmation}</span>
+          </div>
+          <p className="mt-2 text-[11px] leading-5 text-zinc-400">
+            A direção da IA está em <span className="font-bold text-white">{aiSignal}</span>. O fluxo imediato está <span className="font-bold text-white">{flowDirection.toLowerCase()}</span> e o saldo do contrato cheio está {balanceValue >= 0 ? "positivo" : "negativo"}. Esta leitura funciona como confirmação operacional, não como bloqueio automático do sinal.
+          </p>
+        </div>
+
+        {realtimeError && (
+          <div className="mt-3 rounded-lg border border-amber-400/15 bg-amber-400/[0.05] px-3 py-2 text-[10px] text-amber-200/80">
+            Fluxo temporariamente indisponível: {realtimeError}
+          </div>
+        )}
+
+        <div className="mt-3 flex items-center justify-between border-t border-white/[0.05] pt-3 text-[9px] text-zinc-600">
+          <span>{asset} • {timeframeLabel}</span>
+          <span>
+            {realtimeUpdatedAt
+              ? `Atualizado ${new Date(realtimeUpdatedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+              : "Aguardando fluxo"}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   if (!analysisData || !tech) {
     return (
@@ -4607,8 +4954,6 @@ function MarketFlowPanel({
 
     return `Leitura atual com ${pressureText}, ${momentumText} e ${agreementScore.toFixed(0)}% de concordância entre módulos.`;
   })();
-
-  const timeframeLabel = tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf;
 
   return (
     <div className="min-h-[610px] overflow-hidden rounded-2xl border border-zinc-800 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.08),transparent_32%),linear-gradient(180deg,rgba(9,9,11,0.98),rgba(0,0,0,0.98))] p-4">
@@ -4741,7 +5086,6 @@ function MarketFlowPanel({
     </div>
   );
 }
-
 function TechnicalLiveActivity({
   asset,
   tf,
@@ -5707,6 +6051,26 @@ const resolvedAssetType =
   resolvedAssetType === "future_br" &&
   ["WIN", "WDO"].includes(String(resolvedAsset).toUpperCase());
 
+  const {
+    data: realtimeFuturesData,
+    loading: realtimeFlowLoading,
+    error: realtimeFlowError,
+    connected: realtimeFlowConnected,
+  } = useRealtimeFutures(5000, isB3Future);
+
+  const realtimeFuture = useMemo(() => {
+    if (!isB3Future) return null;
+
+    const expectedSymbol =
+      String(resolvedAsset).toUpperCase() === "WIN" ? "WINFUT" : "WDOFUT";
+
+    return (
+      realtimeFuturesData?.instruments?.find(
+        (instrument) => instrument.symbol === expectedSymbol,
+      ) ?? null
+    );
+  }, [isB3Future, realtimeFuturesData, resolvedAsset]);
+
   console.log("[B3 DATA]", b3Data);
 
   function handleLogout() {
@@ -6268,6 +6632,12 @@ const resolvedAssetType =
                   liveLoading={technicalLiveLoading}
                   liveSeconds={technicalLiveSeconds}
                   liveUpdatedAt={technicalLiveUpdatedAt}
+                  realtimeFuture={realtimeFuture}
+                  realtimeConnected={realtimeFlowConnected}
+                  realtimeLoading={realtimeFlowLoading}
+                  realtimeError={realtimeFlowError}
+                  realtimeMarketStatus={realtimeFuturesData?.marketStatus}
+                  realtimeUpdatedAt={realtimeFuturesData?.updatedAt ?? null}
                 />
               </div>
 
@@ -6311,6 +6681,12 @@ const resolvedAssetType =
                 liveLoading={technicalLiveLoading}
                 liveSeconds={technicalLiveSeconds}
                 liveUpdatedAt={technicalLiveUpdatedAt}
+                realtimeFuture={realtimeFuture}
+                realtimeConnected={realtimeFlowConnected}
+                realtimeLoading={realtimeFlowLoading}
+                realtimeError={realtimeFlowError}
+                realtimeMarketStatus={realtimeFuturesData?.marketStatus}
+                realtimeUpdatedAt={realtimeFuturesData?.updatedAt ?? null}
               />
 
               <SummaryTab
