@@ -20,11 +20,13 @@ import {
   FileText,
   Settings,
   Sparkles,
+  Activity,
+  TrendingUp,
+  TrendingDown,
+  Radio,
 } from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
 import { useB3MarketData } from "../hooks/useB3MarketData";
-import QuantDashboardCard from "../components/dashboard/QuantDashboardCard";
-import { useQuantDashboard } from "../hooks/useQuantDashboard";
 import FloatingCommunityChat from "../components/community/FloatingCommunityChat";
 
 type AnalysisModules = {
@@ -4457,6 +4459,289 @@ function GaugeMeter({
   );
 }
 
+
+function MarketFlowPanel({
+  asset,
+  tf,
+  analysisData,
+  liveEnabled,
+  liveLoading,
+  liveSeconds,
+  liveUpdatedAt,
+}: {
+  asset: string;
+  tf: string;
+  analysisData: AnalysisData | null;
+  liveEnabled: boolean;
+  liveLoading: boolean;
+  liveSeconds: number;
+  liveUpdatedAt: Date | null;
+}) {
+  const tech = analysisData?.technical;
+
+  if (!analysisData || !tech) {
+    return (
+      <div className="flex min-h-[610px] flex-col rounded-2xl border border-zinc-800 bg-zinc-950/90 p-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-cyan-300" />
+            <h3 className="text-base font-black text-white">Fluxo de Mercado</h3>
+          </div>
+          <p className="mt-1 text-xs text-zinc-500">Leitura operacional da análise mais recente</p>
+        </div>
+
+        <div className="flex flex-1 items-center justify-center text-center">
+          <div>
+            <Radio className="mx-auto h-9 w-9 text-zinc-700" />
+            <p className="mt-4 text-sm font-semibold text-zinc-400">
+              Gere uma análise para carregar o fluxo operacional.
+            </p>
+            <p className="mt-2 text-xs leading-5 text-zinc-600">
+              Nenhum valor é preenchido sem dados calculados pelo motor de análise.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const indicators = tech.technical_indicators ?? [];
+  const indicatorValue = (predicate: (name: string) => boolean) => {
+    const item = indicators.find((indicator) =>
+      predicate(String(indicator.name ?? "").toUpperCase())
+    );
+    const value = Number(item?.value);
+    return Number.isFinite(value) ? value : null;
+  };
+
+  const roc = indicatorValue((name) => name === "ROC");
+  const atr = indicatorValue((name) => name.startsWith("ATR"));
+  const adx = indicatorValue((name) => name.startsWith("ADX"));
+  const rsi = Number.isFinite(Number(tech.rsi)) ? Number(tech.rsi) : null;
+
+  const buySignals = Math.max(0, Number(tech.buy_signals ?? 0) || 0);
+  const sellSignals = Math.max(0, Number(tech.sell_signals ?? 0) || 0);
+  const neutralSignals = Math.max(0, Number(tech.neutral_signals ?? 0) || 0);
+  const directionalSignals = buySignals + sellSignals;
+
+  const buyPressure = directionalSignals > 0
+    ? Math.round((buySignals / directionalSignals) * 100)
+    : 50;
+  const sellPressure = 100 - buyPressure;
+
+  const aiBrain = analysisData.ai_brain;
+  const finalSignal = analysisData.final_signal;
+  const dominantSignal = String(
+    aiBrain?.signal_detected ?? finalSignal?.direction ?? analysisData.direction ?? "NEUTRO"
+  ).toUpperCase();
+  const agreementScore = Math.max(
+    0,
+    Math.min(100, Number(aiBrain?.module_agreement_score ?? 0) || 0)
+  );
+  const agreementLabel = String(
+    aiBrain?.agreement_label ?? aiBrain?.module_alignment ?? "INDEFINIDO"
+  ).toUpperCase();
+  const smcBias = String(analysisData.smc?.bias ?? "INDEFINIDO").toUpperCase();
+  const trendBias = String(tech.trend_bias ?? "INDEFINIDO").toUpperCase();
+  const volumeReading =
+    analysisData.wegd?.wyckoff?.volume_label ??
+    analysisData.wegd?.wyckoff?.volume_state ??
+    null;
+
+  const signalTone = dominantSignal.includes("COMPRA")
+    ? "buy"
+    : dominantSignal.includes("VENDA")
+    ? "sell"
+    : "neutral";
+
+  const signalClass =
+    signalTone === "buy"
+      ? "border-emerald-400/25 bg-emerald-400/[0.08] text-emerald-300"
+      : signalTone === "sell"
+      ? "border-red-400/25 bg-red-400/[0.08] text-red-300"
+      : "border-amber-400/25 bg-amber-400/[0.08] text-amber-300";
+
+  const formatMetric = (value: number | null, digits = 2) => {
+    if (value === null || !Number.isFinite(value)) return "Indisponível";
+    const abs = Math.abs(value);
+    if (abs > 0 && abs < 0.01) return value.toFixed(6);
+    return value.toFixed(digits);
+  };
+
+  const momentumLabel =
+    roc === null
+      ? "Indisponível"
+      : roc > 0
+      ? "POSITIVO"
+      : roc < 0
+      ? "NEGATIVO"
+      : "NEUTRO";
+
+  const pressureLabel =
+    buySignals === 0 && sellSignals === 0
+      ? "SEM DIREÇÃO"
+      : buyPressure >= 65
+      ? "COMPRADORA"
+      : sellPressure >= 65
+      ? "VENDEDORA"
+      : "EQUILIBRADA";
+
+  const quickRead = (() => {
+    if (buySignals === 0 && sellSignals === 0) {
+      return "Os indicadores direcionais ainda não formam pressão suficiente para uma leitura de fluxo.";
+    }
+
+    const pressureText =
+      pressureLabel === "COMPRADORA"
+        ? "pressão técnica compradora"
+        : pressureLabel === "VENDEDORA"
+        ? "pressão técnica vendedora"
+        : "pressão técnica equilibrada";
+
+    const momentumText =
+      momentumLabel === "POSITIVO"
+        ? "momentum positivo"
+        : momentumLabel === "NEGATIVO"
+        ? "momentum negativo"
+        : "momentum sem direção definida";
+
+    return `Leitura atual com ${pressureText}, ${momentumText} e ${agreementScore.toFixed(0)}% de concordância entre módulos.`;
+  })();
+
+  const timeframeLabel = tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf;
+
+  return (
+    <div className="min-h-[610px] overflow-hidden rounded-2xl border border-zinc-800 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.08),transparent_32%),linear-gradient(180deg,rgba(9,9,11,0.98),rgba(0,0,0,0.98))] p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-cyan-300" />
+            <h3 className="text-base font-black text-white">Fluxo de Mercado</h3>
+          </div>
+          <p className="mt-1 text-xs text-zinc-500">Leitura operacional em atualização contínua</p>
+        </div>
+
+        <div className="shrink-0 text-right">
+          <div className="flex items-center justify-end gap-1.5">
+            <span className={`h-2 w-2 rounded-full ${liveEnabled ? "bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.7)]" : "bg-zinc-700"}`} />
+            <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${liveEnabled ? "text-emerald-300" : "text-zinc-600"}`}>
+              {liveLoading ? "Atualizando" : liveEnabled ? "Ao vivo" : "Manual"}
+            </span>
+          </div>
+          <div className="mt-1 text-[9px] tabular-nums text-zinc-600">
+            {liveEnabled
+              ? liveLoading
+                ? "Nova leitura em processamento"
+                : `Próxima leitura em ${Math.max(0, liveSeconds)}s`
+              : `${asset} • ${timeframeLabel}`}
+          </div>
+        </div>
+      </div>
+
+      <div className={`mt-4 rounded-2xl border p-4 ${signalClass}`}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-500">
+              Direção dominante
+            </div>
+            <div className="mt-1 text-2xl font-black">{dominantSignal}</div>
+          </div>
+
+          {signalTone === "buy" ? (
+            <TrendingUp className="h-8 w-8" />
+          ) : signalTone === "sell" ? (
+            <TrendingDown className="h-8 w-8" />
+          ) : (
+            <Activity className="h-8 w-8" />
+          )}
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-1.5 flex items-center justify-between text-[10px] font-bold">
+            <span className="text-red-300">Venda {sellPressure}%</span>
+            <span className="text-zinc-500">Pressão técnica</span>
+            <span className="text-emerald-300">Compra {buyPressure}%</span>
+          </div>
+          <div className="relative h-2 overflow-hidden rounded-full bg-zinc-900 ring-1 ring-inset ring-white/[0.05]">
+            <div className="absolute inset-y-0 left-0 bg-red-500/80" style={{ width: `${sellPressure}%` }} />
+            <div className="absolute inset-y-0 right-0 bg-emerald-500/80" style={{ width: `${buyPressure}%` }} />
+            <div className="absolute left-1/2 top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-white/50" />
+          </div>
+          <div className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.12em] text-zinc-300">
+            {pressureLabel}
+          </div>
+          <div className="mt-1 text-center text-[9px] text-zinc-600">
+            {buySignals} compra • {neutralSignals} neutro • {sellSignals} venda
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+          <div className="text-[9px] uppercase tracking-wide text-zinc-600">Momento (ROC)</div>
+          <div className={`mt-1 text-sm font-black ${roc !== null && roc > 0 ? "text-emerald-300" : roc !== null && roc < 0 ? "text-rose-300" : "text-zinc-300"}`}>
+            {formatMetric(roc, 3)}
+          </div>
+          <div className="mt-0.5 text-[9px] font-bold text-zinc-600">{momentumLabel}</div>
+        </div>
+
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+          <div className="text-[9px] uppercase tracking-wide text-zinc-600">Força (ADX)</div>
+          <div className="mt-1 text-sm font-black text-amber-300">{formatMetric(adx, 2)}</div>
+          <div className="mt-0.5 text-[9px] font-bold text-zinc-600">
+            {adx === null ? "SEM DADO" : adx >= 25 ? "MOVIMENTO FORTE" : "MOVIMENTO MODERADO"}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+          <div className="text-[9px] uppercase tracking-wide text-zinc-600">RSI (14)</div>
+          <div className="mt-1 text-sm font-black text-cyan-200">{formatMetric(rsi, 2)}</div>
+          <div className="mt-0.5 text-[9px] font-bold text-zinc-600">
+            {rsi === null ? "SEM DADO" : rsi >= 70 ? "SOBRECOMPRA" : rsi <= 30 ? "SOBREVENDA" : "FAIXA NEUTRA"}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+          <div className="text-[9px] uppercase tracking-wide text-zinc-600">ATR (14)</div>
+          <div className="mt-1 text-sm font-black text-orange-200">{formatMetric(atr, 6)}</div>
+          <div className="mt-0.5 text-[9px] font-bold text-zinc-600">VOLATILIDADE ATUAL</div>
+        </div>
+
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+          <div className="text-[9px] uppercase tracking-wide text-zinc-600">Concordância</div>
+          <div className="mt-1 text-sm font-black text-white">{agreementScore.toFixed(1)}%</div>
+          <div className="mt-0.5 truncate text-[9px] font-bold text-zinc-600">{agreementLabel}</div>
+        </div>
+
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+          <div className="text-[9px] uppercase tracking-wide text-zinc-600">Volume</div>
+          <div className="mt-1 truncate text-sm font-black text-emerald-200">
+            {volumeReading ? String(volumeReading).toUpperCase() : "Indisponível"}
+          </div>
+          <div className="mt-0.5 text-[9px] font-bold text-zinc-600">LEITURA DO MOTOR</div>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-xl border border-cyan-400/10 bg-cyan-400/[0.04] p-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[9px] font-black uppercase tracking-[0.14em] text-cyan-300">Contexto operacional</span>
+          <span className="text-[9px] text-zinc-600">SMC {smcBias} • Tendência {trendBias}</span>
+        </div>
+        <p className="mt-2 text-xs leading-5 text-zinc-400">{quickRead}</p>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between border-t border-white/[0.05] pt-3 text-[9px] text-zinc-600">
+        <span>{asset} • {timeframeLabel}</span>
+        <span>
+          {liveUpdatedAt
+            ? `Atualizado ${liveUpdatedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+            : "Aguardando atualização"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function TechnicalLiveActivity({
   asset,
   tf,
@@ -5422,25 +5707,7 @@ const resolvedAssetType =
   resolvedAssetType === "future_br" &&
   ["WIN", "WDO"].includes(String(resolvedAsset).toUpperCase());
 
-  const {
-    data: quantData,
-    loading: quantLoading,
-    error: quantError,
-    refetch: refetchQuant,
-  } = useQuantDashboard({
-    asset: resolvedAsset,
-    assetType: resolvedAssetType,
-    timeframe: tf,
-    token,
-    enabled: !!token,
-    b3Data,
-    analysisData,
-  });
-  
   console.log("[B3 DATA]", b3Data);
-  console.log("[QUANT DATA]", quantData);
-  console.log("[QUANT LOADING]", quantLoading);
-  console.log("[QUANT ERROR]", quantError);
 
   function handleLogout() {
     clearAuth();
@@ -5582,7 +5849,6 @@ const resolvedAssetType =
       setTechnicalLiveError("");
       setTechnicalLiveEnabled(true);
 
-      await refetchQuant();
 
       if (showLoader) {
         setMainTab("Resumo");
@@ -5976,11 +6242,6 @@ const resolvedAssetType =
             </div>
           )}
 
-          {quantError && (
-            <div className="rounded-2xl border border-yellow-900/40 bg-yellow-950/20 p-4 text-yellow-300">
-              {quantError}
-            </div>
-          )}
 
           <div className="grid grid-cols-1 gap-3 items-start">
             <div className="grid grid-cols-1 xl:grid-cols-[300px_360px_minmax(0,1.9fr)] gap-3 items-start">
@@ -5997,13 +6258,16 @@ const resolvedAssetType =
               </div>
 
               
-              {/* DASHBOARD QUANT */}
+              {/* FLUXO DE MERCADO */}
               <div className="hidden xl:block">
-                <QuantDashboardCard
+                <MarketFlowPanel
                   asset={resolvedAsset}
-                  timeframe={tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
-                  data={quantData}
-                  loading={quantLoading}
+                  tf={tf}
+                  analysisData={technicalLiveData ?? analysisData}
+                  liveEnabled={technicalLiveEnabled}
+                  liveLoading={technicalLiveLoading}
+                  liveSeconds={technicalLiveSeconds}
+                  liveUpdatedAt={technicalLiveUpdatedAt}
                 />
               </div>
 
@@ -6037,13 +6301,16 @@ const resolvedAssetType =
               </div>
             </div>
 
-            {/* EM TELAS MENORES, QUANT E SUMMARY FICAM ABAIXO */}
+            {/* EM TELAS MENORES, FLUXO E SUMMARY FICAM ABAIXO */}
             <div className="grid grid-cols-1 gap-4 xl:hidden">
-              <QuantDashboardCard
+              <MarketFlowPanel
                 asset={resolvedAsset}
-                timeframe={tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
-                data={quantData}
-                loading={quantLoading}
+                tf={tf}
+                analysisData={technicalLiveData ?? analysisData}
+                liveEnabled={technicalLiveEnabled}
+                liveLoading={technicalLiveLoading}
+                liveSeconds={technicalLiveSeconds}
+                liveUpdatedAt={technicalLiveUpdatedAt}
               />
 
               <SummaryTab
