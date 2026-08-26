@@ -15,13 +15,17 @@ import {
   ExternalLink,
   CheckCircle2,
   ArrowRight,
+  Download,
+  Lock,
+  FileText,
+  Settings,
+  Sparkles,
 } from "lucide-react";
 import { clearAuth, getStoredToken, getStoredUser } from "../lib/auth";
 import { useB3MarketData } from "../hooks/useB3MarketData";
 import QuantDashboardCard from "../components/dashboard/QuantDashboardCard";
 import { useQuantDashboard } from "../hooks/useQuantDashboard";
 import FloatingCommunityChat from "../components/community/FloatingCommunityChat";
-import RealtimeFuturesDashboard from "../components/realtime-futures";
 
 type AnalysisModules = {
   technical?: number;
@@ -4960,6 +4964,330 @@ function TechnicalOverviewPanel({
   );
 }
 
+
+type PremiumDownloadResource = {
+  id: string;
+  title: string;
+  description: string;
+  platform: string;
+  category: string;
+  fileType: string;
+  downloadUrl: string;
+  accent: "cyan" | "emerald" | "violet";
+};
+
+const PREMIUM_DOWNLOAD_RESOURCES: PremiumDownloadResource[] = [
+  {
+    id: "profit-buy-sell",
+    title: "Indicador Glucks Compra & Venda",
+    description:
+      "Indicador exclusivo para o Profit da Nelogica, com sinalização visual de compra e venda diretamente no gráfico.",
+    platform: "PROFIT / NELOGICA",
+    category: "INDICADOR",
+    fileType: "ZIP",
+    downloadUrl: "/downloads/glucks-compra-venda-profit.zip",
+    accent: "cyan",
+  },
+  {
+    id: "mt5-buy-sell",
+    title: "Indicador Glucks Compra & Venda",
+    description:
+      "Versão preparada para MetaTrader 5, com leitura visual dos sinais para acompanhar o operacional no gráfico.",
+    platform: "METATRADER 5",
+    category: "INDICADOR",
+    fileType: "ZIP",
+    downloadUrl: "/downloads/glucks-compra-venda-mt5.zip",
+    accent: "emerald",
+  },
+  {
+    id: "profit-markings",
+    title: "Marcações Glucks Trader",
+    description:
+      "Arquivo com as marcações e configurações utilizadas pela Glucks Trader para aplicar a estrutura visual no Profit.",
+    platform: "PROFIT / NELOGICA",
+    category: "MARCAÇÕES",
+    fileType: "ZIP",
+    downloadUrl: "/downloads/glucks-marcacoes-profit.zip",
+    accent: "violet",
+  },
+];
+
+function PremiumDownloadsLibrary({
+  user,
+}: {
+  user: ReturnType<typeof getStoredUser>;
+}) {
+  const navigate = useNavigate();
+  const [lockedResource, setLockedResource] =
+    useState<PremiumDownloadResource | null>(null);
+
+  const plan = String(user?.plan ?? "").trim().toLowerCase();
+  const isTrial = plan === "trial";
+  const hasDownloadAccess = Boolean(user) && !isTrial;
+
+  const accentStyles: Record<PremiumDownloadResource["accent"], string> = {
+    cyan: "border-cyan-400/20 bg-cyan-400/[0.06] text-cyan-300",
+    emerald:
+      "border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-300",
+    violet:
+      "border-violet-400/20 bg-violet-400/[0.06] text-violet-300",
+  };
+
+  function handleResourceClick(resource: PremiumDownloadResource) {
+    if (!hasDownloadAccess) {
+      setLockedResource(resource);
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.href = resource.downloadUrl;
+    link.download = "";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  return (
+    <>
+      <section className="overflow-hidden rounded-3xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.10),transparent_32%),linear-gradient(180deg,rgba(8,13,20,0.98),rgba(2,5,10,0.99))] shadow-2xl shadow-cyan-500/[0.05]">
+        <div className="flex flex-col gap-5 border-b border-white/[0.06] px-5 py-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10 shadow-[0_0_28px_rgba(34,211,238,0.08)]">
+              <Download className="h-6 w-6 text-cyan-300" />
+            </div>
+
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-300">
+                  Biblioteca Premium
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-400">
+                  3 recursos
+                </span>
+              </div>
+
+              <h3 className="mt-2 text-xl font-black text-white md:text-2xl">
+                Ferramentas exclusivas Glucks Trader
+              </h3>
+
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">
+                Leve indicadores e configurações da Glucks Trader para o seu operacional no Profit e no MetaTrader 5.
+              </p>
+            </div>
+          </div>
+
+          <div
+            className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] ${
+              isTrial
+                ? "border-amber-400/20 bg-amber-400/[0.07] text-amber-300"
+                : "border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-300"
+            }`}
+          >
+            {isTrial ? (
+              <>
+                <Lock className="h-3.5 w-3.5" />
+                Downloads exclusivos para assinantes
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Downloads liberados
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 p-5 lg:grid-cols-3">
+          {PREMIUM_DOWNLOAD_RESOURCES.map((resource) => (
+            <article
+              key={resource.id}
+              className="group relative flex min-h-[290px] flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-black/35 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-cyan-400/20 hover:bg-white/[0.035]"
+            >
+              <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-cyan-400/[0.035] blur-2xl transition group-hover:bg-cyan-400/[0.07]" />
+
+              <div className="relative flex items-start justify-between gap-3">
+                <div
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl border ${accentStyles[resource.accent]}`}
+                >
+                  {resource.category === "MARCAÇÕES" ? (
+                    <Settings className="h-5 w-5" />
+                  ) : (
+                    <FileText className="h-5 w-5" />
+                  )}
+                </div>
+
+                {isTrial && (
+                  <div className="flex items-center gap-1.5 rounded-full border border-amber-400/15 bg-amber-400/[0.06] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-300/90">
+                    <Lock className="h-3 w-3" />
+                    Premium
+                  </div>
+                )}
+              </div>
+
+              <div className="relative mt-4 flex flex-wrap gap-2">
+                <span className="rounded-full border border-cyan-400/15 bg-cyan-400/[0.06] px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-cyan-300">
+                  {resource.platform}
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                  {resource.category}
+                </span>
+              </div>
+
+              <h4 className="relative mt-4 text-base font-black leading-6 text-white">
+                {resource.title}
+              </h4>
+
+              <p className="relative mt-2 flex-1 text-sm leading-6 text-zinc-400">
+                {resource.description}
+              </p>
+
+              <div className="relative mt-4 flex items-center justify-between border-t border-white/[0.06] pt-4">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-600">
+                  Formato {resource.fileType}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => handleResourceClick(resource)}
+                  className={`inline-flex min-h-10 items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-black transition ${
+                    isTrial
+                      ? "border-amber-400/20 bg-amber-400/[0.07] text-amber-200 hover:border-amber-300/35 hover:bg-amber-400/[0.12]"
+                      : "border-cyan-400/20 bg-cyan-400/10 text-cyan-200 hover:border-cyan-300/35 hover:bg-cyan-400/15"
+                  }`}
+                >
+                  {isTrial ? (
+                    <Lock className="h-3.5 w-3.5" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                  {isTrial ? "Baixar agora" : "Baixar"}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {isTrial && (
+          <div className="mx-5 mb-5 flex flex-col gap-4 rounded-2xl border border-amber-400/15 bg-gradient-to-r from-amber-400/[0.06] via-white/[0.025] to-cyan-400/[0.05] p-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="mt-0.5 rounded-xl border border-amber-400/20 bg-amber-400/10 p-2">
+                <Sparkles className="h-4 w-4 text-amber-300" />
+              </div>
+              <div>
+                <div className="text-sm font-black text-white">
+                  Seu Trial permite testar as análises. A biblioteca é um benefício adicional dos planos ativos.
+                </div>
+                <div className="mt-1 text-xs leading-5 text-zinc-500">
+                  Desbloqueie os três recursos acima e os próximos materiais adicionados à biblioteca.
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigate("/premium?plan=trimestral")}
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-black text-black transition hover:bg-emerald-300"
+            >
+              Desbloquear biblioteca
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+      </section>
+
+      {lockedResource && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="premium-download-title"
+        >
+          <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-cyan-400/20 bg-[linear-gradient(180deg,rgba(8,17,25,0.99),rgba(3,6,10,0.99))] p-6 shadow-[0_30px_120px_rgba(0,0,0,0.65)]">
+            <button
+              type="button"
+              onClick={() => setLockedResource(null)}
+              aria-label="Fechar"
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-zinc-400 transition hover:bg-white/[0.08] hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-400/20 bg-amber-400/10">
+              <Lock className="h-5 w-5 text-amber-300" />
+            </div>
+
+            <div className="mt-5 text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
+              Biblioteca Glucks Trader
+            </div>
+
+            <h3
+              id="premium-download-title"
+              className="mt-2 pr-10 text-2xl font-black leading-tight text-white"
+            >
+              Este download é exclusivo para assinantes
+            </h3>
+
+            <p className="mt-3 text-sm leading-6 text-zinc-400">
+              Você já pode testar o motor de análise durante o Trial. Com um plano ativo, também libera os indicadores, marcações e arquivos da Biblioteca Premium.
+            </p>
+
+            <div className="mt-5 rounded-2xl border border-white/[0.08] bg-black/30 p-4">
+              <div className="text-xs font-bold uppercase tracking-wide text-zinc-500">
+                Você tentou baixar
+              </div>
+              <div className="mt-2 font-black text-white">
+                {lockedResource.title}
+              </div>
+              <div className="mt-1 text-xs text-cyan-300">
+                {lockedResource.platform}
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-2 text-sm text-zinc-300 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-3">
+                <div className="text-[10px] uppercase tracking-wide text-zinc-600">
+                  Trial atual
+                </div>
+                <div className="mt-1 font-bold text-zinc-300">
+                  Análises da plataforma
+                </div>
+              </div>
+              <div className="rounded-xl border border-emerald-400/15 bg-emerald-400/[0.05] p-3">
+                <div className="text-[10px] uppercase tracking-wide text-emerald-400/70">
+                  Plano ativo
+                </div>
+                <div className="mt-1 font-bold text-emerald-200">
+                  Análises + Biblioteca
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setLockedResource(null);
+                navigate("/premium?plan=trimestral");
+              }}
+              className="mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-5 py-3 text-sm font-black text-black transition hover:bg-emerald-300"
+            >
+              Ver planos e desbloquear
+              <ArrowRight className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLockedResource(null)}
+              className="mt-2 w-full rounded-xl px-4 py-2.5 text-xs font-semibold text-zinc-500 transition hover:text-zinc-300"
+            >
+              Continuar no Trial
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const token = getStoredToken();
@@ -5750,7 +6078,7 @@ const resolvedAssetType =
                 analysisData={analysisData}
               />
 
-              <RealtimeFuturesDashboard />
+              <PremiumDownloadsLibrary user={user} />
             </div>
           )}
 
