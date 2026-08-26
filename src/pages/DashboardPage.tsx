@@ -4717,6 +4717,22 @@ function TechnicalOverviewPanel({
     )
   );
 
+  const rawDecisionState = String(
+    aiBrain?.decision_state ?? ""
+  ).toUpperCase();
+
+  const decisionState =
+    rawDecisionState ||
+    (entryAllowed
+      ? "READY"
+      : qualityScore < 50
+      ? "BLOCKED"
+      : "WAIT_CONFIRMATION");
+
+  const isReady = decisionState === "READY" || entryAllowed;
+  const isWaitingConfirmation = decisionState === "WAIT_CONFIRMATION";
+  const isBlocked = decisionState === "BLOCKED";
+
   const qualityLabel = String(
     aiBrain?.trade_quality_label ??
       (qualityScore >= 75
@@ -4765,11 +4781,16 @@ function TechnicalOverviewPanel({
       ? "bg-red-400/10 text-red-300 border border-red-400/20"
       : "bg-yellow-400/10 text-yellow-300 border border-yellow-400/20";
 
-  const decisionHeadline = entryAllowed
-    ? `${aiSignal} validada — entrada liberada`
-    : aiSignal === "NEUTRO"
-    ? "Mercado sem vantagem clara — aguardar"
-    : `${aiSignal} identificada — entrada bloqueada`;
+  const decisionHeadline =
+    aiSignal === "NEUTRO"
+      ? "Mercado sem vantagem clara — aguardar"
+      : isReady
+      ? `${aiSignal} validada — monitorar entrada`
+      : isWaitingConfirmation
+      ? agreementScore >= 75
+        ? `${aiSignal} alinhada — aguardando gatilho`
+        : `${aiSignal} identificada — aguardando confirmação`
+      : `${aiSignal} identificada — cenário bloqueado`;
 
   const decisionNarrative = (() => {
     const technicalVote = String(moduleVotes.technical ?? "").toUpperCase();
@@ -4783,17 +4804,31 @@ function TechnicalOverviewPanel({
       return `A IA encontrou conflito entre os módulos de ${asset}. O sinal ${aiSignal.toLowerCase()} existe, mas a divergência entre leituras reduz a qualidade do cenário. A decisão permanece ${aiAction.toLowerCase()} até que o mercado apresente alinhamento mais claro.`;
     }
 
-    if (!entryAllowed && aiSignal !== "NEUTRO") {
+    if (isBlocked && aiSignal !== "NEUTRO") {
       const alignmentText =
         votes.length > 0
           ? `${alignedVotes} de ${votes.length} módulos principais acompanham o sinal`
           : "os módulos ainda não apresentam alinhamento suficiente";
 
-      return `A IA detectou viés de ${aiSignal.toLowerCase()} em ${asset}, porém manteve a entrada bloqueada. ${alignmentText}. A qualidade está ${qualityLabel.toLowerCase()} e a recomendação é ${aiAction.toLowerCase()} antes de assumir exposição.`;
+      return `A IA detectou viés de ${aiSignal.toLowerCase()} em ${asset}, mas o cenário está bloqueado neste momento. ${alignmentText}. A qualidade está ${qualityLabel.toLowerCase()} e ainda não há condição operacional suficiente para considerar a entrada.`;
     }
 
-    if (entryAllowed) {
-      return `A IA validou o cenário de ${aiSignal.toLowerCase()} em ${asset}. O alinhamento entre os módulos atingiu nível suficiente para liberar a entrada, com qualidade ${qualityLabel.toLowerCase()} e concordância ${agreementLabel.toLowerCase()}. Ainda assim, a execução deve respeitar entrada, stop e alvos calculados.`;
+    if (isWaitingConfirmation && aiSignal !== "NEUTRO") {
+      const alignmentText =
+        votes.length > 0
+          ? `${alignedVotes} de ${votes.length} módulos principais acompanham o sinal`
+          : "os módulos ainda estão consolidando o direcionamento";
+
+      const confirmationText =
+        agreementScore >= 75
+          ? "O viés está alinhado, mas a IA aguarda apenas o gatilho operacional para melhorar o ponto de execução."
+          : "O sinal existe, porém ainda precisa de confirmação adicional entre as leituras antes da execução.";
+
+      return `A IA detectou viés de ${aiSignal.toLowerCase()} em ${asset}. ${alignmentText}. A qualidade está ${qualityLabel.toLowerCase()}. ${confirmationText}`;
+    }
+
+    if (isReady) {
+      return `A IA validou o cenário de ${aiSignal.toLowerCase()} em ${asset}. O alinhamento entre os módulos atingiu nível suficiente para monitorar a entrada, com qualidade ${qualityLabel.toLowerCase()} e concordância ${agreementLabel.toLowerCase()}. A execução deve respeitar entrada, stop e alvos calculados.`;
     }
 
     return `A IA não encontrou vantagem direcional suficiente em ${asset}. O cenário permanece equilibrado e a orientação é aguardar uma confirmação mais clara antes de qualquer entrada.`;
@@ -4950,10 +4985,20 @@ function TechnicalOverviewPanel({
                 </div>
                 <div
                   className={`mt-1 text-sm font-black ${
-                    entryAllowed ? "text-emerald-300" : "text-amber-300"
+                    isReady
+                      ? "text-emerald-300"
+                      : isBlocked
+                      ? "text-red-300"
+                      : "text-amber-300"
                   }`}
                 >
-                  {entryAllowed ? aiAction : `${aiAction} • BLOQUEADA`}
+                  {isReady
+                    ? aiAction
+                    : isBlocked
+                    ? "CENÁRIO BLOQUEADO"
+                    : aiSignal === "NEUTRO"
+                    ? "AGUARDAR"
+                    : "AGUARDAR GATILHO"}
                 </div>
               </div>
             </div>
@@ -5814,6 +5859,8 @@ const resolvedAssetType =
           <h2 className="text-2xl font-bold text-white">
             Terminal de Inteligência de Mercado
           </h2>
+
+
 
           <div className="flex items-center gap-3 flex-wrap">
             {user && (
