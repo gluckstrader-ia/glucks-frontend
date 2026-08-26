@@ -6,6 +6,8 @@ import type {
 } from "../components/dashboard/QuantDashboardCard";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const API_URL_FUTUROS_BR =
+  import.meta.env.VITE_API_URL_FUTUROS_BR || API_URL;
 
 type B3Data = {
   symbol?: string;
@@ -150,11 +152,20 @@ export function useQuantDashboard(params: UseQuantDashboardParams) {
       return;
     }
 
+    const normalizedAsset = String(asset).trim().toUpperCase();
+    const isLocalFutureBr =
+      assetType === "future_br" &&
+      (normalizedAsset === "WIN" || normalizedAsset === "WDO");
+
+    // Regra especial e isolada para WIN/WDO.
+    // Nenhum outro ativo muda de backend.
+    const quantApiUrl = isLocalFutureBr ? API_URL_FUTUROS_BR : API_URL;
+
     try {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/quant/live`, {
+      const response = await fetch(`${quantApiUrl}/quant/live`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

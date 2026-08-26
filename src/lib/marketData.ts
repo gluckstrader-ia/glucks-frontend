@@ -1,4 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const API_URL_FUTUROS_BR =
+  import.meta.env.VITE_API_URL_FUTUROS_BR || API_URL;
 
 export type B3MarketData = {
   symbol: string;
@@ -97,9 +99,14 @@ function normalizeB3MarketData(symbol: "WIN" | "WDO", raw: any): B3MarketData {
 export async function fetchB3MarketData(
   symbol: "WIN" | "WDO"
 ): Promise<B3MarketData> {
-  const response = await fetch(`${API_URL}/internal/market-data/${symbol}`, {
-    credentials: "include",
-  });
+  // WIN e WDO possuem uma infraestrutura própria (Nelogica/bridge local/Cloudflare).
+  // Todos os demais ativos continuam usando VITE_API_URL normalmente.
+  const response = await fetch(
+    `${API_URL_FUTUROS_BR}/internal/market-data/${symbol}`,
+    {
+      credentials: "include",
+    }
+  );
 
   if (!response.ok) {
     let detail = `Falha ao buscar market data de ${symbol}`;
