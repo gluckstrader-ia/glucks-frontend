@@ -355,12 +355,44 @@ const API_URL_FUTUROS_BR =
   import.meta.env.VITE_API_URL_FUTUROS_BR || API_URL;
 
 const AI_LOADING_STEPS = [
-  "Lendo estrutura do mercado...",
-  "Mapeando fluxo e liquidez...",
-  "Calculando confluências técnicas...",
-  "Validando tendência e timing...",
-  "Refinando o sinal final da IA...",
+  {
+    from: 0,
+    title: "Lendo estrutura do mercado...",
+    detail: "Identificando direção, contexto e comportamento recente do preço.",
+  },
+  {
+    from: 16,
+    title: "Analisando indicadores técnicos...",
+    detail: "Confrontando momentum, força, volatilidade e sinais de compra e venda.",
+  },
+  {
+    from: 32,
+    title: "Validando médias móveis...",
+    detail: "Comparando tendência curta, intermediária e longa para medir alinhamento.",
+  },
+  {
+    from: 48,
+    title: "Comparando Técnico • SMC • WE-GD...",
+    detail: "Procurando concordâncias, divergências e conflitos entre os módulos principais.",
+  },
+  {
+    from: 64,
+    title: "Medindo confluência do cenário...",
+    detail: "Avaliando se os sinais possuem força suficiente para sustentar uma operação.",
+  },
+  {
+    from: 78,
+    title: "Calculando qualidade da entrada...",
+    detail: "Pesando confiança, risco, timing e condições que podem bloquear a execução.",
+  },
+  {
+    from: 92,
+    title: "Formando decisão estratégica...",
+    detail: "Transformando os dados em uma ação objetiva: entrar, aguardar ou bloquear.",
+  },
 ];
+
+const MIN_AI_THINKING_MS = 2600;
 
 const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
   Índices: [
@@ -4053,68 +4085,164 @@ function AiThinkingOverlay({
   asset: string;
   timeframe: string;
 }) {
-  const stepIndex = Math.min(
-    AI_LOADING_STEPS.length - 1,
-    Math.floor((progress / 100) * AI_LOADING_STEPS.length)
-  );
+  const safeProgress = Math.max(0, Math.min(100, progress));
+  const displayProgress = Math.round(safeProgress);
 
-  const currentStep = AI_LOADING_STEPS[stepIndex] || "Processando análise...";
+  const stepIndex = AI_LOADING_STEPS.reduce((activeIndex, step, index) => {
+    return safeProgress >= step.from ? index : activeIndex;
+  }, 0);
+
+  const currentStep = AI_LOADING_STEPS[stepIndex] ?? AI_LOADING_STEPS[0];
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center px-4">
-      <div className="w-full max-w-2xl rounded-[28px] border border-emerald-500/20 bg-[linear-gradient(180deg,rgba(3,7,13,0.98),rgba(6,16,12,0.98))] p-6 md:p-8 shadow-[0_0_60px_rgba(16,185,129,0.12)]">
-        <div className="flex items-start gap-4">
-          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10">
-            <div className="h-7 w-7 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
-            <div className="absolute inset-0 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.18)]" />
-          </div>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 px-4 backdrop-blur-md">
+      <div
+        className="w-full max-w-3xl overflow-hidden rounded-[30px] border border-cyan-500/20 bg-[radial-gradient(circle_at_top,rgba(8,145,178,0.10),transparent_36%),linear-gradient(180deg,rgba(3,7,13,0.99),rgba(2,8,12,0.99))] shadow-[0_0_70px_rgba(6,182,212,0.12)]"
+        role="status"
+        aria-live="polite"
+        aria-label={`IA analisando ${asset}`}
+      >
+        <div className="border-b border-zinc-800/90 px-5 py-5 md:px-7 md:py-6">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center">
+                <div className="absolute inset-0 rounded-full border border-cyan-400/20" />
+                <div className="absolute inset-[7px] animate-spin rounded-full border-2 border-transparent border-r-cyan-300/80 border-t-emerald-300/80 [animation-duration:2.8s]" />
+                <div className="absolute inset-[16px] animate-pulse rounded-full border border-cyan-400/30 bg-cyan-400/5 shadow-[0_0_25px_rgba(34,211,238,0.16)]" />
+                <BrainCircuit className="relative z-10 h-8 w-8 text-cyan-200" />
 
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <h3 className="text-2xl md:text-3xl font-bold text-white">
-                IA em processamento
-              </h3>
-              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
-                analisando {asset}
-              </span>
+                <span className="absolute left-[4px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.7)] animate-pulse" />
+                <span className="absolute right-[8px] top-[10px] h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.7)] animate-ping" />
+                <span className="absolute bottom-[7px] right-[15px] h-2 w-2 rounded-full bg-cyan-200 shadow-[0_0_12px_rgba(165,243,252,0.65)] animate-pulse" />
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-cyan-300">
+                    IA estratégica ativa
+                  </span>
+                  <span className="rounded-full border border-zinc-700 bg-zinc-900/80 px-3 py-1 text-[11px] font-semibold text-zinc-300">
+                    {asset} • {timeframe === "5m" ? "5 Minutos" : timeframe}
+                  </span>
+                </div>
+
+                <h3 className="mt-3 text-2xl font-black text-white md:text-3xl">
+                  IA analisando o mercado
+                </h3>
+                <p className="mt-1.5 max-w-xl text-sm leading-6 text-zinc-400 md:text-base">
+                  A Gluck&apos;s Trader IA está cruzando os módulos antes de liberar a decisão estratégica.
+                </p>
+              </div>
             </div>
 
-            <p className="mt-2 text-zinc-400 text-sm md:text-base">
-              A Gluck&apos;s Trader IA está cruzando contexto, tendência,
-              confluência, Smart Money e timing para montar a análise.
-            </p>
+            <div className="shrink-0 text-left md:text-right">
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">
+                Processamento
+              </div>
+              <div className="mt-1 text-3xl font-black tabular-nums text-cyan-300">
+                {displayProgress}%
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-sm text-zinc-400">Etapa atual</div>
-              <div className="mt-1 text-lg font-semibold text-emerald-300">
-                {currentStep}
+        <div className="px-5 py-5 md:px-7 md:py-6">
+          <div className="rounded-2xl border border-cyan-950/80 bg-black/35 p-4 md:p-5">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-500/25 bg-cyan-500/10">
+                <Brain className="h-5 w-5 text-cyan-300 animate-pulse" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-500">
+                  Raciocínio atual
+                </div>
+                <div className="mt-1 text-base font-black text-cyan-200 md:text-lg">
+                  {currentStep.title}
+                </div>
+                <p className="mt-1 text-sm leading-6 text-zinc-400">
+                  {currentStep.detail}
+                </p>
               </div>
             </div>
 
-            <div className="text-right">
-              <div className="text-sm text-zinc-400">Timeframe</div>
-              <div className="mt-1 text-lg font-semibold text-white">
-                {timeframe === "5m" ? "5 Minutos" : timeframe}
+            <div className="mt-5 h-2.5 w-full overflow-hidden rounded-full bg-zinc-900 ring-1 ring-inset ring-zinc-800">
+              <div
+                className="relative h-full rounded-full bg-gradient-to-r from-cyan-500 via-emerald-400 to-cyan-300 transition-[width] duration-500 ease-out"
+                style={{ width: `${Math.max(safeProgress, 4)}%` }}
+              >
+                <div className="absolute inset-y-0 right-0 w-10 bg-white/20 blur-sm" />
               </div>
             </div>
           </div>
 
-          <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-zinc-800">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-green-400 to-cyan-400 transition-all duration-500"
-              style={{ width: `${Math.max(progress, 8)}%` }}
-            />
+          <div className="mt-4 grid gap-2 md:grid-cols-2">
+            {AI_LOADING_STEPS.map((step, index) => {
+              const completed = safeProgress >= (AI_LOADING_STEPS[index + 1]?.from ?? 101);
+              const active = index === stepIndex && !completed;
+
+              return (
+                <div
+                  key={step.title}
+                  className={`flex min-w-0 items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-300 ${
+                    active
+                      ? "border-cyan-500/35 bg-cyan-500/10"
+                      : completed
+                      ? "border-emerald-500/15 bg-emerald-500/[0.05]"
+                      : "border-zinc-800/80 bg-zinc-950/50"
+                  }`}
+                >
+                  <div
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
+                      completed
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                        : active
+                        ? "border-cyan-500/35 bg-cyan-500/10 text-cyan-300"
+                        : "border-zinc-800 bg-black text-zinc-600"
+                    }`}
+                  >
+                    {completed ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : active ? (
+                      <ArrowRight className="h-4 w-4 animate-pulse" />
+                    ) : (
+                      <span className="text-[10px] font-black">{index + 1}</span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 truncate text-xs font-semibold md:text-sm">
+                    <span
+                      className={
+                        completed
+                          ? "text-emerald-200/80"
+                          : active
+                          ? "text-cyan-100"
+                          : "text-zinc-600"
+                      }
+                    >
+                      {step.title.replace("...", "")}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          <div className="mt-3 flex items-center justify-between text-sm">
-            <span className="text-zinc-500">
-              Processamento neural em andamento...
-            </span>
-            <span className="font-bold text-emerald-300">{progress}%</span>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-950/70 px-4 py-3">
+            <div className="flex flex-wrap gap-2">
+              {["Técnico", "SMC", "WE-GD", "Probabilístico", "Timing"].map((module) => (
+                <span
+                  key={module}
+                  className="rounded-full border border-zinc-800 bg-black/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-400"
+                >
+                  {module}
+                </span>
+              ))}
+            </div>
+
+            <div className="text-xs text-zinc-500">
+              Aguardando decisão consolidada da IA
+            </div>
           </div>
         </div>
       </div>
@@ -4701,6 +4829,7 @@ export default function DashboardPage() {
   const [gaugeAnimationKey, setGaugeAnimationKey] = useState(0);
   const [apiError, setApiError] = useState("");
   const analysisInFlightRef = useRef(false);
+  const analysisStartedAtRef = useRef(0);
 
   const selectedAsset = asset.toUpperCase();
   const shouldUseB3Feed =
@@ -4787,12 +4916,14 @@ const resolvedAssetType =
     if (analysisInFlightRef.current) return;
 
     analysisInFlightRef.current = true;
+    let analysisSucceeded = false;
 
     try {
       setApiError("");
 
       if (showLoader) {
-        setProgress(10);
+        analysisStartedAtRef.current = performance.now();
+        setProgress(6);
         setLoading(true);
       }
 
@@ -4810,7 +4941,7 @@ const resolvedAssetType =
       });
 
       if (showLoader) {
-        setProgress(60);
+        setProgress((current) => Math.max(current, 36));
       }
 
       if (!response.ok) {
@@ -4836,31 +4967,47 @@ const resolvedAssetType =
       const data = await response.json();
 
       if (showLoader) {
-        setProgress(90);
+        setProgress((current) => Math.max(current, 64));
       }
+
       setAnalysisData(data);
       await refetchQuant();
 
       if (showLoader) {
         setMainTab("Resumo");
-        setProgress(100);
+        setProgress((current) => Math.max(current, 88));
       }
+
+      analysisSucceeded = true;
     } catch (error: any) {
       setApiError(error.message || "Erro desconhecido");
     } finally {
       analysisInFlightRef.current = false;
 
       if (showLoader) {
-        setTimeout(() => {
-          setLoading(false);
-          setProgress(0);
+        const elapsed = performance.now() - analysisStartedAtRef.current;
+        const minimumVisibleTime = analysisSucceeded ? MIN_AI_THINKING_MS : 700;
+        const remaining = Math.max(0, minimumVisibleTime - elapsed);
 
+        if (remaining > 0) {
+          await new Promise((resolve) => window.setTimeout(resolve, remaining));
+        }
+
+        if (analysisSucceeded) {
+          setProgress(100);
+          await new Promise((resolve) => window.setTimeout(resolve, 360));
+        }
+
+        setLoading(false);
+        setProgress(0);
+
+        if (analysisSucceeded) {
           window.requestAnimationFrame(() => {
             window.requestAnimationFrame(() => {
               setGaugeAnimationKey((current) => current + 1);
             });
           });
-        }, 300);
+        }
       }
     }
   }
@@ -4874,14 +5021,18 @@ const resolvedAssetType =
   useEffect(() => {
     if (!loading) return;
 
-    const interval = setInterval(() => {
+    const interval = window.setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 90) return prev;
-        return prev + 5;
-      });
-    }, 250);
+        if (prev >= 88) return prev;
 
-    return () => clearInterval(interval);
+        const increment =
+          prev < 24 ? 4 : prev < 52 ? 3 : prev < 74 ? 2 : 1;
+
+        return Math.min(88, prev + increment);
+      });
+    }, 180);
+
+    return () => window.clearInterval(interval);
   }, [loading]);
 
 
