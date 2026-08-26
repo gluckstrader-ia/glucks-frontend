@@ -394,8 +394,8 @@ const AI_LOADING_STEPS = [
 
 const MIN_AI_THINKING_MS = 2600;
 
-const LIVE_PANEL_REFRESH_SECONDS = 15;
-const LIVE_PANEL_MIN_PROCESS_MS = 1400;
+const LIVE_PANEL_REFRESH_SECONDS = 30;
+const LIVE_PANEL_MIN_PROCESS_MS = 2600;
 
 const LIVE_PANEL_STEPS = [
   "Lendo preço e estrutura atual...",
@@ -4453,78 +4453,96 @@ function GaugeMeter({
   );
 }
 
-function TechnicalLiveProcessing({
+function TechnicalLiveActivity({
   asset,
   tf,
+  loading,
   progress,
   messageIndex,
+  seconds,
+  updatedAt,
 }: {
   asset: string;
   tf: string;
+  loading: boolean;
   progress: number;
   messageIndex: number;
+  seconds: number;
+  updatedAt: Date | null;
 }) {
   const safeProgress = Math.max(0, Math.min(100, progress));
   const message =
     LIVE_PANEL_STEPS[messageIndex % LIVE_PANEL_STEPS.length] ??
     LIVE_PANEL_STEPS[0];
 
+  const timeframeLabel =
+    tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf;
+
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center overflow-hidden rounded-xl bg-black/88 px-6 backdrop-blur-[3px]">
-      <div className="pointer-events-none absolute inset-0 opacity-60">
-        <div className="absolute left-[12%] top-[18%] h-2 w-2 animate-pulse rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.8)]" />
-        <div className="absolute right-[15%] top-[22%] h-2.5 w-2.5 animate-ping rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
-        <div className="absolute bottom-[17%] left-[20%] h-2 w-2 animate-ping rounded-full bg-cyan-200 shadow-[0_0_18px_rgba(165,243,252,0.8)] [animation-delay:350ms]" />
-        <div className="absolute bottom-[22%] right-[18%] h-2 w-2 animate-pulse rounded-full bg-emerald-200 shadow-[0_0_18px_rgba(167,243,208,0.8)]" />
-      </div>
+    <div className="relative z-20 mb-3 w-full xl:absolute xl:right-4 xl:top-4 xl:mb-0 xl:w-[292px]">
+      <div className="overflow-hidden rounded-xl border border-cyan-400/15 bg-black/70 px-3 py-2.5 shadow-lg shadow-cyan-500/5 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center">
+            <div className="absolute inset-0 rounded-full border border-cyan-300/20" />
+            <div
+              className={`absolute inset-[3px] rounded-full border border-transparent border-r-cyan-300/80 border-t-emerald-300/70 ${
+                loading ? "animate-spin" : "animate-[spin_6s_linear_infinite]"
+              }`}
+            />
+            <div className="absolute inset-[8px] animate-pulse rounded-full bg-cyan-400/[0.08] shadow-[0_0_18px_rgba(34,211,238,0.12)]" />
+            <BrainCircuit className="relative z-10 h-5 w-5 text-cyan-200" />
+            <span className="absolute -right-0.5 top-1 h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]">
+              <span className="absolute inset-0 animate-ping rounded-full bg-emerald-300 opacity-70" />
+            </span>
+          </div>
 
-      <div className="relative w-full max-w-lg text-center">
-        <div className="relative mx-auto flex h-32 w-32 items-center justify-center">
-          <div className="absolute inset-0 rounded-full border border-cyan-400/15" />
-          <div className="absolute inset-[7px] animate-spin rounded-full border-2 border-transparent border-r-cyan-300/90 border-t-emerald-300/80 [animation-duration:2.5s]" />
-          <div className="absolute inset-[20px] animate-[spin_3.4s_linear_infinite_reverse] rounded-full border border-dashed border-cyan-300/40" />
-          <div className="absolute inset-[33px] animate-pulse rounded-full border border-cyan-300/30 bg-cyan-400/[0.07] shadow-[0_0_50px_rgba(34,211,238,0.15)]" />
-          <BrainCircuit className="relative z-10 h-11 w-11 text-cyan-200 drop-shadow-[0_0_14px_rgba(103,232,249,0.65)]" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-300" />
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">
+                {loading ? "IA PENSANDO" : "IA AO VIVO"}
+              </span>
+            </div>
 
-          <span className="absolute left-[9px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 animate-pulse rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.8)]" />
-          <span className="absolute right-[14px] top-[18px] h-2 w-2 animate-ping rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.8)]" />
-          <span className="absolute bottom-[12px] right-[25px] h-2 w-2 animate-pulse rounded-full bg-cyan-100 shadow-[0_0_14px_rgba(207,250,254,0.8)]" />
-        </div>
-
-        <div className="mt-4 flex items-center justify-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-300" />
-          </span>
-          <span className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-300">
-            IA reprocessando ao vivo
-          </span>
-        </div>
-
-        <h4 className="mt-3 text-xl font-black text-white">
-          {asset} • {tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
-        </h4>
-
-        <p className="mt-3 min-h-[24px] text-sm font-semibold text-cyan-200">
-          {message}
-        </p>
-
-        <p className="mt-1 text-xs leading-5 text-zinc-500">
-          O painel técnico continua monitorando o mercado sem alterar os demais módulos do dashboard.
-        </p>
-
-        <div className="mx-auto mt-5 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-zinc-900 ring-1 ring-inset ring-zinc-800">
-          <div
-            className="relative h-full rounded-full bg-gradient-to-r from-cyan-500 via-emerald-400 to-cyan-300 transition-[width] duration-300 ease-out"
-            style={{ width: `${Math.max(6, safeProgress)}%` }}
-          >
-            <div className="absolute inset-y-0 right-0 w-8 bg-white/25 blur-sm" />
+            <p className="mt-1 truncate text-[11px] font-semibold text-cyan-100/90">
+              {loading ? message : `Monitorando ${asset} • ${timeframeLabel}`}
+            </p>
           </div>
         </div>
 
-        <div className="mt-2 text-[11px] font-bold tabular-nums text-zinc-500">
-          {Math.round(safeProgress)}% processado
-        </div>
+        {loading ? (
+          <>
+            <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-zinc-900 ring-1 ring-inset ring-zinc-800">
+              <div
+                className="relative h-full rounded-full bg-gradient-to-r from-cyan-500 via-emerald-400 to-cyan-300 transition-[width] duration-300 ease-out"
+                style={{ width: `${Math.max(8, safeProgress)}%` }}
+              >
+                <div className="absolute inset-y-0 right-0 w-6 bg-white/20 blur-sm" />
+              </div>
+            </div>
+
+            <div className="mt-1.5 flex items-center justify-between gap-2 text-[9px] font-semibold tabular-nums text-zinc-500">
+              <span>Reprocessando em segundo plano</span>
+              <span>{Math.round(safeProgress)}%</span>
+            </div>
+          </>
+        ) : (
+          <div className="mt-2 flex items-center justify-between gap-2 border-t border-white/[0.05] pt-2 text-[9px] font-semibold tabular-nums text-zinc-500">
+            <span>Próxima leitura em {Math.max(0, seconds)}s</span>
+            <span>
+              {updatedAt
+                ? `Atualizado ${updatedAt.toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}`
+                : "Monitor ativo"}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -4778,44 +4796,18 @@ function TechnicalOverviewPanel({
   })();
 
   return (
-    <div className="relative h-[620px] overflow-hidden rounded-xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-3 shadow-2xl shadow-cyan-500/10">
-      {liveLoading && (
-        <TechnicalLiveProcessing
+    <div className="relative min-h-[620px] rounded-xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-4 shadow-2xl shadow-cyan-500/10">
+      {liveEnabled && (
+        <TechnicalLiveActivity
           asset={asset}
           tf={tf}
+          loading={liveLoading}
           progress={liveProgress}
           messageIndex={liveMessageIndex}
+          seconds={liveSeconds}
+          updatedAt={liveUpdatedAt}
         />
       )}
-
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/[0.05] bg-black/25 px-3 py-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className={`relative flex h-2.5 w-2.5 shrink-0 ${liveEnabled ? "" : "opacity-40"}`}>
-            {liveEnabled && (
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
-            )}
-            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${liveEnabled ? "bg-emerald-300" : "bg-zinc-600"}`} />
-          </span>
-
-          <span className={`text-[10px] font-black uppercase tracking-[0.18em] ${liveEnabled ? "text-emerald-300" : "text-zinc-500"}`}>
-            {liveEnabled ? "IA AO VIVO" : "IA aguardando primeira análise"}
-          </span>
-
-          {liveEnabled && liveInsight && (
-            <span className="hidden truncate text-[11px] text-zinc-500 md:inline">
-              • {liveInsight}
-            </span>
-          )}
-        </div>
-
-        <div className="text-[10px] font-semibold tabular-nums text-zinc-500">
-          {liveEnabled
-            ? liveLoading
-              ? "Reprocessando agora"
-              : `Nova leitura em ${Math.max(0, liveSeconds)}s${liveUpdatedAt ? ` • ${liveUpdatedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : ""}`
-            : "Modo vivo inicia após Gerar Análise"}
-        </div>
-      </div>
 
       {liveError && (
         <div className="mb-2 rounded-lg border border-amber-400/15 bg-amber-400/[0.06] px-3 py-2 text-[11px] text-amber-200/80">
@@ -4823,7 +4815,7 @@ function TechnicalOverviewPanel({
         </div>
       )}
 
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+      <div className={`mb-3 flex flex-wrap items-start justify-between gap-2 ${liveEnabled ? "xl:pr-[310px]" : ""}`}>
         <div>
           <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
             PAINEL TÉCNICO INTELIGENTE IA
@@ -4844,6 +4836,13 @@ function TechnicalOverviewPanel({
           </p>
         </div>
       </div>
+
+      {liveEnabled && liveInsight && (
+        <div className="mb-3 flex items-start gap-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2 text-[11px] leading-5 text-zinc-500">
+          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300/70" />
+          <span>{liveInsight}</span>
+        </div>
+      )}
 
       <div className="grid gap-2 xl:grid-cols-3 scale-[0.95] origin-top">
 
@@ -5349,13 +5348,13 @@ const resolvedAssetType =
           const step = current < 36 ? 7 : current < 66 ? 4 : 2;
           return Math.min(88, current + step);
         });
-      }, 170);
+      }, 240);
 
       messageInterval = window.setInterval(() => {
         setTechnicalLiveMessageIndex((current) =>
           (current + 1) % LIVE_PANEL_STEPS.length
         );
-      }, 420);
+      }, 850);
 
       const controller = new AbortController();
       technicalLiveAbortRef.current = controller;
