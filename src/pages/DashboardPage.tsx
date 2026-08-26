@@ -298,6 +298,31 @@ type AnalysisData = {
     justification?: string[];
     verdict?: string;
   };
+
+  ai_brain?: {
+    ai_score?: number;
+    trade_quality_score?: number;
+    trade_quality_label?: string;
+    signal_detected?: string;
+    signal_confidence?: string;
+    module_votes?: {
+      technical?: string;
+      smc?: string;
+      wegd?: string;
+    };
+    module_alignment?: string;
+    module_agreement_score?: number;
+    module_conflicts?: string[];
+    conflict_detected?: boolean;
+    conflicts?: string[];
+    warning_detected?: boolean;
+    warnings?: string[];
+    trading_action?: string;
+    entry_allowed?: boolean;
+    decision_state?: string;
+    decision_color?: string;
+    agreement_label?: string;
+  };
 };
 
 type AssetCategoryLabel =
@@ -4109,7 +4134,17 @@ function GaugeMeter({
   subtitle?: string;
 }) {
   const safe = Math.max(0, Math.min(100, value));
-  const angle = -90 + (safe / 100) * 180;
+  const [animatedValue, setAnimatedValue] = useState(50);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setAnimatedValue(safe);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [safe]);
+
+  const angle = -90 + (animatedValue / 100) * 180;
 
   const labelClass =
     safe >= 60
@@ -4182,7 +4217,12 @@ function GaugeMeter({
             stroke="rgba(226,232,240,0.9)"
             strokeWidth="3"
             strokeLinecap="round"
-            transform={`rotate(${angle} 130 130)`}
+            style={{
+              transform: `rotate(${angle}deg)`,
+              transformOrigin: "130px 130px",
+              transformBox: "view-box",
+              transition: "transform 900ms cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
           />
 
           <circle cx="130" cy="130" r="7" fill="rgba(226,232,240,0.95)" />
@@ -4325,6 +4365,120 @@ function TechnicalOverviewPanel({
   const emaTrend =
     tech.ema_trend ?? "Indefinido";
 
+  const aiBrain = analysisData.ai_brain;
+  const finalSignal = analysisData.final_signal;
+
+  const aiSignal = String(
+    aiBrain?.signal_detected ??
+      finalSignal?.direction ??
+      analysisData.direction ??
+      getLabel(generalValue)
+  ).toUpperCase();
+
+  const aiAction = String(
+    aiBrain?.trading_action ??
+      (generalValue >= 60 || generalValue <= 40
+        ? "AGUARDAR CONFIRMAÇÃO"
+        : "AGUARDAR")
+  ).toUpperCase();
+
+  const entryAllowed = aiBrain?.entry_allowed === true;
+
+  const qualityScore = Math.max(
+    0,
+    Math.min(
+      100,
+      Number(
+        aiBrain?.trade_quality_score ??
+          aiBrain?.ai_score ??
+          finalSignal?.confluence_score ??
+          0
+      ) || 0
+    )
+  );
+
+  const qualityLabel = String(
+    aiBrain?.trade_quality_label ??
+      (qualityScore >= 75
+        ? "ALTA"
+        : qualityScore >= 55
+        ? "MODERADA"
+        : "BAIXA")
+  ).toUpperCase();
+
+  const agreementScore = Math.max(
+    0,
+    Math.min(100, Number(aiBrain?.module_agreement_score ?? 0) || 0)
+  );
+
+  const agreementLabel = String(
+    aiBrain?.agreement_label ?? aiBrain?.module_alignment ?? "INDEFINIDO"
+  ).toUpperCase();
+
+  const signalConfidence = String(
+    aiBrain?.signal_confidence ??
+      (Number(finalSignal?.confidence ?? analysisData.confidence ?? 0) >= 75
+        ? "ALTA"
+        : Number(finalSignal?.confidence ?? analysisData.confidence ?? 0) >= 55
+        ? "MODERADA"
+        : "BAIXA")
+  ).toUpperCase();
+
+  const moduleVotes = aiBrain?.module_votes ?? {};
+  const voteEntries = [
+    ["Técnico", moduleVotes.technical],
+    ["SMC", moduleVotes.smc],
+    ["WE-GD", moduleVotes.wegd],
+  ].filter(([, vote]) => Boolean(vote));
+
+  const signalTone =
+    aiSignal.includes("COMPRA")
+      ? "buy"
+      : aiSignal.includes("VENDA")
+      ? "sell"
+      : "neutral";
+
+  const signalBadgeClass =
+    signalTone === "buy"
+      ? "bg-emerald-400/10 text-emerald-300 border border-emerald-400/20"
+      : signalTone === "sell"
+      ? "bg-red-400/10 text-red-300 border border-red-400/20"
+      : "bg-yellow-400/10 text-yellow-300 border border-yellow-400/20";
+
+  const decisionHeadline = entryAllowed
+    ? `${aiSignal} validada — entrada liberada`
+    : aiSignal === "NEUTRO"
+    ? "Mercado sem vantagem clara — aguardar"
+    : `${aiSignal} identificada — entrada bloqueada`;
+
+  const decisionNarrative = (() => {
+    const technicalVote = String(moduleVotes.technical ?? "").toUpperCase();
+    const smcVote = String(moduleVotes.smc ?? "").toUpperCase();
+    const wegdVote = String(moduleVotes.wegd ?? "").toUpperCase();
+
+    const votes = [technicalVote, smcVote, wegdVote].filter(Boolean);
+    const alignedVotes = votes.filter((vote) => vote === aiSignal).length;
+
+    if (aiBrain?.conflict_detected || (aiBrain?.conflicts?.length ?? 0) > 0) {
+      return `A IA encontrou conflito entre os módulos de ${asset}. O sinal ${aiSignal.toLowerCase()} existe, mas a divergência entre leituras reduz a qualidade do cenário. A decisão permanece ${aiAction.toLowerCase()} até que o mercado apresente alinhamento mais claro.`;
+    }
+
+    if (!entryAllowed && aiSignal !== "NEUTRO") {
+      const alignmentText =
+        votes.length > 0
+          ? `${alignedVotes} de ${votes.length} módulos principais acompanham o sinal`
+          : "os módulos ainda não apresentam alinhamento suficiente";
+
+      return `A IA detectou viés de ${aiSignal.toLowerCase()} em ${asset}, porém manteve a entrada bloqueada. ${alignmentText}. A qualidade está ${qualityLabel.toLowerCase()} e a recomendação é ${aiAction.toLowerCase()} antes de assumir exposição.`;
+    }
+
+    if (entryAllowed) {
+      return `A IA validou o cenário de ${aiSignal.toLowerCase()} em ${asset}. O alinhamento entre os módulos atingiu nível suficiente para liberar a entrada, com qualidade ${qualityLabel.toLowerCase()} e concordância ${agreementLabel.toLowerCase()}. Ainda assim, a execução deve respeitar entrada, stop e alvos calculados.`;
+    }
+
+    return `A IA não encontrou vantagem direcional suficiente em ${asset}. O cenário permanece equilibrado e a orientação é aguardar uma confirmação mais clara antes de qualquer entrada.`;
+  })();
+
   return (
     <div className="h-[620px] overflow-hidden rounded-xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-3 shadow-2xl shadow-cyan-500/10">
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
@@ -4374,104 +4528,90 @@ function TechnicalOverviewPanel({
       </div>
 
       <div className="mt-3 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/[0.08] to-black p-4">
-  <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-2">
+            <Brain className="h-5 w-5 text-cyan-300" />
+          </div>
 
-    <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-2">
-      <Brain className="h-5 w-5 text-cyan-300" />
-    </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h4 className="font-black text-white">
+                  Decisão Estratégica da IA
+                </h4>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  {decisionHeadline}
+                </p>
+              </div>
 
-    <div className="flex-1">
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-black ${signalBadgeClass}`}
+              >
+                {aiSignal}
+              </span>
+            </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <h4 className="font-black text-white">
-          Decisão Estratégica da IA
-        </h4>
+            <p className="mt-3 text-sm leading-6 text-zinc-300">
+              {decisionNarrative}
+            </p>
 
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-black ${
-            generalValue >= 60
-              ? "bg-emerald-400/10 text-emerald-300 border border-emerald-400/20"
-              : generalValue <= 40
-              ? "bg-red-400/10 text-red-300 border border-red-400/20"
-              : "bg-yellow-400/10 text-yellow-300 border border-yellow-400/20"
-          }`}
-        >
-          {getLabel(generalValue)}
-        </span>
+            {voteEntries.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {voteEntries.map(([name, vote]) => (
+                  <span
+                    key={String(name)}
+                    className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-zinc-300"
+                  >
+                    {name}: <span className="text-white">{String(vote).toUpperCase()}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="text-[10px] uppercase tracking-wide text-zinc-500">
+                  Qualidade
+                </div>
+                <div className="mt-1 text-sm font-black text-white">
+                  {qualityScore.toFixed(1)} • {qualityLabel}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="text-[10px] uppercase tracking-wide text-zinc-500">
+                  Concordância
+                </div>
+                <div className="mt-1 text-sm font-black text-white">
+                  {agreementScore.toFixed(1)}% • {agreementLabel}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="text-[10px] uppercase tracking-wide text-zinc-500">
+                  Confiança
+                </div>
+                <div className="mt-1 text-sm font-black text-cyan-200">
+                  {signalConfidence}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="text-[10px] uppercase tracking-wide text-zinc-500">
+                  Ação da IA
+                </div>
+                <div
+                  className={`mt-1 text-sm font-black ${
+                    entryAllowed ? "text-emerald-300" : "text-amber-300"
+                  }`}
+                >
+                  {entryAllowed ? aiAction : `${aiAction} • BLOQUEADA`}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
-
-      <p className="mt-3 text-sm leading-6 text-zinc-300">
-
-  {generalValue >= 75
-    ? `A IA identificou um cenário de alta convicção compradora em ${asset}. A tendência, indicadores e médias apresentam alinhamento positivo, favorecendo continuidade do movimento enquanto os principais níveis técnicos forem respeitados.`
-
-    : generalValue >= 60
-    ? `A IA identificou predominância compradora em ${asset}. O cenário apresenta força positiva, porém recomenda confirmação antes de entradas agressivas devido ao comportamento atual do momentum.`
-
-    : generalValue <= 25
-    ? `A IA identificou forte domínio vendedor em ${asset}. A pressão negativa permanece predominante, indicando cautela com compras enquanto não houver recuperação dos níveis técnicos importantes.`
-
-    : generalValue <= 40
-    ? `A IA identificou um cenário vendedor em ${asset}. Existe pressão baixista, porém o movimento necessita confirmação antes de aumentar exposição operacional.`
-
-    : `A IA identificou equilíbrio entre compradores e vendedores em ${asset}. O mercado aguarda definição, sendo recomendado evitar antecipações até uma confirmação mais clara.`}
-
-</p>
-
-
-<div className="mt-3 grid grid-cols-2 gap-2">
-
-  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-
-    <div className="text-[10px] text-zinc-500">
-      Força do Cenário
-    </div>
-
-    <div
-      className={`mt-1 text-sm font-black ${
-        generalValue >= 60
-          ? "text-emerald-300"
-          : generalValue <= 40
-          ? "text-red-300"
-          : "text-yellow-300"
-      }`}
-    >
-      {generalValue >= 75
-        ? "Muito Forte"
-        : generalValue >= 60
-        ? "Favorável"
-        : generalValue <= 25
-        ? "Muito Fraco"
-        : generalValue <= 40
-        ? "Desfavorável"
-        : "Indefinido"}
-    </div>
-
-  </div>
-
-
-  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-
-    <div className="text-[10px] text-zinc-500">
-      Recomendação IA
-    </div>
-
-    <div className="mt-1 text-sm font-black text-white">
-
-      {generalValue >= 60
-        ? "Buscar confirmação"
-        : generalValue <= 40
-        ? "Aguardar reação"
-        : "Esperar definição"}
-
-    </div>
-
-  </div>
-  </div>
-    </div>
-  </div>
-</div>
     </div>
   );
 }
