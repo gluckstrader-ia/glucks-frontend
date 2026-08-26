@@ -394,6 +394,18 @@ const AI_LOADING_STEPS = [
 
 const MIN_AI_THINKING_MS = 2600;
 
+const LIVE_PANEL_REFRESH_SECONDS = 15;
+const LIVE_PANEL_MIN_PROCESS_MS = 1400;
+
+const LIVE_PANEL_STEPS = [
+  "Lendo preço e estrutura atual...",
+  "Reprocessando indicadores técnicos...",
+  "Validando médias e momentum...",
+  "Comparando Técnico • SMC • WE-GD...",
+  "Recalculando qualidade e concordância...",
+  "Atualizando decisão estratégica...",
+];
+
 const ASSET_OPTIONS: Record<AssetCategoryLabel, AssetOption[]> = {
   Índices: [
     { label: "S&P 500", value: "SPX", apiType: "index", tvSymbol: "SP:SPX" },
@@ -4441,16 +4453,109 @@ function GaugeMeter({
   );
 }
 
+function TechnicalLiveProcessing({
+  asset,
+  tf,
+  progress,
+  messageIndex,
+}: {
+  asset: string;
+  tf: string;
+  progress: number;
+  messageIndex: number;
+}) {
+  const safeProgress = Math.max(0, Math.min(100, progress));
+  const message =
+    LIVE_PANEL_STEPS[messageIndex % LIVE_PANEL_STEPS.length] ??
+    LIVE_PANEL_STEPS[0];
+
+  return (
+    <div className="absolute inset-0 z-30 flex items-center justify-center overflow-hidden rounded-xl bg-black/88 px-6 backdrop-blur-[3px]">
+      <div className="pointer-events-none absolute inset-0 opacity-60">
+        <div className="absolute left-[12%] top-[18%] h-2 w-2 animate-pulse rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.8)]" />
+        <div className="absolute right-[15%] top-[22%] h-2.5 w-2.5 animate-ping rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
+        <div className="absolute bottom-[17%] left-[20%] h-2 w-2 animate-ping rounded-full bg-cyan-200 shadow-[0_0_18px_rgba(165,243,252,0.8)] [animation-delay:350ms]" />
+        <div className="absolute bottom-[22%] right-[18%] h-2 w-2 animate-pulse rounded-full bg-emerald-200 shadow-[0_0_18px_rgba(167,243,208,0.8)]" />
+      </div>
+
+      <div className="relative w-full max-w-lg text-center">
+        <div className="relative mx-auto flex h-32 w-32 items-center justify-center">
+          <div className="absolute inset-0 rounded-full border border-cyan-400/15" />
+          <div className="absolute inset-[7px] animate-spin rounded-full border-2 border-transparent border-r-cyan-300/90 border-t-emerald-300/80 [animation-duration:2.5s]" />
+          <div className="absolute inset-[20px] animate-[spin_3.4s_linear_infinite_reverse] rounded-full border border-dashed border-cyan-300/40" />
+          <div className="absolute inset-[33px] animate-pulse rounded-full border border-cyan-300/30 bg-cyan-400/[0.07] shadow-[0_0_50px_rgba(34,211,238,0.15)]" />
+          <BrainCircuit className="relative z-10 h-11 w-11 text-cyan-200 drop-shadow-[0_0_14px_rgba(103,232,249,0.65)]" />
+
+          <span className="absolute left-[9px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 animate-pulse rounded-full bg-emerald-300 shadow-[0_0_14px_rgba(110,231,183,0.8)]" />
+          <span className="absolute right-[14px] top-[18px] h-2 w-2 animate-ping rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.8)]" />
+          <span className="absolute bottom-[12px] right-[25px] h-2 w-2 animate-pulse rounded-full bg-cyan-100 shadow-[0_0_14px_rgba(207,250,254,0.8)]" />
+        </div>
+
+        <div className="mt-4 flex items-center justify-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-300" />
+          </span>
+          <span className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-300">
+            IA reprocessando ao vivo
+          </span>
+        </div>
+
+        <h4 className="mt-3 text-xl font-black text-white">
+          {asset} • {tf === "5m" ? "5 Minutos" : tf === "1d" ? "1 Dia" : tf}
+        </h4>
+
+        <p className="mt-3 min-h-[24px] text-sm font-semibold text-cyan-200">
+          {message}
+        </p>
+
+        <p className="mt-1 text-xs leading-5 text-zinc-500">
+          O painel técnico continua monitorando o mercado sem alterar os demais módulos do dashboard.
+        </p>
+
+        <div className="mx-auto mt-5 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-zinc-900 ring-1 ring-inset ring-zinc-800">
+          <div
+            className="relative h-full rounded-full bg-gradient-to-r from-cyan-500 via-emerald-400 to-cyan-300 transition-[width] duration-300 ease-out"
+            style={{ width: `${Math.max(6, safeProgress)}%` }}
+          >
+            <div className="absolute inset-y-0 right-0 w-8 bg-white/25 blur-sm" />
+          </div>
+        </div>
+
+        <div className="mt-2 text-[11px] font-bold tabular-nums text-zinc-500">
+          {Math.round(safeProgress)}% processado
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TechnicalOverviewPanel({
   asset,
   tf,
   analysisData,
   gaugeAnimationKey,
+  liveEnabled,
+  liveLoading,
+  liveProgress,
+  liveMessageIndex,
+  liveSeconds,
+  liveUpdatedAt,
+  liveInsight,
+  liveError,
 }: {
   asset: string;
   tf: string;
   analysisData: AnalysisData | null;
   gaugeAnimationKey: number;
+  liveEnabled: boolean;
+  liveLoading: boolean;
+  liveProgress: number;
+  liveMessageIndex: number;
+  liveSeconds: number;
+  liveUpdatedAt: Date | null;
+  liveInsight: string;
+  liveError: string;
 }) {
   const tech = analysisData?.technical;
 
@@ -4673,7 +4778,51 @@ function TechnicalOverviewPanel({
   })();
 
   return (
-    <div className="h-[620px] overflow-hidden rounded-xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-3 shadow-2xl shadow-cyan-500/10">
+    <div className="relative h-[620px] overflow-hidden rounded-xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_35%),linear-gradient(180deg,rgba(8,13,24,0.98),rgba(0,0,0,0.98))] p-3 shadow-2xl shadow-cyan-500/10">
+      {liveLoading && (
+        <TechnicalLiveProcessing
+          asset={asset}
+          tf={tf}
+          progress={liveProgress}
+          messageIndex={liveMessageIndex}
+        />
+      )}
+
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/[0.05] bg-black/25 px-3 py-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className={`relative flex h-2.5 w-2.5 shrink-0 ${liveEnabled ? "" : "opacity-40"}`}>
+            {liveEnabled && (
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+            )}
+            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${liveEnabled ? "bg-emerald-300" : "bg-zinc-600"}`} />
+          </span>
+
+          <span className={`text-[10px] font-black uppercase tracking-[0.18em] ${liveEnabled ? "text-emerald-300" : "text-zinc-500"}`}>
+            {liveEnabled ? "IA AO VIVO" : "IA aguardando primeira análise"}
+          </span>
+
+          {liveEnabled && liveInsight && (
+            <span className="hidden truncate text-[11px] text-zinc-500 md:inline">
+              • {liveInsight}
+            </span>
+          )}
+        </div>
+
+        <div className="text-[10px] font-semibold tabular-nums text-zinc-500">
+          {liveEnabled
+            ? liveLoading
+              ? "Reprocessando agora"
+              : `Nova leitura em ${Math.max(0, liveSeconds)}s${liveUpdatedAt ? ` • ${liveUpdatedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : ""}`
+            : "Modo vivo inicia após Gerar Análise"}
+        </div>
+      </div>
+
+      {liveError && (
+        <div className="mb-2 rounded-lg border border-amber-400/15 bg-amber-400/[0.06] px-3 py-2 text-[11px] text-amber-200/80">
+          {liveError}
+        </div>
+      )}
+
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
@@ -4828,8 +4977,23 @@ export default function DashboardPage() {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [gaugeAnimationKey, setGaugeAnimationKey] = useState(0);
   const [apiError, setApiError] = useState("");
+
+  // Motor vivo exclusivo do Painel Técnico do Ativo.
+  // Os demais painéis continuam usando apenas analysisData, atualizado manualmente.
+  const [technicalLiveData, setTechnicalLiveData] = useState<AnalysisData | null>(null);
+  const [technicalLiveEnabled, setTechnicalLiveEnabled] = useState(false);
+  const [technicalLiveLoading, setTechnicalLiveLoading] = useState(false);
+  const [technicalLiveProgress, setTechnicalLiveProgress] = useState(0);
+  const [technicalLiveMessageIndex, setTechnicalLiveMessageIndex] = useState(0);
+  const [technicalLiveSeconds, setTechnicalLiveSeconds] = useState(LIVE_PANEL_REFRESH_SECONDS);
+  const [technicalLiveUpdatedAt, setTechnicalLiveUpdatedAt] = useState<Date | null>(null);
+  const [technicalLiveInsight, setTechnicalLiveInsight] = useState("");
+  const [technicalLiveError, setTechnicalLiveError] = useState("");
+
   const analysisInFlightRef = useRef(false);
   const analysisStartedAtRef = useRef(0);
+  const technicalLiveAbortRef = useRef<AbortController | null>(null);
+  const technicalLivePreviousRef = useRef<AnalysisData | null>(null);
 
   const selectedAsset = asset.toUpperCase();
   const shouldUseB3Feed =
@@ -4911,9 +5075,74 @@ const resolvedAssetType =
     navigate("/login");
   }
 
+  function describeTechnicalLiveChange(previous: AnalysisData | null, current: AnalysisData) {
+    if (!previous) {
+      return "Primeira leitura consolidada. Monitoramento contínuo iniciado.";
+    }
+
+    const previousBrain = previous.ai_brain;
+    const currentBrain = current.ai_brain;
+
+    const previousSignal = String(
+      previousBrain?.signal_detected ?? previous.final_signal?.direction ?? previous.direction ?? "NEUTRO"
+    ).toUpperCase();
+    const currentSignal = String(
+      currentBrain?.signal_detected ?? current.final_signal?.direction ?? current.direction ?? "NEUTRO"
+    ).toUpperCase();
+
+    if (previousSignal !== currentSignal) {
+      return `Mudança detectada: cenário passou de ${previousSignal} para ${currentSignal}.`;
+    }
+
+    const previousQuality = Number(previousBrain?.trade_quality_score ?? previousBrain?.ai_score ?? 0) || 0;
+    const currentQuality = Number(currentBrain?.trade_quality_score ?? currentBrain?.ai_score ?? 0) || 0;
+    const qualityDelta = currentQuality - previousQuality;
+
+    if (Math.abs(qualityDelta) >= 4) {
+      return qualityDelta > 0
+        ? `Qualidade do cenário ganhou ${qualityDelta.toFixed(1)} pontos na última leitura.`
+        : `Qualidade do cenário perdeu ${Math.abs(qualityDelta).toFixed(1)} pontos na última leitura.`;
+    }
+
+    const previousAgreement = Number(previousBrain?.module_agreement_score ?? 0) || 0;
+    const currentAgreement = Number(currentBrain?.module_agreement_score ?? 0) || 0;
+    const agreementDelta = currentAgreement - previousAgreement;
+
+    if (Math.abs(agreementDelta) >= 4) {
+      return agreementDelta > 0
+        ? "Concordância entre módulos aumentou na nova leitura."
+        : "Divergência entre módulos aumentou na nova leitura.";
+    }
+
+    const previousBuy = Number(previous.technical?.buy_signals ?? 0);
+    const currentBuy = Number(current.technical?.buy_signals ?? 0);
+    const previousSell = Number(previous.technical?.sell_signals ?? 0);
+    const currentSell = Number(current.technical?.sell_signals ?? 0);
+
+    if (currentBuy > previousBuy) {
+      return "Indicadores compradores ganharam força desde a leitura anterior.";
+    }
+
+    if (currentSell > previousSell) {
+      return "Indicadores vendedores ganharam força desde a leitura anterior.";
+    }
+
+    return `Leitura atualizada: cenário ${currentSignal} permanece sem mudança relevante.`;
+  }
+
   async function handleAnalyze(showLoader = true) {
     if (!token) return;
     if (analysisInFlightRef.current) return;
+
+    if (showLoader) {
+      setTechnicalLiveEnabled(false);
+      technicalLiveAbortRef.current?.abort();
+      technicalLiveAbortRef.current = null;
+      setTechnicalLiveLoading(false);
+      setTechnicalLiveProgress(0);
+      setTechnicalLiveMessageIndex(0);
+      setTechnicalLiveError("");
+    }
 
     analysisInFlightRef.current = true;
     let analysisSucceeded = false;
@@ -4971,6 +5200,16 @@ const resolvedAssetType =
       }
 
       setAnalysisData(data);
+      setTechnicalLiveData(data);
+      technicalLivePreviousRef.current = data;
+      setTechnicalLiveUpdatedAt(new Date());
+      setTechnicalLiveInsight(
+        "Primeira leitura consolidada. Monitoramento contínuo iniciado."
+      );
+      setTechnicalLiveSeconds(LIVE_PANEL_REFRESH_SECONDS);
+      setTechnicalLiveError("");
+      setTechnicalLiveEnabled(true);
+
       await refetchQuant();
 
       if (showLoader) {
@@ -5034,6 +5273,190 @@ const resolvedAssetType =
 
     return () => window.clearInterval(interval);
   }, [loading]);
+
+  // Ao trocar ativo/timeframe, o modo vivo é encerrado.
+  // Uma nova análise manual é necessária para iniciar o monitoramento do novo contexto.
+  useEffect(() => {
+    setTechnicalLiveEnabled(false);
+    setTechnicalLiveData(null);
+    setTechnicalLiveLoading(false);
+    setTechnicalLiveProgress(0);
+    setTechnicalLiveMessageIndex(0);
+    setTechnicalLiveSeconds(LIVE_PANEL_REFRESH_SECONDS);
+    setTechnicalLiveUpdatedAt(null);
+    setTechnicalLiveInsight("");
+    setTechnicalLiveError("");
+    technicalLivePreviousRef.current = null;
+    technicalLiveAbortRef.current?.abort();
+    technicalLiveAbortRef.current = null;
+  }, [resolvedAsset, resolvedAssetType, tf]);
+
+  // Motor vivo: depois da primeira análise manual, somente o Painel Técnico
+  // consulta /analyze/live. A resposta fica em technicalLiveData e NÃO substitui
+  // analysisData, preservando todos os demais painéis exatamente como estavam.
+  useEffect(() => {
+    if (!technicalLiveEnabled || !token) return;
+
+    let cancelled = false;
+    let refreshTimeout: number | null = null;
+    let countdownInterval: number | null = null;
+    let progressInterval: number | null = null;
+    let messageInterval: number | null = null;
+
+    const clearCycleTimers = () => {
+      if (refreshTimeout !== null) window.clearTimeout(refreshTimeout);
+      if (countdownInterval !== null) window.clearInterval(countdownInterval);
+      if (progressInterval !== null) window.clearInterval(progressInterval);
+      if (messageInterval !== null) window.clearInterval(messageInterval);
+      refreshTimeout = null;
+      countdownInterval = null;
+      progressInterval = null;
+      messageInterval = null;
+    };
+
+    const scheduleNext = (seconds = LIVE_PANEL_REFRESH_SECONDS) => {
+      if (cancelled) return;
+
+      let remaining = seconds;
+      setTechnicalLiveSeconds(remaining);
+
+      countdownInterval = window.setInterval(() => {
+        remaining = Math.max(0, remaining - 1);
+        setTechnicalLiveSeconds(remaining);
+      }, 1000);
+
+      refreshTimeout = window.setTimeout(() => {
+        if (countdownInterval !== null) {
+          window.clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
+        void runRefresh();
+      }, seconds * 1000);
+    };
+
+    const runRefresh = async () => {
+      if (cancelled) return;
+
+      const startedAt = performance.now();
+      setTechnicalLiveLoading(true);
+      setTechnicalLiveProgress(10);
+      setTechnicalLiveMessageIndex(0);
+      setTechnicalLiveError("");
+
+      progressInterval = window.setInterval(() => {
+        setTechnicalLiveProgress((current) => {
+          if (current >= 88) return current;
+          const step = current < 36 ? 7 : current < 66 ? 4 : 2;
+          return Math.min(88, current + step);
+        });
+      }, 170);
+
+      messageInterval = window.setInterval(() => {
+        setTechnicalLiveMessageIndex((current) =>
+          (current + 1) % LIVE_PANEL_STEPS.length
+        );
+      }, 420);
+
+      const controller = new AbortController();
+      technicalLiveAbortRef.current = controller;
+
+      try {
+        const response = await fetch(`${ANALYZE_API_URL}/analyze/live`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            asset_type: resolvedAssetType,
+            asset: resolvedAsset,
+            timeframe: tf,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          let message = `Falha ao reprocessar o painel (${response.status}).`;
+          try {
+            const errorData = await response.json();
+            if (typeof errorData?.detail === "string") {
+              message = errorData.detail;
+            }
+          } catch {
+            // Mantém mensagem padrão.
+          }
+          throw new Error(message);
+        }
+
+        const data: AnalysisData = await response.json();
+        const previous = technicalLivePreviousRef.current;
+        const insight = describeTechnicalLiveChange(previous, data);
+
+        const elapsed = performance.now() - startedAt;
+        const remainingVisualTime = Math.max(0, LIVE_PANEL_MIN_PROCESS_MS - elapsed);
+        if (remainingVisualTime > 0) {
+          await new Promise((resolve) => window.setTimeout(resolve, remainingVisualTime));
+        }
+
+        if (cancelled) return;
+
+        setTechnicalLiveProgress(100);
+        await new Promise((resolve) => window.setTimeout(resolve, 260));
+        if (cancelled) return;
+
+        setTechnicalLiveData(data);
+        technicalLivePreviousRef.current = data;
+        setTechnicalLiveInsight(insight);
+        setTechnicalLiveUpdatedAt(new Date());
+
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            setGaugeAnimationKey((current) => current + 1);
+          });
+        });
+      } catch (error: any) {
+        if (error?.name !== "AbortError" && !cancelled) {
+          setTechnicalLiveError(
+            `${error?.message || "Não foi possível atualizar a leitura."} O painel manterá a última análise e tentará novamente.`
+          );
+        }
+      } finally {
+        if (progressInterval !== null) {
+          window.clearInterval(progressInterval);
+          progressInterval = null;
+        }
+        if (messageInterval !== null) {
+          window.clearInterval(messageInterval);
+          messageInterval = null;
+        }
+
+        technicalLiveAbortRef.current = null;
+
+        if (!cancelled) {
+          setTechnicalLiveLoading(false);
+          setTechnicalLiveProgress(0);
+          setTechnicalLiveMessageIndex(0);
+          scheduleNext();
+        }
+      }
+    };
+
+    scheduleNext();
+
+    return () => {
+      cancelled = true;
+      clearCycleTimers();
+      technicalLiveAbortRef.current?.abort();
+      technicalLiveAbortRef.current = null;
+    };
+  }, [
+    technicalLiveEnabled,
+    token,
+    ANALYZE_API_URL,
+    resolvedAsset,
+    resolvedAssetType,
+    tf,
+  ]);
 
 
   return (
@@ -5261,8 +5684,16 @@ const resolvedAssetType =
                 <TechnicalOverviewPanel
                   asset={resolvedAsset}
                   tf={tf}
-                  analysisData={analysisData}
+                  analysisData={technicalLiveData ?? analysisData}
                   gaugeAnimationKey={gaugeAnimationKey}
+                  liveEnabled={technicalLiveEnabled}
+                  liveLoading={technicalLiveLoading}
+                  liveProgress={technicalLiveProgress}
+                  liveMessageIndex={technicalLiveMessageIndex}
+                  liveSeconds={technicalLiveSeconds}
+                  liveUpdatedAt={technicalLiveUpdatedAt}
+                  liveInsight={technicalLiveInsight}
+                  liveError={technicalLiveError}
                 />
               </div>
             </div>
