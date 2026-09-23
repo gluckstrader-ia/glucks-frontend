@@ -90,33 +90,6 @@ const steps = [
   },
 ];
 
-const faqs = [
-  {
-    q: "Preciso ser trader experiente para usar?",
-    a: "Não. A plataforma foi desenhada para facilitar a leitura tanto de quem está começando quanto de quem já opera. A decisão final de operar continua sendo sempre do usuário.",
-  },
-  {
-    q: "Quais mercados posso analisar?",
-    a: "A plataforma atende diferentes classes de ativos, incluindo WIN, WDO, forex, ações e outros mercados disponíveis no dashboard.",
-  },
-  {
-    q: "A Gluck's fornece entrada, stop e alvo?",
-    a: "Sim. Quando você solicita a análise do ativo, a plataforma apresenta uma leitura estruturada com direção, confiança, entrada, stop e alvo, conforme o cenário identificado.",
-  },
-  {
-    q: "Como é calculada a confiança?",
-    a: "O nível de confiança é calculado por algoritmo próprio e inteligência artificial a partir das informações e confluências analisadas pela plataforma.",
-  },
-  {
-    q: "Os dados são em tempo real?",
-    a: "A plataforma utiliza integrações com APIs e fontes de mercado em tempo real, conforme disponibilidade de cada ativo e mercado.",
-  },
-  {
-    q: "A IA garante que a operação dará certo?",
-    a: "Não. Mercado financeiro envolve risco e nenhuma ferramenta consegue garantir resultado. A Gluck's organiza informações e cenários para apoiar a análise; ela não elimina risco nem substitui sua decisão.",
-  },
-];
-
 function Card({
   children,
   className = "",
