@@ -364,4 +364,111 @@ setProfitTarget(125);`}</pre>
       <footer className="border-t border-white/10 bg-black"><div className="mx-auto max-w-7xl px-4 py-8 text-sm text-zinc-500 sm:px-6"><div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between"><div><div className="font-black tracking-wider text-white">GLUCK&apos;S</div><div className="mt-1 text-[10px] uppercase tracking-[0.18em]">Tecnologia para traders</div></div><div className="flex flex-wrap gap-5"><a href="#ia">IA</a><a href="#indicador">Indicador</a><a href="#desenvolvimento">Desenvolvimento</a><a href="/beneficios">Benefícios</a><a href="#">Termos</a><a href="#">Privacidade</a></div></div><p className="mt-6 max-w-5xl text-xs leading-6 text-zinc-600">Operações no mercado financeiro envolvem riscos. A Gluck&apos;s oferece ferramentas e conteúdos de apoio à análise e não garante resultados, rentabilidade ou acerto de operações. A decisão de operar e a gestão de risco são sempre do usuário.</p><div className="mt-4 text-xs text-zinc-700">© 2026 Gluck&apos;s Tecnologia. Todos os direitos reservados.</div></div></footer>
     </div>
   );
+}                  "Robôs e estratégias automatizadas",
+                  "Integrações e automações",
+                  "Projetos especiais",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-3 text-sm font-semibold text-zinc-100 sm:text-base">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-cyan-300" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="relative mt-8 ml-auto w-[82%] rotate-[-3deg] rounded-2xl border border-cyan-300/25 bg-[#03131b]/90 p-5 shadow-[0_28px_70px_rgba(0,0,0,0.6)] backdrop-blur-sm">
+                <div className="mb-4 flex gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-yellow-300" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                </div>
+                <pre className="overflow-hidden text-[10px] leading-5 text-cyan-100/90 sm:text-xs"><code>{`// Estratégia personalizada
+if (tendencia === "ALTA") {
+  comprar();
+} else {
+  protegerRisco();
+}
+SetStopLoss(50);
+SetProfitTarget(125);`}</code></pre>
+              </div>
+
+              <a
+                href="mailto:contato@gluckstrader.com.br?subject=Desenvolvimento%20personalizado"
+                className="relative mt-auto flex items-center justify-center gap-3 rounded-2xl bg-cyan-400 px-6 py-5 text-base font-black text-black shadow-[0_0_28px_rgba(34,211,238,0.24)] transition hover:scale-[1.01] hover:bg-cyan-300"
+              >
+                Falar sobre meu projeto <ArrowRight className="h-5 w-5" />
+              </a>
+            </article>
+
+            {/* BENEFÍCIOS GLUCK'S */}
+            <article className="group relative flex min-h-[760px] flex-col overflow-hidden rounded-[30px] border border-yellow-400/80 bg-black p-7 shadow-[0_0_60px_rgba(250,204,21,0.14)] sm:p-9">
+              <img
+                src="/card-beneficios-bg.webp"
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-90"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(36,26,0,0.84)_0%,rgba(20,15,0,0.74)_44%,rgba(0,0,0,0.78)_100%)]" />
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-yellow-300 shadow-[0_0_22px_4px_rgba(250,204,21,0.85)]" />
+
+              <div className="relative flex items-center gap-4 text-yellow-300">
+                <div className="grid h-12 w-12 place-items-center rounded-xl border border-yellow-300/30 bg-yellow-300/10 shadow-[0_0_24px_rgba(250,204,21,0.18)]">
+                  <Gift className="h-7 w-7" />
+                </div>
+                <div className="text-sm font-black uppercase tracking-[0.22em]">Benefícios Gluck&apos;s</div>
+              </div>
+
+              <h2 className="relative mt-7 text-4xl font-black leading-[1.02] tracking-tight sm:text-[2.75rem]">
+                Vantagens para a nossa<br />
+                <span className="text-yellow-300">comunidade.</span>
+              </h2>
+
+              <p className="relative mt-5 text-base leading-7 text-zinc-200">
+                Descontos, condições especiais e parceiros reunidos em uma página exclusiva para a comunidade Gluck&apos;s.
+              </p>
+
+              <div className="relative mt-7 grid grid-cols-2 gap-3">
+                {[
+                  { name: "5PI", logo: "/partners/5pi.png", tag: "MESA PROPRIETÁRIA" },
+                  { name: "Apex Trading", logo: "/partners/apex-trading.png", tag: "BENEFÍCIO EXCLUSIVO" },
+                  { name: "XM", logo: "/partners/xm.png", tag: "CONDIÇÕES ESPECIAIS" },
+                  { name: "Genial Investimentos", logo: "/partners/genial.png", tag: "PARCEIRO" },
+                ].map((partner) => (
+                  <div
+                    key={partner.name}
+                    className="flex min-h-[120px] flex-col items-center justify-center rounded-2xl border border-yellow-300/25 bg-black/60 px-3 py-4 text-center backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-yellow-300/50 hover:bg-yellow-300/[0.06]"
+                  >
+                    <img
+                      src={partner.logo}
+                      alt={`Logo ${partner.name}`}
+                      className="mb-2 h-8 max-w-[135px] object-contain"
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                      }}
+                    />
+                    <div className="text-sm font-black text-white">{partner.name}</div>
+                    <span className="mt-2 rounded-full bg-yellow-300/15 px-2.5 py-1 text-[8px] font-black uppercase tracking-wide text-yellow-200">
+                      {partner.tag}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <a
+                href="/beneficios"
+                className="relative mt-auto flex items-center justify-center gap-3 rounded-2xl bg-yellow-300 px-6 py-5 text-base font-black text-black shadow-[0_0_28px_rgba(250,204,21,0.22)] transition hover:scale-[1.01] hover:bg-yellow-200"
+              >
+                Ver todos os benefícios <ArrowRight className="h-5 w-5" />
+              </a>
+            </article>
+          </div>
+        </section>
+
+        <section className="border-y border-white/10 bg-zinc-950/60"><div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-center md:justify-between"><div><div className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-400">Mentoria Gluck&apos;s</div><h3 className="mt-2 text-2xl font-black">Para quem busca acompanhamento mais próximo.</h3></div><a href="#" className="inline-flex items-center gap-2 text-sm font-bold text-emerald-300">Conhecer a mentoria <ArrowRight className="h-4 w-4"/></a></div></section>
+
+        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20"><div className="rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(120deg,rgba(5,18,11,0.96),rgba(2,2,2,0.98))] p-8 sm:p-12"><div className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-400">Gluck&apos;s Tecnologia</div><div className="mt-4 flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between"><div><h2 className="max-w-3xl text-3xl font-black sm:text-4xl">Tecnologia para diferentes momentos da sua jornada no mercado.</h2><p className="mt-4 text-zinc-400">Inteligência artificial. Indicadores. Automações. Desenvolvimento.</p></div><a href="#ia" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-7 py-4 text-sm font-black text-black">Comece agora <ArrowRight className="h-5 w-5"/></a></div></div></section>
+      </main>
+
+      <footer className="border-t border-white/10 bg-black"><div className="mx-auto max-w-7xl px-4 py-8 text-sm text-zinc-500 sm:px-6"><div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between"><div><div className="font-black tracking-wider text-white">GLUCK&apos;S</div><div className="mt-1 text-[10px] uppercase tracking-[0.18em]">Tecnologia para traders</div></div><div className="flex flex-wrap gap-5"><a href="#ia">IA</a><a href="#indicador">Indicador</a><a href="#desenvolvimento">Desenvolvimento</a><a href="/beneficios">Benefícios</a><a href="#">Termos</a><a href="#">Privacidade</a></div></div><p className="mt-6 max-w-5xl text-xs leading-6 text-zinc-600">Operações no mercado financeiro envolvem riscos. A Gluck&apos;s oferece ferramentas e conteúdos de apoio à análise e não garante resultados, rentabilidade ou acerto de operações. A decisão de operar e a gestão de risco são sempre do usuário.</p><div className="mt-4 text-xs text-zinc-700">© 2026 Gluck&apos;s Tecnologia. Todos os direitos reservados.</div></div></footer>
+    </div>
+  );
 }
