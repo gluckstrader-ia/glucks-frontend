@@ -1,8 +1,14 @@
 import React, { useState } from "react";
 import {
   ArrowRight,
+  BarChart3,
   BrainCircuit,
   CheckCircle2,
+  Code2,
+  Gift,
+  BarChart3,
+  Code2,
+  Gift,
   Menu,
   Radar,
   Sparkles,
@@ -245,126 +251,106 @@ export default function LandingPage() {
 
         <section id="planos" className="border-y border-white/10 bg-zinc-950/70"><div className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[0.7fr_1.3fr]"><div><div className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-400">Planos</div><h2 className="mt-4 text-3xl font-black sm:text-4xl">Escolha seu acesso.</h2><p className="mt-4 leading-7 text-zinc-400">Tecnologia profissional para sua rotina no mercado.</p></div><div className="grid gap-6 md:grid-cols-2">{plans.map((plan)=><div key={plan.name} className={`relative rounded-[28px] border p-6 ${plan.highlight ? "border-emerald-500/50 bg-emerald-500/[0.04] shadow-[0_0_50px_rgba(16,185,129,0.10)]" : "border-white/10 bg-black/40"}`}>{plan.badge && <div className="absolute right-5 top-5 rounded-full bg-emerald-400 px-3 py-1 text-[10px] font-black text-black">{plan.badge}</div>}<div className="text-zinc-400">{plan.name}</div><div className="mt-4 flex items-end gap-2"><div className="text-4xl font-black">{plan.price}</div><div className="pb-1 text-zinc-400">{plan.period}</div></div>{plan.equivalent && <div className="mt-2 text-sm font-semibold text-emerald-300">{plan.equivalent}</div>}<div className="mt-6 space-y-3">{plan.features.map((feature)=><div key={feature} className="flex items-start gap-3 text-sm text-zinc-300"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"/><span>{feature}</span></div>)}</div><a href={`/cadastro?plan=${plan.slug}`} className={`mt-7 flex w-full items-center justify-center rounded-2xl px-6 py-4 text-sm font-black transition ${plan.highlight ? "bg-emerald-400 text-black hover:bg-emerald-300" : "border border-white/15 bg-white/[0.05] text-white hover:bg-white/[0.08]"}`}>{plan.cta}</a></div>)}</div></div></section>
 
-        <section className="relative mx-auto max-w-[1500px] px-4 py-16 sm:px-6 sm:py-20">
-          <div className="grid gap-6 xl:grid-cols-3">
-            {/* INDICADOR */}
-            <article id="indicador" className="group relative min-h-[690px] overflow-hidden rounded-[30px] border border-emerald-400/60 bg-[linear-gradient(155deg,rgba(3,37,29,0.96),rgba(2,8,7,0.98)_55%,rgba(0,0,0,1))] p-7 shadow-[0_0_55px_rgba(16,185,129,0.12)] sm:p-9">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_75%_18%,rgba(16,185,129,0.18),transparent_30%)]" />
-              <div className="relative z-10 flex h-full flex-col">
-                <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.22em] text-emerald-300 sm:text-sm">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl border border-emerald-400/25 bg-emerald-400/10 text-xl">▥</span>
-                  Indicador Gluck&apos;s
+        <section className="mx-auto max-w-[1500px] px-4 py-16 sm:px-6 sm:py-20">
+          <div className="grid gap-6 lg:grid-cols-3">
+
+            {/* INDICADOR GLUCK'S */}
+            <article
+              id="indicador"
+              className="group relative flex min-h-[760px] flex-col overflow-hidden rounded-[30px] border border-emerald-400/80 bg-black p-7 shadow-[0_0_60px_rgba(16,185,129,0.14)] sm:p-9"
+            >
+              <img
+                src="/card-indicador-bg.webp"
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-75"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(0,20,15,0.98)_0%,rgba(0,20,15,0.88)_47%,rgba(0,12,10,0.45)_100%)]" />
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-emerald-300 shadow-[0_0_22px_4px_rgba(52,211,153,0.85)]" />
+
+              <div className="relative flex items-center gap-4 text-emerald-300">
+                <div className="grid h-12 w-12 place-items-center rounded-xl border border-emerald-300/30 bg-emerald-400/10 shadow-[0_0_24px_rgba(52,211,153,0.18)]">
+                  <BarChart3 className="h-7 w-7" />
                 </div>
-                <h2 className="mt-6 text-3xl font-black leading-[1.08] tracking-tight sm:text-4xl">
-                  Sinais no gráfico.<br />Mais clareza na sua <span className="text-emerald-400">operação.</span>
-                </h2>
-                <p className="mt-5 max-w-xl text-base leading-7 text-zinc-300">
-                  Indicador de compra e venda com sinais visuais diretamente no gráfico, reunindo leituras técnicas em uma interface objetiva.
-                </p>
-                <div className="mt-6 space-y-3 text-sm text-zinc-200 sm:text-base">
-                  {["Sinais visuais no gráfico","Alertas e leitura objetiva","Suportes e resistências","Zona Institucional Gluck's","Integração à rotina do trader"].map((item) => (
-                    <div key={item} className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />{item}</div>
-                  ))}
-                </div>
-                <div className="relative mt-7 h-48 overflow-hidden rounded-2xl border border-emerald-400/20 bg-black/60">
-                  <img src="/dashboard-preview.png" alt="Interface real da tecnologia Gluck's" className="h-full w-full object-cover object-left opacity-80 transition duration-500 group-hover:scale-[1.03] group-hover:opacity-100" />
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_45%,rgba(0,0,0,0.8))]" />
-                  <span className="absolute bottom-4 left-4 rounded-lg bg-emerald-400 px-3 py-1 text-xs font-black text-black">COMPRA</span>
-                  <span className="absolute right-4 top-4 rounded-lg bg-red-500 px-3 py-1 text-xs font-black text-white">VENDA</span>
-                </div>
-                <a href="/indicador" className="mt-7 flex items-center justify-between rounded-2xl bg-emerald-400 px-6 py-4 text-sm font-black text-black transition hover:bg-emerald-300">
-                  Conhecer o indicador <ArrowRight className="h-5 w-5" />
-                </a>
+                <div className="text-sm font-black uppercase tracking-[0.22em]">Indicador Gluck&apos;s</div>
               </div>
-            </article>
 
-            {/* DESENVOLVIMENTO */}
-            <article id="desenvolvimento" className="group relative min-h-[690px] overflow-hidden rounded-[30px] border border-cyan-400/60 bg-[linear-gradient(155deg,rgba(2,30,42,0.98),rgba(2,10,14,0.98)_55%,rgba(0,0,0,1))] p-7 shadow-[0_0_55px_rgba(34,211,238,0.10)] sm:p-9">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_15%,rgba(34,211,238,0.16),transparent_32%)]" />
-              <div className="relative z-10 flex h-full flex-col">
-                <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.22em] text-cyan-300 sm:text-sm">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl border border-cyan-400/25 bg-cyan-400/10 text-xl">⚙</span>
-                  Desenvolvimento personalizado
-                </div>
-                <h2 className="mt-6 text-3xl font-black leading-[1.08] tracking-tight sm:text-4xl">
-                  Sua estratégia pode <span className="text-cyan-300">virar tecnologia.</span>
-                </h2>
-                <p className="mt-5 max-w-xl text-base leading-7 text-zinc-300">
-                  Desenvolvemos indicadores, robôs, automações e soluções personalizadas para transformar ideias operacionais em ferramentas reais.
-                </p>
-                <div className="mt-7 space-y-4 text-sm text-zinc-200 sm:text-base">
-                  {["Indicadores personalizados","Robôs e estratégias automatizadas","Integrações e automações","Projetos especiais"].map((item) => (
-                    <div key={item} className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 shrink-0 text-cyan-300" />{item}</div>
-                  ))}
-                </div>
-                <div className="relative mt-8 flex-1 min-h-[210px] overflow-hidden rounded-2xl border border-cyan-400/20 bg-[#02080b] p-5 shadow-inner">
-                  <div className="absolute -right-10 bottom-0 h-44 w-64 rotate-[-5deg] rounded-2xl border border-cyan-400/20 bg-[#06131a] p-4 shadow-[0_0_35px_rgba(34,211,238,0.12)]">
-                    <div className="mb-3 flex gap-1.5"><span className="h-2 w-2 rounded-full bg-red-400"/><span className="h-2 w-2 rounded-full bg-yellow-300"/><span className="h-2 w-2 rounded-full bg-emerald-400"/></div>
-                    <pre className="whitespace-pre-wrap font-mono text-[10px] leading-5 text-cyan-200">{`// Estratégia personalizada
-if (tendencia === "ALTA") {
-  comprar();
-} else {
-  vender();
-}
+              <h2 className="relative mt-7 max-w-[520px] text-4xl font-black leading-[1.02] tracking-tight sm:text-[2.75rem]">
+                Sinais no gráfico.<br />
+                Mais clareza na sua <span className="text-emerald-400">operação.</span>
+              </h2>
 
-setStopLoss(50);
-setProfitTarget(125);`}</pre>
+              <p className="relative mt-5 max-w-[500px] text-base leading-7 text-zinc-200">
+                Indicador de compra e venda com sinais visuais diretamente no gráfico, baseado em price action,
+                Fibonacci, tendência, volume e volatilidade.
+              </p>
+
+              <div className="relative mt-7 space-y-3">
+                {[
+                  "Sinais visuais no gráfico",
+                  "Alertas em tempo real",
+                  "Suportes e resistências",
+                  "Zona Institucional Gluck's",
+                  "Compatível com Profit e TradingView",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-3 text-sm font-semibold text-zinc-100 sm:text-base">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
+                    <span>{item}</span>
                   </div>
-                  <div className="absolute bottom-6 left-5 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-xs font-semibold text-cyan-200">Código + automação + estratégia</div>
-                </div>
-                <a href="/desenvolvimento" className="mt-7 flex items-center justify-between rounded-2xl bg-cyan-400 px-6 py-4 text-sm font-black text-black transition hover:bg-cyan-300">
-                  Falar sobre meu projeto <ArrowRight className="h-5 w-5" />
-                </a>
+                ))}
               </div>
+
+              <div className="relative mt-8 flex flex-wrap gap-3">
+                <div className="rounded-xl border border-emerald-400/20 bg-black/55 px-4 py-3 text-sm font-black text-white backdrop-blur">
+                  Profit / Nelogica
+                </div>
+                <div className="rounded-xl border border-emerald-400/20 bg-black/55 px-4 py-3 text-sm font-black text-white backdrop-blur">
+                  TradingView
+                </div>
+              </div>
+
+              <a
+                href="/indicador"
+                className="relative mt-auto flex items-center justify-center gap-3 rounded-2xl bg-emerald-400 px-6 py-5 text-base font-black text-black shadow-[0_0_28px_rgba(52,211,153,0.25)] transition hover:scale-[1.01] hover:bg-emerald-300"
+              >
+                Conhecer o indicador <ArrowRight className="h-5 w-5" />
+              </a>
             </article>
 
-            {/* BENEFÍCIOS */}
-            <article className="group relative min-h-[690px] overflow-hidden rounded-[30px] border border-yellow-400/60 bg-[linear-gradient(155deg,rgba(43,33,2,0.96),rgba(15,12,2,0.98)_48%,rgba(0,0,0,1))] p-7 shadow-[0_0_55px_rgba(250,204,21,0.10)] sm:p-9">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_75%_12%,rgba(250,204,21,0.18),transparent_32%)]" />
-              <div className="relative z-10 flex h-full flex-col">
-                <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.22em] text-yellow-300 sm:text-sm">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl border border-yellow-400/25 bg-yellow-400/10 text-xl">🎁</span>
-                  Benefícios Gluck&apos;s
+            {/* DESENVOLVIMENTO PERSONALIZADO */}
+            <article
+              id="desenvolvimento"
+              className="group relative flex min-h-[760px] flex-col overflow-hidden rounded-[30px] border border-cyan-400/80 bg-black p-7 shadow-[0_0_60px_rgba(34,211,238,0.14)] sm:p-9"
+            >
+              <img
+                src="/card-desenvolvimento-bg.webp"
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-80"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,18,27,0.92)_0%,rgba(0,18,27,0.72)_55%,rgba(0,8,12,0.48)_100%)]" />
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-cyan-300 shadow-[0_0_22px_4px_rgba(34,211,238,0.85)]" />
+
+              <div className="relative flex items-center gap-4 text-cyan-300">
+                <div className="grid h-12 w-12 place-items-center rounded-xl border border-cyan-300/30 bg-cyan-400/10 shadow-[0_0_24px_rgba(34,211,238,0.18)]">
+                  <Code2 className="h-7 w-7" />
                 </div>
-                <h2 className="mt-6 text-3xl font-black leading-[1.08] tracking-tight sm:text-4xl">
-                  Vantagens para a nossa <span className="text-yellow-300">comunidade.</span>
-                </h2>
-                <p className="mt-5 text-base leading-7 text-zinc-300">
-                  Descontos, condições especiais e parceiros reunidos em uma página exclusiva para a comunidade Gluck&apos;s.
-                </p>
-                <div className="mt-8 grid grid-cols-2 gap-3">
-                  {[
-                    { name: "Clear", logo: "/partners/clear.svg", tag: "Benefício" },
-                    { name: "Profit Pro", logo: "/partners/profitpro.svg", tag: "Condições especiais" },
-                    { name: "Nelogica", logo: "/partners/nelogica.svg", tag: "Parceiro" },
-                    { name: "ATAS", logo: "/partners/atas.svg", tag: "Benefício" },
-                    { name: "TradingView", logo: "/partners/tradingview.svg", tag: "Condições especiais" },
-                    { name: "XP", logo: "/partners/xp.svg", tag: "Benefício" },
-                  ].map((partner) => (
-                    <div key={partner.name} className="flex min-h-24 flex-col items-center justify-center rounded-2xl border border-yellow-300/15 bg-black/40 p-3 text-center transition hover:border-yellow-300/35 hover:bg-yellow-300/[0.04]">
-                      <img src={partner.logo} alt={partner.name} className="h-7 max-w-[115px] object-contain" onError={(event) => { event.currentTarget.style.display = "none"; }} />
-                      <div className="mt-1 text-sm font-black text-white">{partner.name}</div>
-                      <div className="mt-2 rounded-full bg-yellow-300/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-yellow-200">{partner.tag}</div>
-                    </div>
-                  ))}
-                </div>
-                <a href="/beneficios" className="mt-7 flex items-center justify-between rounded-2xl bg-yellow-300 px-6 py-4 text-sm font-black text-black transition hover:bg-yellow-200">
-                  Ver todos os benefícios <ArrowRight className="h-5 w-5" />
-                </a>
+                <div className="text-sm font-black uppercase tracking-[0.20em]">Desenvolvimento personalizado</div>
               </div>
-            </article>
-          </div>
-        </section>
 
-        <section className="border-y border-white/10 bg-zinc-950/60"><div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-center md:justify-between"><div><div className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-400">Mentoria Gluck&apos;s</div><h3 className="mt-2 text-2xl font-black">Para quem busca acompanhamento mais próximo.</h3></div><a href="#" className="inline-flex items-center gap-2 text-sm font-bold text-emerald-300">Conhecer a mentoria <ArrowRight className="h-4 w-4"/></a></div></section>
+              <h2 className="relative mt-7 text-4xl font-black leading-[1.02] tracking-tight sm:text-[2.75rem]">
+                Sua estratégia pode<br />
+                <span className="text-cyan-300">virar tecnologia.</span>
+              </h2>
 
-        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20"><div className="rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(120deg,rgba(5,18,11,0.96),rgba(2,2,2,0.98))] p-8 sm:p-12"><div className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-400">Gluck&apos;s Tecnologia</div><div className="mt-4 flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between"><div><h2 className="max-w-3xl text-3xl font-black sm:text-4xl">Tecnologia para diferentes momentos da sua jornada no mercado.</h2><p className="mt-4 text-zinc-400">Inteligência artificial. Indicadores. Automações. Desenvolvimento.</p></div><a href="#ia" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-7 py-4 text-sm font-black text-black">Comece agora <ArrowRight className="h-5 w-5"/></a></div></div></section>
-      </main>
+              <p className="relative mt-5 text-base leading-7 text-zinc-200">
+                Desenvolvemos indicadores, robôs, automações e soluções personalizadas para traders.
+              </p>
 
-      <footer className="border-t border-white/10 bg-black"><div className="mx-auto max-w-7xl px-4 py-8 text-sm text-zinc-500 sm:px-6"><div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between"><div><div className="font-black tracking-wider text-white">GLUCK&apos;S</div><div className="mt-1 text-[10px] uppercase tracking-[0.18em]">Tecnologia para traders</div></div><div className="flex flex-wrap gap-5"><a href="#ia">IA</a><a href="#indicador">Indicador</a><a href="#desenvolvimento">Desenvolvimento</a><a href="/beneficios">Benefícios</a><a href="#">Termos</a><a href="#">Privacidade</a></div></div><p className="mt-6 max-w-5xl text-xs leading-6 text-zinc-600">Operações no mercado financeiro envolvem riscos. A Gluck&apos;s oferece ferramentas e conteúdos de apoio à análise e não garante resultados, rentabilidade ou acerto de operações. A decisão de operar e a gestão de risco são sempre do usuário.</p><div className="mt-4 text-xs text-zinc-700">© 2026 Gluck&apos;s Tecnologia. Todos os direitos reservados.</div></div></footer>
-    </div>
-  );
-}                  "Robôs e estratégias automatizadas",
+              <div className="relative mt-7 space-y-4">
+                {[
+                  "Indicadores personalizados",
+                  "Robôs e estratégias automatizadas",
                   "Integrações e automações",
                   "Projetos especiais",
                 ].map((item) => (
@@ -381,14 +367,18 @@ setProfitTarget(125);`}</pre>
                   <span className="h-2.5 w-2.5 rounded-full bg-yellow-300" />
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
                 </div>
-                <pre className="overflow-hidden text-[10px] leading-5 text-cyan-100/90 sm:text-xs"><code>{`// Estratégia personalizada
-if (tendencia === "ALTA") {
-  comprar();
-} else {
-  protegerRisco();
-}
-SetStopLoss(50);
-SetProfitTarget(125);`}</code></pre>
+                <pre className="overflow-hidden whitespace-pre-wrap text-[10px] leading-5 text-cyan-100/90 sm:text-xs">
+                  <code>
+                    {"// Estratégia personalizada\n"}
+                    {'if (tendencia === "ALTA") {\n'}
+                    {"  comprar();\n"}
+                    {"} else {\n"}
+                    {"  protegerRisco();\n"}
+                    {"}\n"}
+                    {"SetStopLoss(50);\n"}
+                    {"SetProfitTarget(125);"}
+                  </code>
+                </pre>
               </div>
 
               <a
